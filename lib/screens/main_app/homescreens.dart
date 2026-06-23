@@ -1,4 +1,6 @@
-﻿import 'dart:io';
+﻿// ignore_for_file: deprecated_member_use
+
+import 'dart:io';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_auth/firebase_auth.dart';

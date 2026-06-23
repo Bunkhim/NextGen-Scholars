@@ -1,4 +1,4 @@
-﻿// ignore_for_file: file_names, avoid_print, deprecated_member_use
+﻿// ignore_for_file: use_build_context_synchronously, file_names, avoid_print, deprecated_member_use
 
 import 'dart:io';
 

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/screens/main_app/display_size_screen.dart';

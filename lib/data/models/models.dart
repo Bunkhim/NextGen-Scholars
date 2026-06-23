@@ -1,4 +1,4 @@
-/// Database models barrel export.
+// Database models barrel export.
 export 'application_draft_model.dart';
 export 'chat_message_model.dart';
 export 'notification_model.dart';
