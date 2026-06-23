@@ -1,0 +1,50 @@
+# # ជាផ្នែកសំខាន់បំផុតដែលអ្នកបានលើកឡើង
+# build/
+# .dart_tool/
+# .idea/
+
+# # កូដដែលទាក់ទងនឹង Tooling និង IDE
+# .vscode/
+# .packages
+# .pub-cache/
+# .pub/
+
+# # កូដដែលម៉ាស៊ីនបង្កើតឱ្យដោយស្វ័យប្រវត្តិ (Generated files)
+# *.lock
+# *.js
+# *.exe
+
+# # សម្រាប់ Android & iOS Specific
+# android/app/debug/
+# android/app/release/
+# ios/.generated/
+# ios/Flutter/Generated.xcconfig
+# ios/Flutter/flutter_export_environment.sh
+
+# # ចំណាំ៖ ប្រសិនបើអ្នកមាន Secret keys (ដូចជា .env) ត្រូវដាក់វានៅទីនេះដែរ
+# .env
+
+# Flutter & Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# IDE
+.idea/
+.vscode/
+
+# Platform build outputs
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/.symlinks/
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# Misc
+*.log
+
+# Environment variables (API keys)
+.env

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "459677001326",
+    "project_id": "scholarship-app-bfe64",
+    "storage_bucket": "scholarship-app-bfe64.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:459677001326:android:da17a9fc13ffc0e75de87f",
+        "android_client_info": {
+          "package_name": "com.example.scholarship_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1QFBUURr4CaD8GlkzMk6s-jDfFNro0ac"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

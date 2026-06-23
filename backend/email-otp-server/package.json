@@ -1,0 +1,18 @@
+{
+    "name": "scholarship-email-otp",
+    "version": "1.0.0",
+    "description": "Email OTP service for Scholarship App",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.21.0",
+        "firebase-admin": "^11.11.0",
+        "dotenv": "^16.0.0"
+    },
+    "engines": {
+        "node": "18"
+    }
+}
