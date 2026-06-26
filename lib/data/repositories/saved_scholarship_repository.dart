@@ -15,11 +15,20 @@ class SavedScholarshipRepository {
   Future<int> save(SavedScholarshipModel saved) async {
     final db = await _db.database;
 
+    // Determine the WHERE clause and args, handling nullable userId.
+    final hasUserId = saved.userId != null;
+    final where = hasUserId
+        ? 'scholarship_id = ? AND user_id = ?'
+        : 'scholarship_id = ? AND user_id IS NULL';
+    final whereArgs = hasUserId
+        ? [saved.scholarshipId, saved.userId]
+        : [saved.scholarshipId];
+
     // Check for any existing row, visible or hidden.
     final existing = await db.query(
       DatabaseHelper.tableSavedScholarships,
-      where: 'scholarship_id = ? AND (user_id = ? OR user_id IS NULL)',
-      whereArgs: [saved.scholarshipId, saved.userId],
+      where: where,
+      whereArgs: whereArgs,
       limit: 1,
     );
 
@@ -62,10 +71,15 @@ class SavedScholarshipRepository {
   /// Remove by scholarship_id (unsave).
   Future<int> unsave(int scholarshipId, {String? userId}) async {
     final db = await _db.database;
+    final hasUserId = userId != null;
+    final where = hasUserId
+        ? 'scholarship_id = ? AND user_id = ?'
+        : 'scholarship_id = ? AND user_id IS NULL';
+    final whereArgs = hasUserId ? [scholarshipId, userId] : [scholarshipId];
     final result = await db.delete(
       DatabaseHelper.tableSavedScholarships,
-      where: 'scholarship_id = ? AND (user_id = ? OR user_id IS NULL)',
-      whereArgs: [scholarshipId, userId],
+      where: where,
+      whereArgs: whereArgs,
     );
     _triggerCloudSync();
     return result;
@@ -74,10 +88,15 @@ class SavedScholarshipRepository {
   /// Check if a scholarship is saved.
   Future<bool> isSaved(int scholarshipId, {String? userId}) async {
     final db = await _db.database;
+    final hasUserId = userId != null;
+    final where = hasUserId
+        ? 'scholarship_id = ? AND user_id = ?'
+        : 'scholarship_id = ? AND user_id IS NULL';
+    final whereArgs = hasUserId ? [scholarshipId, userId] : [scholarshipId];
     final results = await db.query(
       DatabaseHelper.tableSavedScholarships,
-      where: 'scholarship_id = ? AND (user_id = ? OR user_id IS NULL)',
-      whereArgs: [scholarshipId, userId],
+      where: where,
+      whereArgs: whereArgs,
       limit: 1,
     );
     return results.isNotEmpty;

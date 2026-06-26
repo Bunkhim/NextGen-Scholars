@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ThemeService {
   static final ThemeService _instance = ThemeService._internal();
-  static final ValueNotifier<bool> themeNotifier = ValueNotifier(false);
+  static final RxBool themeNotifier = false.obs;
 
   factory ThemeService() {
     return _instance;

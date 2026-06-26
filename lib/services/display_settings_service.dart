@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DisplaySettingsService {
@@ -11,13 +12,13 @@ class DisplaySettingsService {
   // ── Notifiers ─────────────────────────────────────────────────────────────
 
   /// Font family name (null = system default)
-  static final ValueNotifier<String?> fontFamilyNotifier = ValueNotifier(null);
+  static final Rx<String?> fontFamilyNotifier = Rx<String?>(null);
 
   /// Text scale factor (0.85 = Small, 1.0 = Default, 1.15 = Medium, 1.3 = Large, 1.45 = Very large)
-  static final ValueNotifier<double> textScaleNotifier = ValueNotifier(1.0);
+  static final RxDouble textScaleNotifier = 1.0.obs;
 
   /// Display scale factor (0.9 = Small, 1.0 = Standard, 1.1 = Large)
-  static final ValueNotifier<double> displayScaleNotifier = ValueNotifier(1.0);
+  static final RxDouble displayScaleNotifier = 1.0.obs;
 
   // ── Pref Keys ─────────────────────────────────────────────────────────────
 

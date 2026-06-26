@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Theme definition ─────────────────────────────────────────────────────────
@@ -164,8 +165,8 @@ class WallpaperService {
 
   // ── Notifiers ─────────────────────────────────────────────────────────────
 
-  static final ValueNotifier<String?> themeIdNotifier = ValueNotifier(null);
-  static final ValueNotifier<String?> wallpaperNotifier = ValueNotifier(null);
+  static final Rx<String?> themeIdNotifier = Rx<String?>(null);
+  static final Rx<String?> wallpaperNotifier = Rx<String?>(null);
 
   // ── Pref Keys ─────────────────────────────────────────────────────────────
 

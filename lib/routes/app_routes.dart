@@ -1,48 +1,58 @@
-class AppRoutes {
+abstract class Routes {
+  Routes._();
+
   // Authentication Routes
-  static const String splashScreen = '/splash_screen';
-  static const String onboardingScreen = '/onboarding_screen';
-  static const String loginScreen = '/login_screen';
-  static const String registerScreen = '/register_screen';
-  static const String verifyEmailScreen = '/verify_email_screen';
-  static const String forgetPasswordScreen = '/forget_password_screen';
-  static const String resetPasswordScreen = '/reset_password_screen';
+  static const String splash = '/splash';
+  static const String onboarding = '/onboarding';
+  static const String login = '/login';
+  static const String register = '/register';
+  static const String verifyEmail = '/verify_email';
+  static const String forgetPassword = '/forget_password';
+  static const String resetPassword = '/reset_password';
 
   // Main App Routes
-  static const String homeScreen = '/home_screen';
-  static const String discoverScreen = '/discover_screen';
-  static const String profileScreen = '/profile_screen';
-  static const String editProfileScreen = '/edit_profile_screen';
-  static const String notificationScreen = '/notification_screen';
-  static const String settingScreen = '/setting_screen';
+  static const String home = '/home';
+  static const String discover = '/discover';
+  static const String profile = '/profile';
+  static const String editProfile = '/edit_profile';
+  static const String notification = '/notification';
+  static const String setting = '/setting';
+  static const String settings = '/settings';
 
-  // ── NEW: Search & Filter Routes ──────────
-  static const String searchFilterScreen = '/search_filter_screen';
-  static const String filterResultScreen = '/filter_result_screen';
-  static const String searchResultScreen = '/search_result_screen';
-  static const String settingsScreen = '/settings_screen';
+  // Search & Filter Routes
+  static const String searchFilter = '/search_filter';
+  static const String filterResult = '/filter_result';
+  static const String searchResult = '/search_result';
 
   // Scholarship Routes
-  static const String scholarshipDetailScreen = '/scholarship_detail_screen';
-  static const String savedScholarshipScreen = '/saved_scholarship_screen';
-  static const String myApplicationsScreen = '/my_applications_screen';
+  static const String scholarshipDetail = '/scholarship_detail';
+  static const String savedScholarship = '/saved_scholarship';
+  static const String myApplications = '/my_applications';
 
   // Fill Information Routes
-  static const String personalInfoScreen = '/personal_info_screen';
-  static const String educationBackgroundScreen =
-      '/education_background_screen';
-  static const String workExperienceScreen = '/work_experience_screen';
-  static const String researchExperienceScreen = '/research_experience_screen';
-  static const String awardAchievementScreen = '/award_achievement_screen';
-  static const String languagesScreen = '/languages_screen';
-  static const String referenceScreen = '/reference_screen';
-  static const String scholarshipPreferenceScreen =
-      '/scholarship_preference_screen';
+  static const String personalInfo = '/personal_info';
+  static const String educationBackground = '/education_background';
+  static const String workExperience = '/work_experience';
+  static const String researchExperience = '/research_experience';
+  static const String awardAchievement = '/award_achievement';
+  static const String languages = '/languages';
+  static const String reference = '/reference';
+  static const String scholarshipPreference = '/scholarship_preference';
+
+  // Additional Screens
+  static const String displaySize = '/display_size';
+  static const String fontPicker = '/font_picker';
+  static const String fontSize = '/font_size';
+  static const String helpSupport = '/help_support';
+  static const String scholarshipMatch = '/scholarship_match';
+  static const String chatAi = '/chat_ai';
+  static const String wallpaper = '/wallpaper';
+  static const String applicationStatus = '/application_status';
 
   // Admin Routes
-  static const String adminDashboardScreen = '/admin_dashboard_screen';
-  static const String manageScholarshipsScreen = '/manage_scholarships_screen';
-  static const String manageUsersScreen = '/manage_users_screen';
-  static const String statisticAnalyticsScreen = '/statistic_analytics_screen';
-  static const String userDetailsScreen = '/user_details_screen';
+  static const String adminDashboard = '/admin_dashboard';
+  static const String manageScholarships = '/manage_scholarships';
+  static const String manageUsers = '/manage_users';
+  static const String statisticAnalytics = '/statistic_analytics';
+  static const String userDetails = '/user_details';
 }

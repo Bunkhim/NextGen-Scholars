@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageService {
   static final LanguageService _instance = LanguageService._internal();
-  static final ValueNotifier<Locale> localeNotifier =
-      ValueNotifier(const Locale('en'));
+  static final Rx<Locale> localeNotifier = const Locale('en').obs;
 
   factory LanguageService() => _instance;
   LanguageService._internal();
