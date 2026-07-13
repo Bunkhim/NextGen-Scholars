@@ -1,52 +1,18 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/notification_controller.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final NotificationService _notificationService = NotificationService();
-
-  bool _pushEnabled = true;
-  bool _newScholarshipsEnabled = false;
-  bool _settingsLoaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNotificationSettings();
-  }
-
-  Future<void> _loadNotificationSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _pushEnabled = prefs.getBool('settings_push_notifications') ?? true;
-      _newScholarshipsEnabled =
-          prefs.getBool('settings_new_scholarships') ?? false;
-      _settingsLoaded = true;
-    });
-  }
-
-  List<AppNotification> _applySettingsFilter(List<AppNotification> all) {
-    if (!_pushEnabled) return [];
-    return all.where((n) {
-      if (n.type == 'new_scholarship' && !_newScholarshipsEnabled) return false;
-      return true;
-    }).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.put(NotificationController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     final isKm = Localizations.localeOf(context).languageCode == 'km';
@@ -55,18 +21,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       backgroundColor: WallpaperService().hasAny
           ? Colors.transparent
           : colorScheme.surfaceContainerHighest,
-      body: !_settingsLoaded
-          ? const Center(child: CircularProgressIndicator())
-          : StreamBuilder<List<AppNotification>>(
-              stream: _notificationService.streamMyNotifications(),
-              builder: (context, snapshot) {
-                final raw = snapshot.data ?? [];
-                final notifications = _applySettingsFilter(raw);
-                final unreadCount =
-                    notifications.where((n) => !n.isRead).length;
+      body: Obx(() {
+        if (!controller.settingsLoaded.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final notifications = controller.notifications;
+        final unreadCount = controller.unreadCount;
 
-                return CustomScrollView(
-                  slivers: [
+        return CustomScrollView(
+          slivers: [
                     // AppBar
                     SliverAppBar(
                       backgroundColor: WallpaperService().hasTheme
@@ -116,8 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       actions: [
                         if (unreadCount > 0)
                           TextButton(
-                            onPressed: () =>
-                                _notificationService.markAllAsRead(),
+                            onPressed: () => controller.markAllAsRead(),
                             child: Text(
                               t.translate('notificationMarkAllRead'),
                               style: TextStyle(
@@ -133,12 +96,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
 
                     // Content
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        notifications.isEmpty)
-                      const SliverFillRemaining(
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (notifications.isEmpty)
+                    if (notifications.isEmpty)
                       SliverFillRemaining(
                         child: _buildEmptyState(colorScheme, t),
                       )
@@ -154,7 +112,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 item: item,
                                 colorScheme: colorScheme,
                                 isKm: isKm,
-                                notificationService: _notificationService,
+                                controller: controller,
                               );
                             },
                             childCount: notifications.length,
@@ -163,8 +121,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                   ],
                 );
-              },
-            ),
+      }),
     );
   }
 
@@ -222,14 +179,14 @@ class _SwipeableNotificationCard extends StatefulWidget {
   final AppNotification item;
   final ColorScheme colorScheme;
   final bool isKm;
-  final NotificationService notificationService;
+  final NotificationController controller;
 
   const _SwipeableNotificationCard({
     required super.key,
     required this.item,
     required this.colorScheme,
     required this.isKm,
-    required this.notificationService,
+    required this.controller,
   });
 
   @override
@@ -282,7 +239,7 @@ class _SwipeableNotificationCardState extends State<_SwipeableNotificationCard>
       // Swipe left→right: slide off screen then dismiss
       _snapTo(screenWidth);
       Future.delayed(const Duration(milliseconds: 220), () {
-        widget.notificationService.dismissNotification(widget.item.id);
+        widget.controller.dismissNotification(widget.item.id);
       });
     } else if (_offset <= -_btnWidth / 2) {
       _snapTo(-_btnWidth); // Reveal "Clear" button
@@ -294,7 +251,7 @@ class _SwipeableNotificationCardState extends State<_SwipeableNotificationCard>
   void _dismissCard() {
     _snapTo(MediaQuery.of(context).size.width);
     Future.delayed(const Duration(milliseconds: 220), () {
-      widget.notificationService.dismissNotification(widget.item.id);
+      widget.controller.dismissNotification(widget.item.id);
     });
   }
 
@@ -435,7 +392,7 @@ class _SwipeableNotificationCardState extends State<_SwipeableNotificationCard>
                         if (_offset != 0) {
                           _snapTo(0);
                         } else if (!item.isRead) {
-                          widget.notificationService.markAsRead(item.id);
+                          widget.controller.markAsRead(item.id);
                         }
                       },
                       child: Padding(

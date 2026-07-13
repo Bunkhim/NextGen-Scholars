@@ -1,17 +1,14 @@
-﻿// ignore_for_file: use_build_context_synchronously, file_names, avoid_print, deprecated_member_use
+﻿// ignore_for_file: no_wildcard_variable_uses, unused_field, unused_element, use_build_context_synchronously, file_names, avoid_print, deprecated_member_use
 
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:scholarship_app/constants/app_colors.dart';
+import 'package:scholarship_app/controllers/main_app/edit_profile_controller.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/screens/main_app/profile_screen.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -22,25 +19,34 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController dobController = TextEditingController();
-  final TextEditingController countryController = TextEditingController();
+  late final EditProfileController controller;
 
-  // Error state
-  String? _nameError;
-  String? _emailError;
-  String? _phoneError;
-  String? _dobError;
-  String? _countryError;
-  bool _isSaving = false;
-  bool _isLoading = true;
+  TextEditingController get nameController => controller.nameController;
+  TextEditingController get emailController => controller.emailController;
+  TextEditingController get phoneController => controller.phoneController;
+  TextEditingController get dobController => controller.dobController;
+  TextEditingController get countryController => controller.countryController;
 
-  // Photo
-  File? _pickedPhoto;
-  String? _existingPhotoUrl;
-  final _picker = ImagePicker();
+  String? get _nameError => controller.nameError.value;
+  set _nameError(String? value) => controller.nameError.value = value;
+  String? get _emailError => controller.emailError.value;
+  set _emailError(String? value) => controller.emailError.value = value;
+  String? get _phoneError => controller.phoneError.value;
+  set _phoneError(String? value) => controller.phoneError.value = value;
+  String? get _dobError => controller.dobError.value;
+  set _dobError(String? value) => controller.dobError.value = value;
+  String? get _countryError => controller.countryError.value;
+  set _countryError(String? value) => controller.countryError.value = value;
+
+  bool get _isSaving => controller.isSaving.value;
+  set _isSaving(bool value) => controller.isSaving.value = value;
+  bool get _isLoading => controller.isLoading.value;
+  set _isLoading(bool value) => controller.isLoading.value = value;
+
+  File? get _pickedPhoto => controller.pickedPhoto.value;
+  set _pickedPhoto(File? value) => controller.pickedPhoto.value = value;
+  String? get _existingPhotoUrl => controller.existingPhotoUrl.value;
+  set _existingPhotoUrl(String? value) => controller.existingPhotoUrl.value = value;
 
   final List<String> _countryNameKeys = const [
     'countryNameCambodia',
@@ -61,139 +67,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'countryNameGermany',
   ];
 
-  // Track original values for unsaved-changes detection
-  late String _originalName;
-  late String _originalEmail;
-  late String _originalPhone;
-  late String _originalDob;
-  late String _originalCountry;
-  late List<String> _originalInterests;
+  List<bool> get selectedFields => controller.selectedFields;
+  List<String> get _savedInterests => controller.savedInterests;
+  bool get _hasUnsavedChanges => controller.hasUnsavedChanges;
 
-  List<String> _getInterestedFields(AppLocalizations t) => [
-        t.translate('editProfileFieldArt'),
-        t.translate('editProfileFieldMedical'),
-        t.translate('editProfileFieldFullScholarship'),
-        t.translate('editProfileFieldUSA'),
-      ];
-  late List<bool> selectedFields;
-  List<String> _savedInterests = [];
+  List<String> _getInterestedFields(AppLocalizations t) =>
+      controller.getInterestedFields(t);
 
   @override
   void initState() {
     super.initState();
-    selectedFields = List<bool>.filled(4, false);
-    _originalName = '';
-    _originalEmail = '';
-    _originalPhone = '';
-    _originalDob = '';
-    _originalCountry = '';
-    _originalInterests = [];
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    try {
-      final profile = await UserFirestoreService().getProfile();
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (!mounted) return;
-
-      if (profile != null) {
-        nameController.text = profile['name'] ?? user?.displayName ?? '';
-        emailController.text = profile['email'] ?? user?.email ?? '';
-        phoneController.text = profile['phone'] ?? '';
-        dobController.text = profile['dob'] ?? '';
-        countryController.text = profile['country'] ?? '';
-        _existingPhotoUrl = profile['photoUrl'] ?? user?.photoURL;
-        _savedInterests = List<String>.from(profile['interestedFields'] ?? []);
-
-        // Match saved interests to toggle chips
-        final t = AppLocalizations.of(context);
-        final fields = _getInterestedFields(t);
-        for (int i = 0; i < fields.length; i++) {
-          selectedFields[i] = _savedInterests.contains(fields[i]);
-        }
-      } else if (user != null) {
-        nameController.text = user.displayName ?? '';
-        emailController.text = user.email ?? '';
-        _existingPhotoUrl = user.photoURL;
-      }
-
-      _originalName = nameController.text;
-      _originalEmail = emailController.text;
-      _originalPhone = phoneController.text;
-      _originalDob = dobController.text;
-      _originalCountry = countryController.text;
-      _originalInterests = List<String>.from(_savedInterests);
-    } catch (e) {
-      // Fallback to Firebase Auth user data
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null && mounted) {
-        nameController.text = user.displayName ?? '';
-        emailController.text = user.email ?? '';
-        _existingPhotoUrl = user.photoURL;
-        _originalName = nameController.text;
-        _originalEmail = emailController.text;
-      }
-    }
-
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  bool get _hasUnsavedChanges {
-    return nameController.text != _originalName ||
-        emailController.text != _originalEmail ||
-        phoneController.text != _originalPhone ||
-        dobController.text != _originalDob ||
-        countryController.text != _originalCountry ||
-        _pickedPhoto != null ||
-        _interestsChanged;
-  }
-
-  bool get _interestsChanged {
-    final t = AppLocalizations.of(context);
-    final fields = _getInterestedFields(t);
-    final current = <String>[];
-    for (int i = 0; i < fields.length; i++) {
-      if (selectedFields[i]) current.add(fields[i]);
-    }
-    if (current.length != _originalInterests.length) return true;
-    for (final item in current) {
-      if (!_originalInterests.contains(item)) return true;
-    }
-    return false;
+    controller = Get.put(EditProfileController());
   }
 
   Future<bool> _onWillPop() async {
-    if (!_hasUnsavedChanges) return true;
-    final t = AppLocalizations.of(context);
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.translate('editProfileUnsavedTitle')),
-        content: Text(t.translate('editProfileUnsavedMessage')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(t.translate('editProfileDiscard')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(t.translate('editProfileKeepEditing')),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
+    return controller.confirmDiscardChanges();
   }
 
   @override
   void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    phoneController.dispose();
-    dobController.dispose();
-    countryController.dispose();
+    if (Get.isRegistered<EditProfileController>()) {
+      Get.delete<EditProfileController>();
+    }
     super.dispose();
   }
 
@@ -315,209 +210,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _validateNameLive(String value) {
-    final t = AppLocalizations.of(context);
-    setState(() {
-      if (value.trim().isEmpty) {
-        _nameError = t.translate('editProfileNameRequired');
-      } else if (!_isValidName(value)) {
-        _nameError = t.translate('editProfileNameLength');
-      } else {
-        _nameError = null;
-      }
-    });
+    controller.validateNameLive(value);
   }
 
   void _validateEmailLive(String value) {
-    final t = AppLocalizations.of(context);
-    setState(() {
-      if (value.trim().isEmpty) {
-        _emailError = t.translate('editProfileEmailRequired');
-      } else if (!_isValidEmail(value.trim())) {
-        _emailError = t.translate('editProfileEmailInvalid');
-      } else {
-        _emailError = null;
-      }
-    });
+    controller.validateEmailLive(value);
   }
 
   void _validatePhoneLive(String value) {
-    final t = AppLocalizations.of(context);
-    setState(() {
-      if (value.trim().isEmpty) {
-        _phoneError = t.translate('editProfilePhoneRequired');
-      } else if (!_isValidPhone(value.trim())) {
-        _phoneError = t.translate('editProfilePhoneInvalid');
-      } else {
-        _phoneError = null;
-      }
-    });
+    controller.validatePhoneLive(value);
   }
 
   void _validateDobLive(String value) {
-    final t = AppLocalizations.of(context);
-    setState(() {
-      if (value.trim().isEmpty) {
-        _dobError = t.translate('editProfileDobRequired');
-      } else if (!_isValidDOB(value.trim())) {
-        _dobError = t.translate('editProfileDobInvalid');
-      } else {
-        _dobError = null;
-      }
-    });
+    controller.validateDobLive(value);
   }
 
   void _validateCountryLive(String value) {
-    final t = AppLocalizations.of(context);
-    setState(() {
-      if (value.trim().isEmpty) {
-        _countryError = t.translate('editProfileCountryRequired');
-      } else if (!_isValidCountry(value)) {
-        _countryError = t.translate('editProfileCountryInvalid');
-      } else {
-        _countryError = null;
-      }
-    });
+    controller.validateCountryLive(value);
   }
 
   void _validateForm() {
-    final t = AppLocalizations.of(context);
-    setState(() {
-      _nameError = null;
-      _emailError = null;
-      _phoneError = null;
-      _dobError = null;
-      _countryError = null;
-
-      final name = nameController.text.trim();
-      if (name.isEmpty) {
-        _nameError = t.translate('editProfileNameRequired');
-      } else if (!_isValidName(name)) {
-        _nameError = t.translate('editProfileNameLength');
-      }
-
-      final email = emailController.text.trim();
-      if (email.isEmpty) {
-        _emailError = t.translate('editProfileEmailRequired');
-      } else if (!_isValidEmail(email)) {
-        _emailError = t.translate('editProfileEmailInvalid');
-      }
-
-      final phone = phoneController.text.trim();
-      if (phone.isEmpty) {
-        _phoneError = t.translate('editProfilePhoneRequired');
-      } else if (!_isValidPhone(phone)) {
-        _phoneError = t.translate('editProfilePhoneInvalid');
-      }
-
-      final dob = dobController.text.trim();
-      if (dob.isEmpty) {
-        _dobError = t.translate('editProfileDobRequired');
-      } else if (!_isValidDOB(dob)) {
-        _dobError = t.translate('editProfileDobInvalid');
-      }
-
-      final country = countryController.text.trim();
-      if (country.isEmpty) {
-        _countryError = t.translate('editProfileCountryRequired');
-      } else if (!_isValidCountry(country)) {
-        _countryError = t.translate('editProfileCountryInvalid');
-      }
-    });
+    controller.validateForm();
   }
 
   bool _hasErrors() {
-    return _nameError != null ||
-        _emailError != null ||
-        _phoneError != null ||
-        _dobError != null ||
-        _countryError != null;
+    return controller.hasErrors();
   }
 
   void _handleSave() async {
-    _validateForm();
-
-    if (_hasErrors()) {
-      final t = AppLocalizations.of(context);
-      _showTopMessage(
-        t.translate('editProfileFixErrors'),
-        Colors.red.shade600,
-      );
-      return;
-    }
-
-    setState(() => _isSaving = true);
-
-    try {
-      // Save photo locally if picked
-      String? photoPath = _existingPhotoUrl;
-      if (_pickedPhoto != null) {
-        final appDir = await getApplicationDocumentsDirectory();
-        final ext = p.extension(_pickedPhoto!.path);
-        final dest = File('${appDir.path}/profile_photo$ext');
-        await _pickedPhoto!.copy(dest.path);
-        photoPath = dest.path;
-        // Evict cached image so Flutter re-reads the updated file
-        await FileImage(dest).evict();
-      }
-
-      // ── Notify screens IMMEDIATELY (before Firestore) ──────────────
-      ProfileScreen.activePhotoPath = photoPath;
-      ProfileScreen.photoRefreshNotifier.value++;
-
-      // Collect selected interests
-      final t = AppLocalizations.of(context);
-      final fields = _getInterestedFields(t);
-      final interests = <String>[];
-      for (int i = 0; i < fields.length; i++) {
-        if (selectedFields[i]) interests.add(fields[i]);
-      }
-
-      // Save to Firestore
-      await UserFirestoreService().updateProfile(
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        phone: phoneController.text.trim(),
-        dob: dobController.text.trim(),
-        country: countryController.text.trim(),
-        photoUrl: photoPath,
-        interestedFields: interests,
-      );
-
-      // Also update Firebase Auth display name if changed
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final newName = nameController.text.trim();
-        if (user.displayName != newName) {
-          await user.updateDisplayName(newName);
-        }
-      }
-
-      if (!mounted) return;
-
-      final colorScheme = Theme.of(context).colorScheme;
-
-      _showTopMessage(
-        t.translate('editProfileSaveSuccess'),
-        colorScheme.primary,
-      );
-
-      // Notify stats reload (name, counts, etc.)
-      ProfileScreen.refreshNotifier.value++;
-
-      Navigator.pop(context, true);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isSaving = false);
-
-      _showTopMessage(
-        'Error: ${e.toString()}',
-        Colors.red.shade600,
-      );
-    }
+    await controller.handleSave();
   }
 
   Future<void> _pickPhoto() async {
-    final t = AppLocalizations.of(context);
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -532,7 +256,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  t.translate('editProfileChangePhoto'),
+                  AppLocalizations.of(ctx).translate('editProfileChangePhoto'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -551,7 +275,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Icon(Icons.camera_alt_rounded,
                         color: cs.primary, size: 22),
                   ),
-                  title: Text(t.translate('editProfileCamera')),
+                    title: Text(AppLocalizations.of(ctx).translate('editProfileCamera')),
                   onTap: () => Navigator.pop(ctx, ImageSource.camera),
                 ),
                 ListTile(
@@ -565,7 +289,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Icon(Icons.photo_library_rounded,
                         color: cs.primary, size: 22),
                   ),
-                  title: Text(t.translate('editProfileGallery')),
+                  title: Text(AppLocalizations.of(ctx).translate('editProfileGallery')),
                   onTap: () => Navigator.pop(ctx, ImageSource.gallery),
                 ),
               ],
@@ -578,15 +302,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (source == null) return;
 
     try {
-      final picked = await _picker.pickImage(
-        source: source,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 80,
-      );
-      if (picked != null && mounted) {
-        setState(() => _pickedPhoto = File(picked.path));
-      }
+      await controller.pickPhoto(source);
     } catch (e) {
       if (!mounted) return;
       _showTopMessage(
@@ -597,7 +313,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _showCountryPicker() async {
-    final t = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -620,7 +335,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  t.translate('forgotPasswordSelectCountry'),
+                  AppLocalizations.of(ctx).translate('forgotPasswordSelectCountry'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -631,9 +346,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Divider(height: 1, color: cs.outlineVariant.withOpacity(0.5)),
               Expanded(
                 child: ListView.builder(
-                  itemCount: _countryNameKeys.length,
+                  itemCount: controller.countryNameKeys.length,
                   itemBuilder: (_, i) {
-                    final name = t.translate(_countryNameKeys[i]);
+                    final t = AppLocalizations.of(ctx);
+                    final name = t.translate(controller.countryNameKeys[i]);
                     return ListTile(
                       title: Text(name),
                       onTap: () => Navigator.of(ctx).pop(name),
@@ -648,37 +364,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
 
     if (!mounted || selected == null) return;
-    countryController.text = selected;
-    _validateCountryLive(selected);
+    controller.setCountry(selected);
   }
 
   /// Whether there's a photo to display (local file or network URL).
   bool get _hasPhotoToShow {
-    if (_existingPhotoUrl == null || _existingPhotoUrl!.isEmpty) return false;
-    if (_existingPhotoUrl!.startsWith('http')) return true;
-    return File(_existingPhotoUrl!).existsSync();
+    return controller.hasPhotoToShow;
   }
 
   /// Photo image provider for display.
   ImageProvider? get _photoProvider {
-    if (_existingPhotoUrl == null || _existingPhotoUrl!.isEmpty) return null;
-    if (_existingPhotoUrl!.startsWith('http')) {
-      return NetworkImage(_existingPhotoUrl!);
-    }
-    final f = File(_existingPhotoUrl!);
-    if (f.existsSync()) return FileImage(f);
-    return null;
+    return controller.photoProvider;
   }
 
   /// Initials from name for fallback avatar.
   String get _initials {
-    final name = nameController.text.trim();
-    if (name.isEmpty) return '?';
-    final parts = name.split(' ').where((p) => p.isNotEmpty).toList();
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
+    return controller.initials;
   }
 
   @override
@@ -687,19 +388,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = AppLocalizations.of(context);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        final shouldPop = await _onWillPop();
-        if (shouldPop && mounted) Navigator.of(context).pop();
-      },
-      child: Scaffold(
-        backgroundColor: WallpaperService().hasAny
-            ? Colors.transparent
-            : colorScheme.surfaceContainerHighest,
-        body: Column(
-          children: [
+    return Obx(
+      () => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final shouldPop = await _onWillPop();
+          if (shouldPop && mounted) Navigator.of(context).pop();
+        },
+        child: Scaffold(
+          backgroundColor: WallpaperService().hasAny
+              ? Colors.transparent
+              : colorScheme.surfaceContainerHighest,
+          body: Column(
+            children: [
             _buildHeroHeader(context, t, colorScheme, isDark),
             _isLoading
                 ? Expanded(
@@ -750,6 +452,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       textCapitalization:
                                           TextCapitalization.words,
                                       onChanged: _validateNameLive,
+                                          // controller-backed reactive state
                                     ),
                                     const SizedBox(height: 14),
                                     _buildFormField(
@@ -843,6 +546,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ],
         ),
       ),
+      )
     );
   }
 
@@ -1277,12 +981,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 runSpacing: 10,
                 children: List.generate(
                   fields.length,
-                  (i) => _buildInterestChip(
+                          (i) => _buildInterestChip(
                     context,
                     fields[i],
                     selectedFields[i],
-                    () =>
-                        setState(() => selectedFields[i] = !selectedFields[i]),
+                    () => controller.toggleInterest(i),
                   ),
                 ),
               ),

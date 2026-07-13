@@ -7,136 +7,59 @@ import 'package:scholarship_app/screens/main_app/font_picker_screen.dart';
 import 'package:scholarship_app/screens/main_app/font_size_screen.dart';
 import 'package:scholarship_app/screens/main_app/wallpaper_screen.dart';
 import 'package:scholarship_app/services/display_settings_service.dart';
-import 'package:scholarship_app/services/language_service.dart';
-import 'package:scholarship_app/services/theme_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/settings_controller.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  // SharedPreferences keys
-  static const _kPush = 'settings_push_notifications';
-  static const _kEmail = 'settings_email_notifications';
-  static const _kDeadline = 'settings_deadline_reminders';
-  static const _kNewScholarships = 'settings_new_scholarships';
-  static const _kSound = 'settings_notification_sound';
-
-  // Notification toggles
-  bool _pushNotifications = true;
-  bool _emailNotifications = true;
-  bool _deadlineReminders = true;
-  bool _newScholarships = false;
-
-  // App settings
-  String _selectedLanguage = 'English';
-  String _notificationSound = 'Default';
-  late bool _darkMode;
-
-  final List<String> _languages = [
-    'English',
-    'ខ្មែរ',
-  ];
-
-  List<String> _getSounds(AppLocalizations t) => [
-        t.translate('settingsSoundDefault'),
-        t.translate('settingsSoundSilent'),
-        t.translate('settingsSoundVibrateOnly'),
-        t.translate('settingsSoundChime'),
-      ];
-
-  @override
-  void initState() {
-    super.initState();
-    _darkMode = ThemeService().isDarkMode;
-    // Sync language display with current locale
-    final currentLocale = LanguageService.localeNotifier.value;
-    _selectedLanguage =
-        currentLocale.languageCode == 'km' ? 'ខ្មែរ' : 'English';
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _pushNotifications = prefs.getBool(_kPush) ?? true;
-      _emailNotifications = prefs.getBool(_kEmail) ?? true;
-      _deadlineReminders = prefs.getBool(_kDeadline) ?? true;
-      _newScholarships = prefs.getBool(_kNewScholarships) ?? false;
-      _notificationSound = prefs.getString(_kSound) ?? 'Default';
-    });
-  }
-
-  Future<void> _saveBool(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(key, value);
-  }
-
-  Future<void> _saveString(String key, String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
-  }
-
-  void _showLanguagePicker() {
+  void _showLanguagePicker(BuildContext context, SettingsController controller) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _PickerSheet(
-        title: AppLocalizations.of(context).translate('settingsLanguage'),
-        items: _languages,
-        selected: _selectedLanguage,
-        onSelect: (val) {
-          setState(() => _selectedLanguage = val);
-          final langCode = val == 'ខ្មែរ' ? 'km' : 'en';
-          LanguageService().setLanguage(langCode);
-        },
-      ),
+      builder: (_) => Obx(() => _PickerSheet(
+            title: AppLocalizations.of(context).translate('settingsLanguage'),
+            items: const ['English', 'ខ្មែរ'],
+            selected: controller.selectedLanguage.value,
+            onSelect: (val) {
+              controller.setLanguage(val);
+              Navigator.pop(context);
+            },
+          )),
     );
   }
 
-  void _showSoundPicker() {
+  void _showSoundPicker(BuildContext context, SettingsController controller) {
     final t = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _PickerSheet(
-        title: t.translate('settingsNotificationSound'),
-        items: _getSounds(t),
-        selected: _notificationSound,
-        onSelect: (val) {
-          setState(() => _notificationSound = val);
-          _saveString(_kSound, val);
-        },
-      ),
+      builder: (_) => Obx(() => _PickerSheet(
+            title: t.translate('settingsNotificationSound'),
+            items: [
+              t.translate('settingsSoundDefault'),
+              t.translate('settingsSoundSilent'),
+              t.translate('settingsSoundVibrateOnly'),
+              t.translate('settingsSoundChime'),
+            ],
+            selected: controller.notificationSound.value,
+            onSelect: (val) {
+              controller.saveString('settings_notification_sound', val);
+              Navigator.pop(context);
+            },
+          )),
     );
   }
 
-  Future<void> _openLink(String page) async {
+  Future<void> _openLink(BuildContext context, SettingsController controller, String page) async {
     final t = AppLocalizations.of(context);
 
-    // Map page names to URLs
-    final urls = <String, String>{
-      'Privacy Policy': 'https://nextgenscholars.app/privacy-policy',
-      'Terms of Service': 'https://nextgenscholars.app/terms-of-service',
-      'Help & Support':
-          'mailto:support@nextgenscholars.app?subject=Help%20%26%20Support',
-      'Rate App': '', // handled separately below
-    };
-
-    // Rate App – show a thank-you dialog
     if (page == 'Rate App') {
-      if (!mounted) return;
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(t.translate('settingsRateApp')),
           content: Text(t.translate('settingsRateAppThanks')),
           actions: [
@@ -150,21 +73,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    final url = urls[page];
-    if (url == null || url.isEmpty) return;
-
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (!mounted) return;
+    final success = await controller.openLink(page);
+    if (!success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              t.translate('settingsOpeningPage').replaceAll('\$page', page)),
+          content: Text(t.translate('settingsOpeningPage').replaceAll('\$page', page)),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           backgroundColor: const Color(0xff2196F3),
           duration: const Duration(seconds: 2),
         ),
@@ -174,12 +89,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(SettingsController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-
+    
     return Scaffold(
-      backgroundColor:
-          WallpaperService().hasAny ? Colors.transparent : colorScheme.surface,
+      backgroundColor: WallpaperService().hasAny ? Colors.transparent : colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -222,96 +137,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── NOTIFICATIONS SECTION ─────────────────────────────
-                    _SectionHeader(
-                        title: t.translate('settingsNotificationsSection')),
+                    _SectionHeader(title: t.translate('settingsNotificationsSection')),
 
-                    _ToggleTile(
-                      icon: Icons.notifications_outlined,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsPushNotifications'),
-                      value: _pushNotifications,
-                      onChanged: (v) {
-                        setState(() => _pushNotifications = v);
-                        _saveBool(_kPush, v);
-                      },
-                    ),
+                    Obx(() => _ToggleTile(
+                          icon: Icons.notifications_outlined,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsPushNotifications'),
+                          value: controller.pushNotifications.value,
+                          onChanged: (v) => controller.saveBool('settings_push_notifications', v),
+                        )),
                     _Divider(),
 
-                    _ToggleTile(
-                      icon: Icons.email_outlined,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsEmailNotifications'),
-                      value: _emailNotifications,
-                      onChanged: (v) {
-                        setState(() => _emailNotifications = v);
-                        _saveBool(_kEmail, v);
-                      },
-                    ),
+                    Obx(() => _ToggleTile(
+                          icon: Icons.email_outlined,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsEmailNotifications'),
+                          value: controller.emailNotifications.value,
+                          onChanged: (v) => controller.saveBool('settings_email_notifications', v),
+                        )),
                     _Divider(),
 
-                    _ToggleTile(
-                      icon: Icons.alarm_outlined,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsDeadlineReminders'),
-                      value: _deadlineReminders,
-                      onChanged: (v) {
-                        setState(() => _deadlineReminders = v);
-                        _saveBool(_kDeadline, v);
-                      },
-                    ),
+                    Obx(() => _ToggleTile(
+                          icon: Icons.alarm_outlined,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsDeadlineReminders'),
+                          value: controller.deadlineReminders.value,
+                          onChanged: (v) => controller.saveBool('settings_deadline_reminders', v),
+                        )),
                     _Divider(),
 
-                    _ToggleTile(
-                      icon: Icons.school_outlined,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsNewScholarships'),
-                      value: _newScholarships,
-                      onChanged: (v) {
-                        setState(() => _newScholarships = v);
-                        _saveBool(_kNewScholarships, v);
-                      },
-                    ),
+                    Obx(() => _ToggleTile(
+                          icon: Icons.school_outlined,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsNewScholarships'),
+                          value: controller.newScholarships.value,
+                          onChanged: (v) => controller.saveBool('settings_new_scholarships', v),
+                        )),
 
                     const SizedBox(height: 8),
 
                     // ── APP SETTINGS SECTION ──────────────────────────────
-                    _SectionHeader(
-                        title: t.translate('settingsAppSettingsSection')),
+                    _SectionHeader(title: t.translate('settingsAppSettingsSection')),
 
-                    _ArrowTile(
-                      icon: Icons.language_rounded,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsLanguage'),
-                      trailing: _selectedLanguage,
-                      onTap: _showLanguagePicker,
-                    ),
+                    Obx(() => _ArrowTile(
+                          icon: Icons.language_rounded,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsLanguage'),
+                          trailing: controller.selectedLanguage.value,
+                          onTap: () => _showLanguagePicker(context, controller),
+                        )),
                     _Divider(),
 
-                    _ArrowTile(
-                      icon: Icons.notifications_active_outlined,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsNotificationSound'),
-                      trailing: _notificationSound,
-                      onTap: _showSoundPicker,
-                    ),
+                    Obx(() => _ArrowTile(
+                          icon: Icons.notifications_active_outlined,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsNotificationSound'),
+                          trailing: controller.notificationSound.value,
+                          onTap: () => _showSoundPicker(context, controller),
+                        )),
                     _Divider(),
 
-                    _ToggleTile(
-                      icon: Icons.dark_mode_outlined,
-                      iconColor: colorScheme.primary,
-                      label: t.translate('settingsDarkMode'),
-                      value: _darkMode,
-                      onChanged: (v) {
-                        setState(() => _darkMode = v);
-                        ThemeService().setTheme(v);
-                      },
-                    ),
+                    Obx(() => _ToggleTile(
+                          icon: Icons.dark_mode_outlined,
+                          iconColor: colorScheme.primary,
+                          label: t.translate('settingsDarkMode'),
+                          value: controller.darkMode.value,
+                          onChanged: (v) => controller.toggleTheme(v),
+                        )),
 
                     const SizedBox(height: 8),
 
                     // ── DISPLAY SECTION ───────────────────────────────────
-                    _SectionHeader(
-                        title: t.translate('settingsDisplaySection')),
+                    _SectionHeader(title: t.translate('settingsDisplaySection')),
 
                     _ArrowTile(
                       icon: Icons.font_download_outlined,
@@ -319,12 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       label: t.translate('settingsFont'),
                       trailing: DisplaySettingsService().currentFontDisplayName,
                       onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const FontPickerScreen()),
-                        );
-                        setState(() {});
+                        await Get.to(() => const FontPickerScreen());
                       },
                     ),
                     _Divider(),
@@ -333,15 +225,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.format_size_rounded,
                       iconColor: colorScheme.primary,
                       label: t.translate('settingsFontSize'),
-                      trailing: t.translate(
-                          DisplaySettingsService().currentTextScaleLabelKey()),
+                      trailing: t.translate(DisplaySettingsService().currentTextScaleLabelKey()),
                       onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const FontSizeScreen()),
-                        );
-                        setState(() {});
+                        await Get.to(() => const FontSizeScreen());
                       },
                     ),
                     _Divider(),
@@ -350,15 +236,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.display_settings_rounded,
                       iconColor: colorScheme.primary,
                       label: t.translate('settingsDisplaySize'),
-                      trailing: t.translate(DisplaySettingsService()
-                          .currentDisplayScaleLabelKey()),
+                      trailing: t.translate(DisplaySettingsService().currentDisplayScaleLabelKey()),
                       onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const DisplaySizeScreen()),
-                        );
-                        setState(() {});
+                        await Get.to(() => const DisplaySizeScreen());
                       },
                     ),
 
@@ -372,12 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ? t.translate(WallpaperService().displayLabelKey)
                           : t.translate('settingsWallpaperNone'),
                       onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const WallpaperScreen()),
-                        );
-                        setState(() {});
+                        await Get.to(() => WallpaperScreen());
                       },
                     ),
 
@@ -390,7 +265,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.privacy_tip_outlined,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsPrivacyPolicy'),
-                      onTap: () => _openLink('Privacy Policy'),
+                      onTap: () => _openLink(context, controller, 'Privacy Policy'),
                     ),
                     _Divider(),
 
@@ -398,7 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.description_outlined,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsTermsOfService'),
-                      onTap: () => _openLink('Terms of Service'),
+                      onTap: () => _openLink(context, controller, 'Terms of Service'),
                     ),
                     _Divider(),
 
@@ -406,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.help_outline_rounded,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsHelpSupport'),
-                      onTap: () => _openLink('Help & Support'),
+                      onTap: () => _openLink(context, controller, 'Help & Support'),
                     ),
                     _Divider(),
 
@@ -414,7 +289,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.star_outline_rounded,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsRateApp'),
-                      onTap: () => _openLink('Rate App'),
+                      onTap: () => _openLink(context, controller, 'Rate App'),
                     ),
 
                     // ── VERSION ───────────────────────────────────────────

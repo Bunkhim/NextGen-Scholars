@@ -1,9 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:scholarship_app/controllers/main_app/help_support_controller.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -13,7 +14,7 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
-  final Set<int> _expandedFaqs = {};
+  final HelpSupportController controller = Get.put(HelpSupportController());
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ? WallpaperService().onThemeColor
                   : cs.onSurface,
               size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(),
         ),
         title: Text(
           t.translate('helpTitle'),
@@ -56,7 +57,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header Card ─────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -120,8 +120,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // ── Contact Options ──────────────────────────────────
             _SectionLabel(t.translate('helpContactUs')),
             const SizedBox(height: 10),
             _ContactCard(
@@ -131,33 +129,31 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   color: cs.primary,
                   title: t.translate('helpEmail'),
                   subtitle: 'choubkhunrithy@gmail.com',
-                  onTap: () => _launchUrl('mailto:choubkhunrithy@gmail.com'),
+                  onTap: () =>
+                      controller.openUrl('mailto:choubkhunrithy@gmail.com'),
                 ),
                 _ContactItem(
                   icon: Icons.phone_outlined,
                   color: Colors.green,
                   title: t.translate('helpPhone'),
                   subtitle: '+855 31 228 7763',
-                  onTap: () => _launchUrl('tel:+855312287763'),
+                  onTap: () => controller.openUrl('tel:+855312287763'),
                 ),
                 _ContactItem(
                   icon: Icons.chat_bubble_outline_rounded,
                   color: Colors.purple,
                   title: 'Telegram',
                   subtitle: '@scholarship_kh_bot',
-                  onTap: () => _launchUrl('https://t.me/scholarship_kh_bot'),
+                  onTap: () =>
+                      controller.openUrl('https://t.me/scholarship_kh_bot'),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-
-            // ── FAQ Section ──────────────────────────────────────
             _SectionLabel(t.translate('helpFaqTitle')),
             const SizedBox(height: 10),
             _buildFaqCard(isDark, cs, t),
             const SizedBox(height: 24),
-
-            // ── About Section ────────────────────────────────────
             _SectionLabel(t.translate('helpAbout')),
             const SizedBox(height: 10),
             Container(
@@ -213,26 +209,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   Widget _buildFaqCard(bool isDark, ColorScheme cs, AppLocalizations t) {
     final faqs = [
-      {
-        'q': t.translate('helpFaq1Q'),
-        'a': t.translate('helpFaq1A'),
-      },
-      {
-        'q': t.translate('helpFaq2Q'),
-        'a': t.translate('helpFaq2A'),
-      },
-      {
-        'q': t.translate('helpFaq3Q'),
-        'a': t.translate('helpFaq3A'),
-      },
-      {
-        'q': t.translate('helpFaq4Q'),
-        'a': t.translate('helpFaq4A'),
-      },
-      {
-        'q': t.translate('helpFaq5Q'),
-        'a': t.translate('helpFaq5A'),
-      },
+      {'q': t.translate('helpFaq1Q'), 'a': t.translate('helpFaq1A')},
+      {'q': t.translate('helpFaq2Q'), 'a': t.translate('helpFaq2A')},
+      {'q': t.translate('helpFaq3Q'), 'a': t.translate('helpFaq3A')},
+      {'q': t.translate('helpFaq4Q'), 'a': t.translate('helpFaq4A')},
+      {'q': t.translate('helpFaq5Q'), 'a': t.translate('helpFaq5A')},
     ];
 
     return Container(
@@ -251,116 +232,101 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
-        child: Column(
-          children: List.generate(faqs.length, (i) {
-            final isExpanded = _expandedFaqs.contains(i);
-            final isLast = i == faqs.length - 1;
-            return Column(
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        if (isExpanded) {
-                          _expandedFaqs.remove(i);
-                        } else {
-                          _expandedFaqs.add(i);
-                        }
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: WallpaperService()
-                                  .themedPrimary(cs)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  color: WallpaperService().themedPrimary(cs),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
+        child: Obx(
+          () => Column(
+            children: List.generate(faqs.length, (i) {
+              final isExpanded = controller.expandedFaqs.contains(i);
+              final isLast = i == faqs.length - 1;
+              return Column(
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => controller.toggleFaq(i),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: WallpaperService()
+                                    .themedPrimary(cs)
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${i + 1}',
+                                  style: TextStyle(
+                                    color: WallpaperService().themedPrimary(cs),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              faqs[i]['q']!,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: cs.onSurface,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                faqs[i]['q']!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
+                                ),
                               ),
                             ),
-                          ),
-                          AnimatedRotation(
-                            turns: isExpanded ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(Icons.expand_more_rounded,
-                                color: cs.onSurfaceVariant, size: 22),
-                          ),
-                        ],
+                            AnimatedRotation(
+                              turns: isExpanded ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(Icons.expand_more_rounded,
+                                  color: cs.onSurfaceVariant, size: 22),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                AnimatedCrossFade(
-                  firstChild: const SizedBox.shrink(),
-                  secondChild: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(60, 0, 16, 14),
-                    child: Text(
-                      faqs[i]['a']!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: cs.onSurfaceVariant,
-                        height: 1.5,
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(60, 0, 16, 14),
+                      child: Text(
+                        faqs[i]['a']!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: cs.onSurfaceVariant,
+                          height: 1.5,
+                        ),
                       ),
                     ),
+                    crossFadeState: isExpanded
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 250),
                   ),
-                  crossFadeState: isExpanded
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: const Duration(milliseconds: 250),
-                ),
-                if (!isLast)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 60),
-                    child: Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: cs.outlineVariant.withOpacity(0.5),
+                  if (!isLast)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 60),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: cs.outlineVariant.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-              ],
-            );
-          }),
+                ],
+              );
+            }),
+          ),
         ),
       ),
     );
   }
-
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
 }
-
-// ── Section Label ─────────────────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.label);
@@ -386,8 +352,6 @@ class _SectionLabel extends StatelessWidget {
     );
   }
 }
-
-// ── Contact Card ──────────────────────────────────────────────────────────────
 
 class _ContactItem {
   final IconData icon;

@@ -3,49 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/services/display_settings_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/font_picker_controller.dart';
 
-class FontPickerScreen extends StatefulWidget {
+class FontPickerScreen extends StatelessWidget {
   const FontPickerScreen({super.key});
-
-  @override
-  State<FontPickerScreen> createState() => _FontPickerScreenState();
-}
-
-class _FontPickerScreenState extends State<FontPickerScreen>
-    with SingleTickerProviderStateMixin {
-  late String? _selectedFont;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
-  final _service = DisplaySettingsService();
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedFont = _service.currentFontFamily;
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    );
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _selectFont(String? family) {
-    setState(() => _selectedFont = family);
-    _service.setFontFamily(family);
-  }
 
   TextStyle _getFontStyle(String family, {double fontSize = 16}) {
     if (family.isEmpty) {
@@ -60,9 +23,10 @@ class _FontPickerScreenState extends State<FontPickerScreen>
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(FontPickerController());
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final fonts = DisplaySettingsService.availableFonts;
+    final fonts = controller.fonts;
 
     return Scaffold(
       backgroundColor:
@@ -104,7 +68,7 @@ class _FontPickerScreenState extends State<FontPickerScreen>
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded,
                           color: Colors.white, size: 22),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Get.back(),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -126,12 +90,12 @@ class _FontPickerScreenState extends State<FontPickerScreen>
           // ── Font List ───────────────────────────────────────────────
           Expanded(
             child: FadeTransition(
-              opacity: _fadeAnimation,
+              opacity: controller.fadeAnimation,
               child: Builder(builder: (context) {
                 final ws = WallpaperService();
                 final themed = ws.hasTheme;
                 final primary = ws.themedPrimary(cs);
-                return ListView.separated(
+                return Obx(() => ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                   itemCount: fonts.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -140,14 +104,14 @@ class _FontPickerScreenState extends State<FontPickerScreen>
                     final family = font['family']!;
                     final name = font['name']!;
                     final isSelected = family.isEmpty
-                        ? (_selectedFont == null || _selectedFont!.isEmpty)
-                        : _selectedFont == family;
+                        ? (controller.selectedFont.value == null || controller.selectedFont.value!.isEmpty)
+                        : controller.selectedFont.value == family;
 
                     return Material(
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () =>
-                            _selectFont(family.isEmpty ? null : family),
+                            controller.selectFont(family.isEmpty ? null : family),
                         borderRadius: BorderRadius.circular(16),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
@@ -234,7 +198,7 @@ class _FontPickerScreenState extends State<FontPickerScreen>
                       ),
                     );
                   },
-                );
+                ));
               }),
             ),
           ),

@@ -2,67 +2,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/services/display_settings_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/font_size_controller.dart';
 
-class FontSizeScreen extends StatefulWidget {
+class FontSizeScreen extends StatelessWidget {
   const FontSizeScreen({super.key});
 
   @override
-  State<FontSizeScreen> createState() => _FontSizeScreenState();
-}
-
-class _FontSizeScreenState extends State<FontSizeScreen>
-    with SingleTickerProviderStateMixin {
-  late double _currentScale;
-  final _service = DisplaySettingsService();
-
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentScale = _service.currentTextScale;
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    );
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  int _scaleToIndex(double scale) {
-    final options = DisplaySettingsService.textScaleOptions;
-    for (int i = 0; i < options.length; i++) {
-      if (((options[i]['scale'] as double) - scale).abs() < 0.01) return i;
-    }
-    return 1; // Default
-  }
-
-  void _onScaleChanged(double value) {
-    final index = value.round();
-    final scale =
-        DisplaySettingsService.textScaleOptions[index]['scale'] as double;
-    setState(() => _currentScale = scale);
-    _service.setTextScale(scale);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.put(FontSizeController());
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final options = DisplaySettingsService.textScaleOptions;
-    final currentIndex = _scaleToIndex(_currentScale);
+    final options = controller.options;
 
     return Scaffold(
       backgroundColor:
@@ -104,7 +56,7 @@ class _FontSizeScreenState extends State<FontSizeScreen>
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded,
                           color: Colors.white, size: 22),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Get.back(),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -126,15 +78,18 @@ class _FontSizeScreenState extends State<FontSizeScreen>
           // ── Content ─────────────────────────────────────────────────
           Expanded(
             child: FadeTransition(
-              opacity: _fadeAnimation,
+              opacity: controller.fadeAnimation,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Builder(builder: (context) {
                   final ws = WallpaperService();
                   final themed = ws.hasTheme;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  return Obx(() {
+                    final currentScale = controller.currentScale.value;
+                    final currentIndex = controller.scaleToIndex(currentScale);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       // ── Preview Label ──────────────────────────────────
                       Text(
                         t.translate('settingsFontSizeSampleText'),
@@ -166,7 +121,7 @@ class _FontSizeScreenState extends State<FontSizeScreen>
                             Text(
                               t.translate('settingsFontSizePreviewTitle'),
                               style: TextStyle(
-                                fontSize: 24 * _currentScale,
+                                fontSize: 24 * currentScale,
                                 fontWeight: FontWeight.w700,
                                 color: themed ? ws.onThemeColor : cs.onSurface,
                               ),
@@ -175,7 +130,7 @@ class _FontSizeScreenState extends State<FontSizeScreen>
                             Text(
                               t.translate('settingsFontSizePreviewSubtitle'),
                               style: TextStyle(
-                                fontSize: 16 * _currentScale,
+                                fontSize: 16 * currentScale,
                                 fontWeight: FontWeight.w600,
                                 color: themed ? ws.onThemeColor : cs.onSurface,
                               ),
@@ -184,7 +139,7 @@ class _FontSizeScreenState extends State<FontSizeScreen>
                             Text(
                               t.translate('settingsFontSizePreviewBody'),
                               style: TextStyle(
-                                fontSize: 14 * _currentScale,
+                                fontSize: 14 * currentScale,
                                 color: themed
                                     ? ws.onThemeColor.withOpacity(0.7)
                                     : cs.onSurfaceVariant,
@@ -249,7 +204,7 @@ class _FontSizeScreenState extends State<FontSizeScreen>
                           min: 0,
                           max: (options.length - 1).toDouble(),
                           divisions: options.length - 1,
-                          onChanged: _onScaleChanged,
+                          onChanged: controller.onScaleChanged,
                         ),
                       ),
 
@@ -269,8 +224,9 @@ class _FontSizeScreenState extends State<FontSizeScreen>
                           height: 1.4,
                         ),
                       ),
-                    ],
-                  );
+                      ],
+                    );
+                  });
                 }),
               ),
             ),

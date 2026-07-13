@@ -2,54 +2,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:scholarship_app/database/database.dart';
-import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/services/application_data.dart';
-import 'package:scholarship_app/screens/fill_information/personal_info_screen.dart';
-import 'package:scholarship_app/screens/main_app/discover_screen.dart';
-import 'package:scholarship_app/screens/main_app/profile_screen.dart';
-import 'package:scholarship_app/screens/scholarship/my_applications_screen.dart';
-import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/services/application_service.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/scholarship/scholarship_detail_controller.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
-import 'package:scholarship_app/services/viewed_scholarship_service.dart';
+import 'package:scholarship_app/translations/app_localizations.dart';
+import 'package:scholarship_app/screens/fill_information/personal_info_screen.dart';
+import 'package:scholarship_app/screens/scholarship/my_applications_screen.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ScholarshipDetailScreen extends StatefulWidget {
+class ScholarshipDetailScreen extends StatelessWidget {
   const ScholarshipDetailScreen({super.key});
 
-  @override
-  State<ScholarshipDetailScreen> createState() =>
-      _ScholarshipDetailScreenState();
-}
-
-class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
-  bool _applying = false;
-  bool _viewTracked = false;
-  bool _descExpanded = true;
-  bool _isSaved = false;
-  bool _isSaving = false;
-
-  final _savedRepo = SavedScholarshipRepository();
-  final _scholarshipRepo = ScholarshipRepository();
-
-  @override
-  void initState() {
-    super.initState();
-    // Load bookmark state after first frame so we have route arguments
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedState());
-  }
-
-  Future<void> _loadSavedState() async {
-    final scholarship =
-        ModalRoute.of(context)?.settings.arguments as FirestoreScholarship?;
-    if (scholarship == null) return;
-    final ids = await _savedRepo.getSavedFirestoreIds();
-    if (mounted) setState(() => _isSaved = ids.contains(scholarship.id));
-  }
-
-  void _showSaveMessage(String message, {bool isSaved = true}) {
+  void _showSaveMessage(BuildContext context, String message,
+      {bool isSaved = true}) {
     final overlayEntry = OverlayEntry(
       builder: (context) {
         return Positioned(
@@ -116,182 +82,124 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
 
     Overlay.of(context).insert(overlayEntry);
     Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) overlayEntry.remove();
+      overlayEntry.remove();
     });
   }
 
-  Future<void> _toggleBookmark(FirestoreScholarship scholarship) async {
-    if (_isSaving) return;
+  Future<void> _toggleBookmark(BuildContext context,
+      ScholarshipDetailController controller) async {
     final t = AppLocalizations.of(context);
-    final wasSaved = _isSaved;
-    setState(() {
-      _isSaved = !wasSaved;
-      _isSaving = true;
-    });
-
-    if (wasSaved) {
-      await _savedRepo.unsaveByFirestoreId(scholarship.id);
-    } else {
-      final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
-        firestoreId: scholarship.id,
-        scholarship: Scholarship(
-          title: scholarship.titleEn,
-          titleKm: scholarship.titleKm,
-          institution: scholarship.university,
-          country: scholarship.country,
-          type: scholarship.fundingType,
-          deadline: scholarship.deadline,
-          openDate: scholarship.openDate,
-          numberOfPlaces: scholarship.numberOfPlaces,
-          description: scholarship.descriptionEn,
-          descriptionKm: scholarship.descriptionKm,
-          applicationUrl: scholarship.applicationLink,
-          imageUrl: scholarship.imageUrl,
-          logoUrl: scholarship.logoUrl,
-          level: scholarship.degree,
-          fieldOfStudy: scholarship.fieldOfStudy,
-          eligibility: scholarship.eligibilityEn,
-          eligibilityKm: scholarship.eligibilityKm,
-          benefits: scholarship.benefitsEn,
-          benefitsKm: scholarship.benefitsKm,
-          requiredDocuments: scholarship.requiredDocumentsEn,
-          requiredDocumentsKm: scholarship.requiredDocumentsKm,
-          isActive: true,
-        ),
-      );
-      await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
-    }
-
-    SavedScholarshipScreen.refreshNotifier.value++;
-    ProfileScreen.refreshNotifier.value++;
-    DiscoverScreen.refreshNotifier.value++;
-
-    if (mounted) {
-      setState(() => _isSaving = false);
-      _showSaveMessage(
-        wasSaved ? t.translate('savedRemoved') : t.translate('savedAdded'),
-        isSaved: !wasSaved,
-      );
-    }
+    final added = await controller.toggleBookmark();
+    if (!context.mounted) return;
+    _showSaveMessage(
+      context,
+      added ? t.translate('savedAdded') : t.translate('savedRemoved'),
+      isSaved: added,
+    );
   }
 
-  /// Handle the Apply tap: check profile → submit → navigate.
-  Future<void> _handleApply(FirestoreScholarship scholarship) async {
+  /// Handle the Apply tap: run the controller's checks, then show the
+  /// dialog/snackbar that matches the outcome.
+  Future<void> _handleApply(BuildContext context,
+      ScholarshipDetailController controller) async {
     final t = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    // 1. Check profile completeness
-    final appData = ApplicationData();
-    if (!appData.isProfileComplete) {
-      final missing = appData.incompleteSections;
-      final goFill = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(t.translate('applyIncompleteTitle')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(t.translate('applyIncompleteMsg')),
-              const SizedBox(height: 12),
-              ...missing.map((s) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(children: [
-                      Icon(Icons.warning_amber_rounded,
-                          size: 18, color: Colors.orange),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(s)),
-                    ]),
-                  )),
+    final result = await controller.handleApply();
+    if (!context.mounted) return;
+
+    switch (result.outcome) {
+      case ApplyOutcome.profileIncomplete:
+        final goFill = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(t.translate('applyIncompleteTitle')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.translate('applyIncompleteMsg')),
+                const SizedBox(height: 12),
+                ...result.missingSections.map((s) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(children: [
+                        Icon(Icons.warning_amber_rounded,
+                            size: 18, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(s)),
+                      ]),
+                    )),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(t.translate('applyCancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                ),
+                child: Text(t.translate('applyFillNow')),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(t.translate('applyCancel')),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
+        );
+        if (goFill == true && context.mounted) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const PersonalInfoScreen()));
+        }
+        break;
+
+      case ApplyOutcome.alreadyApplied:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t.translate('applyAlreadyApplied'))),
+        );
+        break;
+
+      case ApplyOutcome.scholarshipUnavailable:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.translate('applyScholarshipUnavailable')),
+            backgroundColor: colorScheme.error,
+          ),
+        );
+        break;
+
+      case ApplyOutcome.success:
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            icon: Icon(Icons.check_circle, color: Colors.green, size: 48),
+            title: Text(t.translate('applySuccessTitle')),
+            content: Text(t.translate('applySuccessMsg')),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MyApplicationsScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                ),
+                child: Text(t.translate('applyViewApplications')),
               ),
-              child: Text(t.translate('applyFillNow')),
-            ),
-          ],
-        ),
-      );
-      if (goFill == true && mounted) {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const PersonalInfoScreen()));
-      }
-      return;
-    }
+            ],
+          ),
+        );
+        break;
 
-    // 2. Check duplicate
-    final alreadyApplied =
-        await ApplicationService().hasApplied(scholarship.id);
-    if (alreadyApplied) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.translate('applyAlreadyApplied'))),
-      );
-      return;
-    }
-
-    // 3. Verify scholarship still exists in admin's list
-    final freshScholarship =
-        await ScholarshipService().getScholarshipById(scholarship.id);
-    if (freshScholarship == null || !freshScholarship.isActive) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.translate('applyScholarshipUnavailable')),
-          backgroundColor: colorScheme.error,
-        ),
-      );
-      return;
-    }
-
-    // 4. Submit
-    setState(() => _applying = true);
-    final result = await ApplicationService().apply(scholarship);
-    if (!mounted) return;
-    setState(() => _applying = false);
-
-    if (result != null) {
-      // Refresh profile counts
-      ProfileScreen.refreshNotifier.value++;
-      // Success – navigate to My Applications
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          icon: Icon(Icons.check_circle, color: Colors.green, size: 48),
-          title: Text(t.translate('applySuccessTitle')),
-          content: Text(t.translate('applySuccessMsg')),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const MyApplicationsScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-              ),
-              child: Text(t.translate('applyViewApplications')),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.translate('applyFailed'))),
-      );
+      case ApplyOutcome.failed:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t.translate('applyFailed'))),
+        );
+        break;
     }
   }
 
@@ -301,7 +209,6 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     final t = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
 
-    // Get scholarship data from route arguments
     final scholarship =
         ModalRoute.of(context)?.settings.arguments as FirestoreScholarship?;
 
@@ -319,13 +226,10 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
       );
     }
 
-    // Choose content based on locale
-    // Track view (only once per screen open)
-    if (!_viewTracked && scholarship.id.isNotEmpty) {
-      _viewTracked = true;
-      ViewedScholarshipService().markViewed(scholarship.id);
-      ProfileScreen.refreshNotifier.value++;
-    }
+    final controller = Get.put(
+      ScholarshipDetailController(),
+      tag: scholarship.id,
+    )..init(scholarship);
 
     final title = locale == 'km' && scholarship.titleKm.isNotEmpty
         ? scholarship.titleKm
@@ -375,8 +279,8 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Image
-              _buildHeaderImage(scholarship, colorScheme),
+              // Header Image (bookmark icon reactive via its own Obx)
+              _buildHeaderImage(context, scholarship, colorScheme, controller),
 
               Padding(
                 padding:
@@ -429,51 +333,60 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
 
                     const SizedBox(height: 14),
 
-                    // About / Description (expandable)
+                    // About / Description (expandable, reactive)
                     if (description.isNotEmpty) ...[
-                      GestureDetector(
-                        onTap: () =>
-                            setState(() => _descExpanded = !_descExpanded),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildSectionTitle(context,
-                                  t.translate('detailAboutTitle'), colorScheme),
+                      Obx(() => GestureDetector(
+                            onTap: controller.toggleDescription,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildSectionTitle(
+                                      context,
+                                      t.translate('detailAboutTitle'),
+                                      colorScheme),
+                                ),
+                                Icon(
+                                  controller.descExpanded.value
+                                      ? Icons.keyboard_arrow_up_rounded
+                                      : Icons.keyboard_arrow_down_rounded,
+                                  color: WallpaperService().hasAny
+                                      ? WallpaperService()
+                                          .onThemeColor
+                                          .withOpacity(0.7)
+                                      : colorScheme.onSurfaceVariant,
+                                ),
+                              ],
                             ),
-                            Icon(
-                              _descExpanded
-                                  ? Icons.keyboard_arrow_up_rounded
-                                  : Icons.keyboard_arrow_down_rounded,
-                              color: WallpaperService().hasAny
-                                  ? WallpaperService()
-                                      .onThemeColor
-                                      .withOpacity(0.7)
-                                  : colorScheme.onSurfaceVariant,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_descExpanded) ...[
-                        const SizedBox(height: 4),
-                        Divider(
-                            color: WallpaperService().hasAny
-                                ? WallpaperService()
-                                    .onThemeColor
-                                    .withOpacity(0.2)
-                                : colorScheme.primary.withOpacity(0.25),
-                            height: 1),
-                        const SizedBox(height: 8),
-                        Text(
-                          description,
-                          style: TextStyle(
-                            height: 1.5,
-                            fontSize: 13,
-                            color: WallpaperService().hasAny
-                                ? WallpaperService().onThemeColor
-                                : colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
+                          )),
+                      Obx(() => controller.descExpanded.value
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Divider(
+                                      color: WallpaperService().hasAny
+                                          ? WallpaperService()
+                                              .onThemeColor
+                                              .withOpacity(0.2)
+                                          : colorScheme.primary
+                                              .withOpacity(0.25),
+                                      height: 1),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    description,
+                                    style: TextStyle(
+                                      height: 1.5,
+                                      fontSize: 13,
+                                      color: WallpaperService().hasAny
+                                          ? WallpaperService().onThemeColor
+                                          : colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox.shrink()),
                       const SizedBox(height: 16),
                     ],
 
@@ -562,38 +475,40 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Apply button (filled)
+              // Apply button (filled, reactive on isApplying)
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _applying ? null : () => _handleApply(scholarship),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _applying
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : Text(
-                          t.translate('detailApplyButton'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                child: Obx(() => ElevatedButton(
+                      onPressed: controller.isApplying.value
+                          ? null
+                          : () => _handleApply(context, controller),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
                         ),
-                ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: controller.isApplying.value
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(
+                              t.translate('detailApplyButton'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    )),
               ),
             ],
           ),
@@ -614,7 +529,10 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   }
 
   Widget _buildHeaderImage(
-      FirestoreScholarship scholarship, ColorScheme colorScheme) {
+      BuildContext context,
+      FirestoreScholarship scholarship,
+      ColorScheme colorScheme,
+      ScholarshipDetailController controller) {
     return SizedBox(
       height: 220,
       width: double.infinity,
@@ -648,12 +566,12 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
           else
             _buildHeaderPlaceholder(colorScheme),
 
-          // Bookmark button (top-right)
+          // Bookmark button (top-right), reactive
           Positioned(
             top: 12,
             right: 12,
             child: GestureDetector(
-              onTap: () => _toggleBookmark(scholarship),
+              onTap: () => _toggleBookmark(context, controller),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -667,7 +585,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                     ),
                   ],
                 ),
-                child: _isSaving
+                child: Obx(() => controller.isSaving.value
                     ? SizedBox(
                         width: 22,
                         height: 22,
@@ -677,14 +595,14 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                         ),
                       )
                     : Icon(
-                        _isSaved
+                        controller.isSaved.value
                             ? Icons.bookmark_rounded
                             : Icons.bookmark_border_rounded,
-                        color: _isSaved
+                        color: controller.isSaved.value
                             ? WallpaperService().themedPrimary(colorScheme)
                             : colorScheme.onSurfaceVariant.withOpacity(0.5),
                         size: 22,
-                      ),
+                      )),
               ),
             ),
           ),

@@ -1,8 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
+import 'package:scholarship_app/controllers/main_app/search_filter_controller.dart';
 
 class SearchFilterScreen extends StatefulWidget {
   const SearchFilterScreen({super.key});
@@ -12,34 +14,7 @@ class SearchFilterScreen extends StatefulWidget {
 }
 
 class _SearchFilterScreenState extends State<SearchFilterScreen> {
-  static const int _maxSearchLength = 100;
-
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  String? _searchError;
-
-  List<String> _getRecentSearches(AppLocalizations t) => [
-        t.translate('searchRecentCS'),
-        t.translate('searchRecentEngineering'),
-        t.translate('searchRecentBusiness'),
-      ];
-
-  List<String> _getPopularSearches(AppLocalizations t) => [
-        t.translate('searchPopularSTEM'),
-        t.translate('searchPopularMedical'),
-        t.translate('searchPopularFullScholarship'),
-        t.translate('searchPopularUSA'),
-      ];
-
-  void _onRecentTap(String query) {
-    _searchController.text = query;
-    Navigator.pop(context, query);
-  }
-
-  void _onPopularTap(String query) {
-    _searchController.text = query;
-    Navigator.pop(context, query);
-  }
+  final SearchFilterController controller = Get.put(SearchFilterController());
 
   void _openFilter() async {
     final result = await showModalBottomSheet<Map<String, String?>>(
@@ -48,29 +23,9 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => _FilterSheet(),
     );
-    if (!mounted) return;
     if (result != null) {
-      // Propagate filter back to discover screen
-      Navigator.pop(context, result);
+      controller.applyFilterResult(result);
     }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  String _sanitizeInput(String input) {
-    var sanitized = input.trim();
-    // Remove XSS dangerous characters: < > " ' / \ ;
-    sanitized = sanitized.replaceAll(RegExp('[<>"\'\\\\;/]'), '');
-    // Limit to max length
-    if (sanitized.length > _maxSearchLength) {
-      sanitized = sanitized.substring(0, _maxSearchLength);
-    }
-    return sanitized;
   }
 
   @override
@@ -99,7 +54,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Back + Title
                     Row(
                       children: [
                         IconButton(
@@ -108,7 +62,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                             color: colorScheme.onPrimary,
                             size: 20,
                           ),
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => Get.back(),
                         ),
                         Expanded(
                           child: Text(
@@ -123,10 +77,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
-                    // Search Bar
                     Row(
                       children: [
                         Expanded(
@@ -136,60 +87,39 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: TextField(
-                              controller: _searchController,
-                              focusNode: _focusNode,
-                              autofocus: true,
-                              maxLength: _maxSearchLength,
-                              style: TextStyle(color: colorScheme.onSurface),
-                              onChanged: (value) {
-                                final sanitized = _sanitizeInput(value);
-                                if (sanitized != value) {
-                                  _searchController.text = sanitized;
-                                  _searchController.selection =
-                                      TextSelection.fromPosition(
-                                    TextPosition(offset: sanitized.length),
-                                  );
-                                }
-                                setState(() {
-                                  _searchError = null;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                hintText: t.translate('searchHint'),
-                                hintStyle: TextStyle(
-                                  color: colorScheme.outline,
-                                  fontSize: 13,
+                            child: Obx(
+                              () => TextField(
+                                controller: controller.searchController,
+                                focusNode: controller.focusNode,
+                                autofocus: true,
+                                maxLength: SearchFilterController.maxSearchLength,
+                                style: TextStyle(color: colorScheme.onSurface),
+                                onChanged: controller.onSearchChanged,
+                                decoration: InputDecoration(
+                                  hintText: t.translate('searchHint'),
+                                  hintStyle: TextStyle(
+                                    color: colorScheme.outline,
+                                    fontSize: 13,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: controller.searchError.value != null
+                                        ? Colors.red
+                                        : colorScheme.onSurfaceVariant,
+                                    size: 20,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(vertical: 13),
+                                  counterText: '',
                                 ),
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: _searchError != null
-                                      ? Colors.red
-                                      : colorScheme.onSurfaceVariant,
-                                  size: 20,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 13),
-                                counterText: '', // Hide character counter
+                                onSubmitted: (val) =>
+                                    controller.onSearchSubmitted(val, t),
                               ),
-                              onSubmitted: (val) {
-                                final sanitized = _sanitizeInput(val);
-                                if (sanitized.isEmpty) {
-                                  setState(() {
-                                    _searchError =
-                                        t.translate('validationSearchEmpty');
-                                  });
-                                  return;
-                                }
-                                Navigator.pop(context, sanitized);
-                              },
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-
-                        // Filter Button
                         GestureDetector(
                           onTap: _openFilter,
                           child: Container(
@@ -211,20 +141,21 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                         ),
                       ],
                     ),
-                    if (_searchError != null) ...[
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Text(
-                          _searchError!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.red.shade600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                    Obx(
+                      () => controller.searchError.value != null
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 6, left: 8),
+                              child: Text(
+                                controller.searchError.value!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
                   ],
                 ),
               ),
@@ -239,8 +170,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
-
-                  // ── Recent Searches ───────────────────────────────────────
                   Text(
                     t.translate('searchRecentTitle'),
                     style: TextStyle(
@@ -250,13 +179,14 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  ...List.generate(_getRecentSearches(t).length, (i) {
-                    final recentSearches = _getRecentSearches(t);
+                  ...List.generate(controller.getRecentSearches(t).length,
+                      (i) {
+                    final recentSearches = controller.getRecentSearches(t);
                     return Column(
                       children: [
                         InkWell(
-                          onTap: () => _onRecentTap(recentSearches[i]),
+                          onTap: () =>
+                              controller.onRecentTap(recentSearches[i]),
                           borderRadius: BorderRadius.circular(8),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -291,10 +221,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                       ],
                     );
                   }),
-
                   const SizedBox(height: 24),
-
-                  // ── Popular Searches ──────────────────────────────────────
                   Text(
                     t.translate('searchPopularTitle'),
                     style: TextStyle(
@@ -304,13 +231,12 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    children: _getPopularSearches(t).map((tag) {
+                    children: controller.getPopularSearches(t).map((tag) {
                       return GestureDetector(
-                        onTap: () => _onPopularTap(tag),
+                        onTap: () => controller.onPopularTap(tag),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
@@ -345,6 +271,8 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
 }
 
 // ── Filter Bottom Sheet ───────────────────────────────────────────────────────
+// (Local, ephemeral UI state only — no shared/business state, left as-is.
+//  Its Navigator.pop only closes this bottom sheet, not the whole screen.)
 
 class _FilterSheet extends StatefulWidget {
   @override
@@ -352,10 +280,9 @@ class _FilterSheet extends StatefulWidget {
 }
 
 class _FilterSheetState extends State<_FilterSheet> {
-  String? _selectedCountryRaw; // raw Firestore value
-  String? _selectedTypeRaw; // raw Firestore value
+  String? _selectedCountryRaw;
+  String? _selectedTypeRaw;
 
-  // Map: raw Firestore value → translation key
   static const _countryMap = {
     'United States': 'filterCountryUnitedStates',
     'United Kingdom': 'filterCountryUnitedKingdom',
@@ -401,7 +328,6 @@ class _FilterSheetState extends State<_FilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
           Center(
             child: Container(
               width: 40,
@@ -413,15 +339,12 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
           ),
           const SizedBox(height: 20),
-
           Text(t.translate('searchFilterTitle'),
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: colorScheme.onSurface)),
           const SizedBox(height: 20),
-
-          // Country
           Text(t.translate('searchCountryLabel'),
               style: TextStyle(
                   fontSize: 14,
@@ -461,10 +384,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               );
             }).toList(),
           ),
-
           const SizedBox(height: 20),
-
-          // Type
           Text(t.translate('searchScholarshipTypeLabel'),
               style: TextStyle(
                   fontSize: 14,
@@ -504,10 +424,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               );
             }).toList(),
           ),
-
           const SizedBox(height: 28),
-
-          // Apply Button
           SizedBox(
             width: double.infinity,
             height: 50,

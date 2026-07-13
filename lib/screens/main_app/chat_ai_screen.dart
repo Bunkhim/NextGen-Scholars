@@ -1,11 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:scholarship_app/database/database.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/chat_ai_controller.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/services/chat_ai_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
 class ChatAIScreen extends StatefulWidget {
@@ -19,13 +17,9 @@ class _ChatAIScreenState extends State<ChatAIScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<_ChatMessage> _messages = [];
-  bool _isTyping = false;
   late AnimationController _dotController;
-  final ChatAIService _aiService = ChatAIService();
-  final ChatMessageRepository _chatRepo = ChatMessageRepository();
-  StreamSubscription<String>? _streamSub;
-  String _currentSessionId = '';
+
+  final ChatAIController controller = Get.put(ChatAIController());
 
   @override
   void initState() {
@@ -34,33 +28,12 @@ class _ChatAIScreenState extends State<ChatAIScreen>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat();
-    _currentSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    _loadLastSession();
-  }
 
-  /// Load the most recent chat session if it exists.
-  Future<void> _loadLastSession() async {
-    try {
-      final sessions = await _chatRepo.getSessions();
-      if (sessions.isNotEmpty) {
-        _currentSessionId = sessions.first.sessionId;
-        final messages = await _chatRepo.getSessionMessages(_currentSessionId);
-        if (messages.isNotEmpty && mounted) {
-          setState(() {
-            _messages.clear();
-            for (final msg in messages) {
-              _messages.add(_ChatMessage(
-                text: msg.content,
-                isUser: msg.isUser,
-              ));
-            }
-          });
-          _scrollToBottom();
-        }
-      }
-    } catch (_) {
-      // Silently fall back to empty chat if DB fails.
-    }
+    // Scroll to bottom whenever new messages arrive or typing starts/stops.
+    ever(controller.messages, (_) => _scrollToBottom());
+    ever(controller.isTyping, (_) => _scrollToBottom());
+
+    if (controller.messages.isNotEmpty) _scrollToBottom();
   }
 
   @override
@@ -68,77 +41,16 @@ class _ChatAIScreenState extends State<ChatAIScreen>
     _messageController.dispose();
     _scrollController.dispose();
     _dotController.dispose();
-    _streamSub?.cancel();
     super.dispose();
   }
 
   void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty || _isTyping) return;
-
-    setState(() {
-      _messages.add(_ChatMessage(text: text, isUser: true));
-      _messageController.clear();
-      _isTyping = true;
-      // Add a placeholder AI message for streaming
-      _messages.add(_ChatMessage(text: '', isUser: false));
-    });
-
-    _scrollToBottom();
-
-    // Save user message to DB immediately.
-    _chatRepo.insert(ChatMessageModel(
-      sessionId: _currentSessionId,
-      role: ChatMessageModel.roleUser,
-      content: text,
-    ));
-
-    _streamSub?.cancel();
-    _streamSub = _aiService.sendMessageStream(text).listen(
-      (partialResponse) {
-        if (!mounted) return;
-        setState(() {
-          // Update the last message (AI placeholder) with streaming text
-          _messages.last = _ChatMessage(text: partialResponse, isUser: false);
-        });
-        _scrollToBottom();
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _isTyping = false);
-        // Save completed AI response to DB.
-        if (_messages.isNotEmpty && !_messages.last.isUser) {
-          _chatRepo.insert(ChatMessageModel(
-            sessionId: _currentSessionId,
-            role: ChatMessageModel.roleAssistant,
-            content: _messages.last.text,
-          ));
-        }
-        _scrollToBottom();
-      },
-      onError: (error) {
-        if (!mounted) return;
-        final t = AppLocalizations.of(context);
-        setState(() {
-          _isTyping = false;
-          _messages.last = _ChatMessage(
-            text: t.translate('chatAIErrorGeneric'),
-            isUser: false,
-          );
-        });
-      },
+    final t = AppLocalizations.of(context);
+    controller.sendMessage(
+      _messageController.text,
+      errorFallbackText: t.translate('chatAIErrorGeneric'),
     );
-  }
-
-  void _startNewChat() {
-    _streamSub?.cancel();
-    _aiService.resetChat();
-    setState(() {
-      _messages.clear();
-      _isTyping = false;
-      // Generate a new session ID for the new chat.
-      _currentSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    });
+    _messageController.clear();
   }
 
   void _scrollToBottom() {
@@ -258,7 +170,7 @@ class _ChatAIScreenState extends State<ChatAIScreen>
                     : cs.onSurfaceVariant,
                 size: 22),
             tooltip: 'New Chat',
-            onPressed: _startNewChat,
+            onPressed: controller.startNewChat,
           ),
           const SizedBox(width: 4),
         ],
@@ -274,19 +186,26 @@ class _ChatAIScreenState extends State<ChatAIScreen>
         children: [
           // Messages
           Expanded(
-            child: _messages.isEmpty
-                ? _buildEmptyState(cs, t, isDark)
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    itemCount: _messages.length + (_isTyping ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _messages.length && _isTyping) {
-                        return _buildTypingIndicator(cs);
-                      }
-                      return _buildMessageBubble(_messages[index], cs, isDark);
-                    },
-                  ),
+            child: Obx(() {
+              final messages = controller.messages;
+              final isTyping = controller.isTyping.value;
+
+              if (messages.isEmpty) {
+                return _buildEmptyState(cs, t, isDark);
+              }
+
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                itemCount: messages.length + (isTyping ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == messages.length && isTyping) {
+                    return _buildTypingIndicator(cs);
+                  }
+                  return _buildMessageBubble(messages[index], cs, isDark);
+                },
+              );
+            }),
           ),
 
           // Input area
@@ -411,7 +330,7 @@ class _ChatAIScreenState extends State<ChatAIScreen>
   }
 
   Widget _buildMessageBubble(
-      _ChatMessage message, ColorScheme cs, bool isDark) {
+      ChatMessage message, ColorScheme cs, bool isDark) {
     final isUser = message.isUser;
 
     return Padding(
@@ -604,52 +523,48 @@ class _ChatAIScreenState extends State<ChatAIScreen>
             ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
-            onTap: _isTyping ? null : _sendMessage,
-            child: AnimatedOpacity(
-              opacity: _isTyping ? 0.4 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: themed
-                        ? [
-                            ws.themedPrimary(cs),
-                            ws.themedPrimary(cs).withOpacity(0.7)
-                          ]
-                        : [cs.primary, cs.primary.withOpacity(0.7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (themed ? ws.themedPrimary(cs) : cs.primary)
-                          .withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+          Obx(() {
+            final isTyping = controller.isTyping.value;
+            return GestureDetector(
+              onTap: isTyping ? null : _sendMessage,
+              child: AnimatedOpacity(
+                opacity: isTyping ? 0.4 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: themed
+                          ? [
+                              ws.themedPrimary(cs),
+                              ws.themedPrimary(cs).withOpacity(0.7)
+                            ]
+                          : [cs.primary, cs.primary.withOpacity(0.7)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                ),
-                child: Icon(
-                  _isTyping ? Icons.hourglass_top_rounded : Icons.send_rounded,
-                  color: Colors.white,
-                  size: 20,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (themed ? ws.themedPrimary(cs) : cs.primary)
+                            .withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    isTyping ? Icons.hourglass_top_rounded : Icons.send_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
   }
-}
-
-class _ChatMessage {
-  final String text;
-  final bool isUser;
-
-  _ChatMessage({required this.text, required this.isUser});
 }

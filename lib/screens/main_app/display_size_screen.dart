@@ -1,8 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/display_size_controller.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/services/display_settings_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
 class DisplaySizeScreen extends StatefulWidget {
@@ -14,8 +15,7 @@ class DisplaySizeScreen extends StatefulWidget {
 
 class _DisplaySizeScreenState extends State<DisplaySizeScreen>
     with SingleTickerProviderStateMixin {
-  late double _currentScale;
-  final _service = DisplaySettingsService();
+  late final DisplaySizeController controller;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -23,7 +23,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
   @override
   void initState() {
     super.initState();
-    _currentScale = _service.currentDisplayScale;
+    controller = Get.put(DisplaySizeController());
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -38,31 +38,16 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    super.dispose();
-  }
-
-  int _scaleToIndex(double scale) {
-    final options = DisplaySettingsService.displayScaleOptions;
-    for (int i = 0; i < options.length; i++) {
-      if (((options[i]['scale'] as double) - scale).abs() < 0.01) return i;
+    if (Get.isRegistered<DisplaySizeController>()) {
+      Get.delete<DisplaySizeController>();
     }
-    return 1; // Standard
-  }
-
-  void _onScaleChanged(double value) {
-    final index = value.round();
-    final scale =
-        DisplaySettingsService.displayScaleOptions[index]['scale'] as double;
-    setState(() => _currentScale = scale);
-    _service.setDisplayScale(scale);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final options = DisplaySettingsService.displayScaleOptions;
-    final currentIndex = _scaleToIndex(_currentScale);
 
     return Scaffold(
       backgroundColor:
@@ -127,13 +112,17 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Builder(builder: (context) {
-                  final ws = WallpaperService();
-                  final themed = ws.hasTheme;
-                  final primary = ws.themedPrimary(cs);
-                  return Column(
+              child: Obx(
+                () => SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Builder(builder: (context) {
+                    final ws = WallpaperService();
+                    final themed = ws.hasTheme;
+                    final primary = ws.themedPrimary(cs);
+                    final options = controller.options;
+                    final currentIndex =
+                        controller.scaleToIndex(controller.currentScale.value);
+                    return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 8),
@@ -169,7 +158,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                                 child: Text(
                                   t.translate('settingsDisplaySizePreviewMsg1'),
                                   style: TextStyle(
-                                    fontSize: 14 * _currentScale,
+                                    fontSize: 14 * controller.currentScale.value,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -198,7 +187,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                                 child: Text(
                                   t.translate('settingsDisplaySizePreviewMsg2'),
                                   style: TextStyle(
-                                    fontSize: 14 * _currentScale,
+                                    fontSize: 14 * controller.currentScale.value,
                                     color:
                                         themed ? ws.onThemeColor : cs.onSurface,
                                     height: 1.4,
@@ -225,7 +214,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                                 child: Text(
                                   t.translate('settingsDisplaySizePreviewMsg3'),
                                   style: TextStyle(
-                                    fontSize: 14 * _currentScale,
+                                    fontSize: 14 * controller.currentScale.value,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -254,7 +243,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                                 child: Text(
                                   t.translate('settingsDisplaySizePreviewMsg4'),
                                   style: TextStyle(
-                                    fontSize: 14 * _currentScale,
+                                    fontSize: 14 * controller.currentScale.value,
                                     color:
                                         themed ? ws.onThemeColor : cs.onSurface,
                                     fontWeight: FontWeight.w500,
@@ -353,7 +342,8 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                           min: 0,
                           max: (options.length - 1).toDouble(),
                           divisions: options.length - 1,
-                          onChanged: _onScaleChanged,
+                          onChanged: (value) =>
+                              controller.setScaleByIndex(value.round()),
                         ),
                       ),
 
@@ -375,10 +365,12 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                       ),
                     ],
                   );
-                }),
+                  }
+                ),
               ),
             ),
           ),
+          )
         ],
       ),
     );

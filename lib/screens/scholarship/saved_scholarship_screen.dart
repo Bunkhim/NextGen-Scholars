@@ -1,22 +1,20 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:scholarship_app/database/database.dart';
+import 'package:get/get.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
-import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/main_app/main_navigation_screen.dart';
-import 'package:scholarship_app/screens/main_app/profile_screen.dart';
-import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
+import 'package:scholarship_app/controllers/scholarship/saved_scholarship_controller.dart';
 
 class SavedScholarshipScreen extends StatefulWidget {
   const SavedScholarshipScreen({super.key});
 
   /// Increment this from anywhere to trigger a live reload of the saved list.
+  /// Kept as a static ValueNotifier (not moved into GetX) because other
+  /// controllers reference it directly by class name.
   static final ValueNotifier<int> refreshNotifier = ValueNotifier(0);
 
   @override
@@ -24,278 +22,114 @@ class SavedScholarshipScreen extends StatefulWidget {
 }
 
 class _SavedScholarshipScreenState extends State<SavedScholarshipScreen> {
-  final SavedScholarshipRepository _savedRepo = SavedScholarshipRepository();
-  final ScholarshipService _scholarshipService = ScholarshipService();
-  StreamSubscription<List<FirestoreScholarship>>? _firestoreSub;
-  List<_SavedScholarshipView> _scholarships = [];
-  bool _isLoading = true;
-  String? _loadError;
+  final SavedScholarshipController controller =
+      Get.put(SavedScholarshipController());
 
   void _goToExploreScholarships() {
     MainNavigationScreen.tabNotifier.value = 1;
     final routeName = ModalRoute.of(context)?.settings.name;
     if (routeName == AppRoutes.homeScreen) return;
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.homeScreen,
-      (route) => false,
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedScholarships();
-    // Reload whenever discover screen saves or unsaves a scholarship.
-    SavedScholarshipScreen.refreshNotifier.addListener(_loadSavedScholarships);
-    // Subscribe to Firestore so any admin edit is reflected immediately.
-    _firestoreSub = _scholarshipService
-        .streamActiveScholarships()
-        .listen(_onFirestoreUpdate);
-  }
-
-  @override
-  void dispose() {
-    SavedScholarshipScreen.refreshNotifier
-        .removeListener(_loadSavedScholarships);
-    _firestoreSub?.cancel();
-    super.dispose();
-  }
-
-  /// Called whenever Firestore emits a new scholarship list.
-  /// Updates only the items that are already saved without reloading from SQLite.
-  void _onFirestoreUpdate(List<FirestoreScholarship> latest) {
-    if (!mounted || _scholarships.isEmpty) return;
-    final map = {for (final s in latest) s.id: s};
-    bool changed = false;
-
-    final updated = _scholarships.map((view) {
-      final fresh = map[view.scholarship.id];
-      if (fresh == null) {
-        // Admin deactivated / deleted — hide it.
-        if (view.isVisible) {
-          changed = true;
-          return view..isVisible = false;
-        }
-        return view;
-      }
-      // Replace with fresh Firestore data while keeping savedId.
-      changed = true;
-      return _SavedScholarshipView(
-        savedId: view.savedId,
-        scholarship: fresh..isFavorite = true,
-      );
-    }).toList();
-
-    if (changed && mounted) setState(() => _scholarships = updated);
-  }
-
-  Future<void> _loadSavedScholarships() async {
-    try {
-      final savedWithDetails = await _savedRepo.getSavedWithDetails();
-      if (mounted) {
-        setState(() {
-          _scholarships = savedWithDetails.map((row) {
-            final deadlineStr = row['deadline'] as String?;
-            final openDateStr = row['open_date'] as String?;
-            return _SavedScholarshipView(
-              savedId: row['saved_id'] as int,
-              scholarship: FirestoreScholarship(
-                id: (row['firestore_id'] as String?)?.isNotEmpty == true
-                    ? row['firestore_id'] as String
-                    : 'local_${row['saved_id']}',
-                titleEn: (row['title'] as String?) ?? '',
-                titleKm: (row['title_km'] as String?) ?? '',
-                descriptionEn: (row['description'] as String?) ?? '',
-                descriptionKm: (row['description_km'] as String?) ?? '',
-                country: (row['country'] as String?) ?? '',
-                university: (row['institution'] as String?) ?? '',
-                degree: (row['level'] as String?) ?? '',
-                fieldOfStudy: (row['field_of_study'] as String?) ?? '',
-                fundingType: (row['type'] as String?) ?? '',
-                numberOfPlaces: (row['number_of_places'] as int?) ?? 0,
-                openDate:
-                    openDateStr != null ? DateTime.tryParse(openDateStr) : null,
-                deadline: deadlineStr != null
-                    ? DateTime.tryParse(deadlineStr) ?? DateTime.now()
-                    : DateTime.now(),
-                applicationLink: (row['application_url'] as String?) ?? '',
-                imageUrl: (row['image_url'] as String?) ?? '',
-                logoUrl: (row['logo_url'] as String?) ?? '',
-                eligibilityEn: (row['eligibility'] as String?) ?? '',
-                eligibilityKm: (row['eligibility_km'] as String?) ?? '',
-                benefitsEn: (row['benefits'] as String?) ?? '',
-                benefitsKm: (row['benefits_km'] as String?) ?? '',
-                requiredDocumentsEn:
-                    (row['required_documents'] as String?) ?? '',
-                requiredDocumentsKm:
-                    (row['required_documents_km'] as String?) ?? '',
-                isActive: (row['is_active'] as int?) == 1,
-                createdAt: row['created_at'] != null
-                    ? DateTime.tryParse(row['created_at'] as String) ??
-                        DateTime.now()
-                    : DateTime.now(),
-                isFavorite: true,
-              ),
-            );
-          }).toList();
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _loadError = e.toString();
-        });
-      }
-    }
-  }
-
-  void _removeItem(int savedId) {
-    final index = _scholarships.indexWhere((s) => s.savedId == savedId);
-    if (index == -1) return;
-    final scholarship = _scholarships[index];
-    setState(() {
-      scholarship.isVisible = false;
-    });
-
-    // Soft-hide in DB.
-    _savedRepo.hide(savedId);
-    ProfileScreen.refreshNotifier.value++;
-    DiscoverScreen.refreshNotifier.value++;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).translate('savedRemoved')),
-        action: SnackBarAction(
-          label: AppLocalizations.of(context).translate('savedUndo'),
-          onPressed: () {
-            setState(() {
-              scholarship.isVisible = true;
-            });
-            // Restore in DB.
-            _savedRepo.restore(savedId);
-            ProfileScreen.refreshNotifier.value++;
-            DiscoverScreen.refreshNotifier.value++;
-          },
-        ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _sortScholarships(String sortType) {
-    setState(() {
-      if (sortType == 'deadline') {
-        _scholarships.sort(
-            (a, b) => a.scholarship.deadline.compareTo(b.scholarship.deadline));
-      } else if (sortType == 'name') {
-        _scholarships.sort(
-            (a, b) => a.scholarship.titleEn.compareTo(b.scholarship.titleEn));
-      }
-    });
+    Get.offAllNamed(AppRoutes.homeScreen);
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final visibleScholarships =
-        _scholarships.where((s) => s.isVisible).toList();
-    final savedCount = visibleScholarships.length;
 
-    return Scaffold(
-      backgroundColor: WallpaperService().hasAny
-          ? Colors.transparent
-          : colorScheme.surfaceContainerHighest,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: WallpaperService().hasTheme
-            ? WallpaperService().appBarColor
-            : colorScheme.surface,
-        surfaceTintColor: WallpaperService().hasTheme
+    return Obx(() {
+      final visibleScholarships = controller.visibleScholarships;
+      final savedCount = visibleScholarships.length;
+
+      return Scaffold(
+        backgroundColor: WallpaperService().hasAny
             ? Colors.transparent
-            : colorScheme.surface,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios,
+            : colorScheme.surfaceContainerHighest,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: WallpaperService().hasTheme
+              ? WallpaperService().appBarColor
+              : colorScheme.surface,
+          surfaceTintColor: WallpaperService().hasTheme
+              ? Colors.transparent
+              : colorScheme.surface,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios,
+                color: WallpaperService().hasTheme
+                    ? WallpaperService().onThemeColor
+                    : colorScheme.onSurface,
+                size: 20),
+            onPressed: controller.goToHomeTab,
+          ),
+          title: Text(
+            t.translate('savedTitle'),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
               color: WallpaperService().hasTheme
                   ? WallpaperService().onThemeColor
                   : colorScheme.onSurface,
-              size: 20),
-          onPressed: () {
-            // Switch back to Home tab (index 0) in BottomNavigationBar
-            MainNavigationScreen.tabNotifier.value = 0;
-          },
-        ),
-        title: Text(
-          t.translate('savedTitle'),
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: WallpaperService().hasTheme
-                ? WallpaperService().onThemeColor
-                : colorScheme.onSurface,
+            ),
           ),
+          actions: [
+            PopupMenuButton<String>(
+              icon: Icon(Icons.sort,
+                  color: WallpaperService().hasTheme
+                      ? WallpaperService().onThemeColor
+                      : colorScheme.onSurface),
+              onSelected: controller.sortScholarships,
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'deadline',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 18),
+                      const SizedBox(width: 12),
+                      Text(t.translate('savedSortByDeadline')),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'name',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sort_by_alpha, size: 18),
+                      const SizedBox(width: 12),
+                      Text(t.translate('savedSortByName')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.sort,
-                color: WallpaperService().hasTheme
-                    ? WallpaperService().onThemeColor
-                    : colorScheme.onSurface),
-            onSelected: _sortScholarships,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'deadline',
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 18),
-                    SizedBox(width: 12),
-                    Text(t.translate('savedSortByDeadline')),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'name',
-                child: Row(
-                  children: [
-                    Icon(Icons.sort_by_alpha, size: 18),
-                    SizedBox(width: 12),
-                    Text(t.translate('savedSortByName')),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _loadError != null
-              ? _buildErrorState(colorScheme, t)
-              : savedCount == 0
-                  ? _buildEmptyState(colorScheme)
-                  : Column(
-                      children: [
-                        _buildHeader(savedCount, colorScheme),
-                        Expanded(
-                          child: ListView.builder(
-                            padding: EdgeInsets.only(
-                              top: 8,
-                              bottom:
-                                  MediaQuery.of(context).padding.bottom + 85,
+        body: controller.isLoading.value
+            ? const Center(child: CircularProgressIndicator())
+            : controller.loadError.value != null
+                ? _buildErrorState(colorScheme, t)
+                : savedCount == 0
+                    ? _buildEmptyState(colorScheme)
+                    : Column(
+                        children: [
+                          _buildHeader(savedCount, colorScheme),
+                          Expanded(
+                            child: ListView.builder(
+                              padding: EdgeInsets.only(
+                                top: 8,
+                                bottom:
+                                    MediaQuery.of(context).padding.bottom + 85,
+                              ),
+                              itemCount: visibleScholarships.length,
+                              itemBuilder: (context, index) {
+                                return _buildScholarshipCard(
+                                    visibleScholarships[index], colorScheme, t);
+                              },
                             ),
-                            itemCount: visibleScholarships.length,
-                            itemBuilder: (context, index) {
-                              return _buildScholarshipCard(
-                                  visibleScholarships[index], colorScheme, t);
-                            },
                           ),
-                        ),
-                      ],
-                    ),
-    );
+                        ],
+                      ),
+      );
+    });
   }
 
   Widget _buildHeader(int count, ColorScheme colorScheme) {
@@ -335,16 +169,15 @@ class _SavedScholarshipScreenState extends State<SavedScholarshipScreen> {
     );
   }
 
-  Widget _buildScholarshipCard(
-      _SavedScholarshipView item, ColorScheme colorScheme, AppLocalizations t) {
+  Widget _buildScholarshipCard(SavedScholarshipView item,
+      ColorScheme colorScheme, AppLocalizations t) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ScholarshipCard(
         scholarship: item.scholarship,
-        onFavoriteToggle: () => _removeItem(item.savedId),
+        onFavoriteToggle: () => controller.removeItem(item.savedId, t),
         onTap: () {
-          Navigator.pushNamed(
-            context,
+          Get.toNamed(
             AppRoutes.scholarshipDetailScreen,
             arguments: item.scholarship,
           );
@@ -374,13 +207,7 @@ class _SavedScholarshipScreenState extends State<SavedScholarshipScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _isLoading = true;
-                _loadError = null;
-              });
-              _loadSavedScholarships();
-            },
+            onPressed: controller.retryLoad,
             icon: const Icon(Icons.refresh),
             label: Text(t.translate('savedRetry')),
             style: ElevatedButton.styleFrom(
@@ -460,15 +287,4 @@ class _SavedScholarshipScreenState extends State<SavedScholarshipScreen> {
       ),
     );
   }
-}
-
-class _SavedScholarshipView {
-  final int savedId;
-  final FirestoreScholarship scholarship;
-  bool isVisible = true;
-
-  _SavedScholarshipView({
-    required this.savedId,
-    required this.scholarship,
-  });
 }

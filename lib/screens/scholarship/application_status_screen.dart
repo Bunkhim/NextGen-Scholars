@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/scholarship/application_status_controller.dart';
 import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
@@ -8,7 +10,12 @@ import 'package:scholarship_app/translations/app_localizations.dart';
 class ApplicationStatusScreen extends StatelessWidget {
   final ScholarshipApplication application;
 
-  const ApplicationStatusScreen({super.key, required this.application});
+  ApplicationStatusScreen({super.key, required this.application});
+
+  late final ApplicationStatusController controller = Get.put(
+    ApplicationStatusController(application),
+    tag: application.id,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -43,42 +50,66 @@ class ApplicationStatusScreen extends StatelessWidget {
         ),
         centerTitle: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Scholarship Info Card ────────────────────────────
-            _InfoCard(application: application),
-            const SizedBox(height: 24),
+      body: Obx(() {
+        // Single reactive read: controller.application.value updates live
+        // whenever Firestore pushes a new snapshot for this application.
+        final app = controller.application.value;
+        final error = controller.errorMessage.value;
 
-            // ── Timeline ─────────────────────────────────────────
-            _SectionLabel(t.translate('trackTimeline')),
-            const SizedBox(height: 12),
-            _TimelineCard(application: application),
-            const SizedBox(height: 24),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (error.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
+              ],
 
-            // ── Details Card ─────────────────────────────────────
-            _SectionLabel(t.translate('trackDetails')),
-            const SizedBox(height: 12),
-            _DetailsCard(application: application),
+              // ── Scholarship Info Card ────────────────────────────
+              _InfoCard(application: app),
+              const SizedBox(height: 24),
 
-            // ── Status-specific Card ─────────────────────────────
-            if (application.isAccepted) ...[
+              // ── Timeline ─────────────────────────────────────────
+              _SectionLabel(t.translate('trackTimeline')),
+              const SizedBox(height: 12),
+              _TimelineCard(application: app),
               const SizedBox(height: 24),
-              _AcceptedCard(),
+
+              // ── Details Card ─────────────────────────────────────
+              _SectionLabel(t.translate('trackDetails')),
+              const SizedBox(height: 12),
+              _DetailsCard(application: app),
+
+              // ── Status-specific Card ─────────────────────────────
+              if (app.isAccepted) ...[
+                const SizedBox(height: 24),
+                _AcceptedCard(),
+              ],
+              if (app.isRejected) ...[
+                const SizedBox(height: 24),
+                _RejectedCard(),
+              ],
+              if (app.isInterview) ...[
+                const SizedBox(height: 24),
+                _InterviewCard(),
+              ],
             ],
-            if (application.isRejected) ...[
-              const SizedBox(height: 24),
-              _RejectedCard(),
-            ],
-            if (application.isInterview) ...[
-              const SizedBox(height: 24),
-              _InterviewCard(),
-            ],
-          ],
-        ),
-      ),
+          ),
+        );
+      }),
     );
   }
 }

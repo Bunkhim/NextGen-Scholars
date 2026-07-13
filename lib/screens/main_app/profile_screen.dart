@@ -2,22 +2,14 @@
 
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:scholarship_app/data/repositories/saved_scholarship_repository.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/profile_controller.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/routes/app_routes.dart';
-import 'package:scholarship_app/screens/main_app/editProfile.dart';
+import 'package:scholarship_app/screens/main_app/edit_profile.dart';
 import 'package:scholarship_app/screens/main_app/help_support_screen.dart';
 import 'package:scholarship_app/screens/main_app/notification_screen.dart';
 import 'package:scholarship_app/screens/main_app/settings_screen.dart';
-import 'package:scholarship_app/services/application_service.dart';
-import 'package:scholarship_app/services/fill_info_persistence_service.dart';
-import 'package:scholarship_app/services/session_security_service.dart';
-import 'package:scholarship_app/services/user_data_sync_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
-import 'package:scholarship_app/services/viewed_scholarship_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -39,17 +31,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
-  String userName = '';
-  String userEmail = '';
-  String? _photoUrl;
-  int savedCount = 0;
-  int appliedCount = 0;
-  int viewedCount = 0;
-
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
-  bool _isLoggingOut = false;
-  bool _isDeletingAccount = false;
+
+  final ProfileController controller = Get.put(ProfileController());
 
   @override
   void initState() {
@@ -60,175 +45,10 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
     _animController.forward();
-    _loadProfile();
-    // Listen for refresh triggers from other screens
-    ProfileScreen.refreshNotifier.addListener(_loadProfile);
-    // Listen for instant photo update (no Firestore delay)
-    ProfileScreen.photoRefreshNotifier.addListener(_onPhotoRefresh);
-  }
-
-  void _onPhotoRefresh() {
-    if (mounted && ProfileScreen.activePhotoPath != null) {
-      final path = ProfileScreen.activePhotoPath!;
-      // Evict cached file so the new image is loaded from disk
-      if (!path.startsWith('http') && File(path).existsSync()) {
-        FileImage(File(path)).evict();
-      }
-      setState(() => _photoUrl = path);
-    }
-  }
-
-  Future<void> _loadProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final profile = await UserFirestoreService().getProfile();
-
-    // Get real counts from actual data sources
-    final realSavedCount = await SavedScholarshipRepository().count();
-    final realViewedCount = await ViewedScholarshipService().count();
-
-    // Count applications from Firestore collection
-    int realAppliedCount = 0;
-    try {
-      final apps = await ApplicationService().streamMyApplications().first;
-      realAppliedCount = apps.length;
-    } catch (_) {
-      // Fallback to profile counter
-      realAppliedCount = (profile?['applications'] as int?) ?? 0;
-    }
-
-    if (!mounted) return;
-    setState(() {
-      if (profile != null) {
-        userName = profile['name'] ?? user?.displayName ?? '';
-        userEmail = profile['email'] ?? user?.email ?? '';
-        _photoUrl = profile['photoUrl'] ?? user?.photoURL;
-        ProfileScreen.activePhotoPath = _photoUrl;
-        ProfileScreen.photoRefreshNotifier.value++;
-      } else if (user != null) {
-        userName = user.displayName ?? '';
-        userEmail = user.email ?? '';
-        _photoUrl = user.photoURL;
-      }
-      savedCount = realSavedCount;
-      appliedCount = realAppliedCount;
-      viewedCount = realViewedCount;
-    });
-  }
-
-  Future<void> _handleLogout() async {
-    final t = AppLocalizations.of(context);
-    setState(() => _isLoggingOut = true);
-    try {
-      // Backup ALL user data to Firestore before signing out
-      await UserDataSyncService().backupAll();
-      // Preserve Fill Info data but detach from current user
-      await FillInfoPersistenceService().onUserLoggedOut();
-      // Clear session timestamp so next login resets the 7-day timer
-      await SessionSecurityService().clearLoginTimestamp();
-
-      // Sign out Google if used
-      final googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        await googleSignIn.signOut();
-      }
-      // Sign out Firebase
-      await FirebaseAuth.instance.signOut();
-
-      if (!mounted) return;
-      // Clear entire navigation stack and go to login
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.loginScreen,
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoggingOut = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.translate('profileLogoutFailed')),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleDeleteAccount() async {
-    final t = AppLocalizations.of(context);
-    setState(() => _isDeletingAccount = true);
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-      final uid = user.uid;
-
-      // 1. Delete Fill Info local data permanently (local + Firestore)
-      await FillInfoPersistenceService().onAccountDeleted(uid);
-
-      // 2. Delete ALL other cloud-synced data
-      await UserDataSyncService.deleteAllCloudData(uid);
-      await UserDataSyncService.deleteAllLocalData(uid);
-
-      // 3. Clear session security timestamp
-      await SessionSecurityService().clearLoginTimestamp();
-
-      // 4. Delete Firestore user document
-      await UserFirestoreService().deleteUserDocument(uid);
-
-      // 4. Sign out Google if used
-      final googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        await googleSignIn.signOut();
-      }
-
-      // 5. Delete Firebase Auth account
-      await user.delete();
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.translate('profileDeleteAccountSuccess')),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // Navigate to login and clear stack
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.loginScreen,
-        (route) => false,
-      );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      setState(() => _isDeletingAccount = false);
-
-      String errorMsg = t.translate('profileDeleteAccountFailed');
-      if (e.code == 'requires-recent-login') {
-        errorMsg = t.translate('profileDeleteAccountReauth');
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMsg),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isDeletingAccount = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.translate('profileDeleteAccountFailed')),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 
   @override
   void dispose() {
-    ProfileScreen.refreshNotifier.removeListener(_loadProfile);
-    ProfileScreen.photoRefreshNotifier.removeListener(_onPhotoRefresh);
     _animController.dispose();
     super.dispose();
   }
@@ -283,19 +103,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ).then((_) {
                     // Photo already updated via photoRefreshNotifier
                     // Just reload stats (name, counts)
-                    _loadProfile();
+                    controller.loadProfile();
                   }),
                 ),
                 const SizedBox(width: 8),
               ],
               flexibleSpace: FlexibleSpaceBar(
                 stretchModes: const [StretchMode.zoomBackground],
-                background: _HeroHeader(
-                  userName: userName,
-                  userEmail: userEmail,
-                  photoUrl: _photoUrl,
+                background: Obx(() => _HeroHeader(
+                  userName: controller.userName.value,
+                  userEmail: controller.userEmail.value,
+                  photoUrl: controller.photoUrl.value,
                   subtitle: t.translate('profileManageSubtitle'),
-                ),
+                )),
               ),
             ),
 
@@ -307,14 +127,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Stats Row ──────────────────────────────────────
-                    _StatsRow(
-                      savedCount: savedCount,
-                      appliedCount: appliedCount,
-                      viewedCount: viewedCount,
+                    Obx(() => _StatsRow(
+                      savedCount: controller.savedCount.value,
+                      appliedCount: controller.appliedCount.value,
+                      viewedCount: controller.viewedCount.value,
                       savedLabel: t.translate('profileSavedLabel'),
                       appliedLabel: t.translate('profileAppliedLabel'),
                       viewedLabel: t.translate('profileViewedLabel'),
-                    ),
+                    )),
                     const SizedBox(height: 20),
 
                     // ── Edit Profile Button ────────────────────────────
@@ -360,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             MaterialPageRoute(
                                 builder: (_) => const EditProfileScreen()),
                           ).then((_) {
-                            _loadProfile();
+                            controller.loadProfile();
                           }),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -433,26 +253,26 @@ class _ProfileScreenState extends State<ProfileScreen>
                     const SizedBox(height: 28),
 
                     // ── Logout ─────────────────────────────────────────
-                    _LogoutButton(
+                    Obx(() => _LogoutButton(
                       label: t.translate('profileLogout'),
                       confirmMessage: t.translate('profileLogoutConfirm'),
                       cancelLabel: t.translate('profileLogoutCancel'),
                       loadingLabel: t.translate('profileLoggingOut'),
-                      isLoading: _isLoggingOut,
-                      onConfirm: _handleLogout,
-                    ),
+                      isLoading: controller.isLoggingOut.value,
+                      onConfirm: controller.handleLogout,
+                    )),
                     const SizedBox(height: 12),
 
                     // ── Delete Account ─────────────────────────────────
-                    _DeleteAccountButton(
+                    Obx(() => _DeleteAccountButton(
                       label: t.translate('profileDeleteAccount'),
                       confirmMessage:
                           t.translate('profileDeleteAccountConfirm'),
                       cancelLabel: t.translate('profileDeleteAccountCancel'),
                       loadingLabel: t.translate('profileDeletingAccount'),
-                      isLoading: _isDeletingAccount,
-                      onConfirm: _handleDeleteAccount,
-                    ),
+                      isLoading: controller.isDeletingAccount.value,
+                      onConfirm: controller.handleDeleteAccount,
+                    )),
                     const SizedBox(height: 16),
 
                     // ── Version ────────────────────────────────────────

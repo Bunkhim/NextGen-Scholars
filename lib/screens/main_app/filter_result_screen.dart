@@ -4,49 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/filter_result_controller.dart';
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-class FilterResultScreen extends StatefulWidget {
+class FilterResultScreen extends StatelessWidget {
   const FilterResultScreen({super.key});
 
   @override
-  State<FilterResultScreen> createState() => _FilterResultScreenState();
-}
-
-class _FilterResultScreenState extends State<FilterResultScreen> {
-  // Active filter chips - use translation keys
-  final List<String> _activeFilterKeys = [
-    'filterChipComputerScience',
-    'filterChipUnitedState',
-    'filterChipFullScholarships',
-  ];
-
-  // Mock scholarship data - use translation keys for translatable fields
-  final List<Map<String, String>> _allResultKeys = [
-    {
-      'titleKey': 'filterResultTitle1',
-      'university': 'MIT',
-      'locationKey': 'filterResultLocationUS',
-      'typeKey': 'filterResultTypeFullScholarship',
-      'deadline': '2026-02-14',
-    },
-    {
-      'titleKey': 'filterResultTitle1',
-      'university': 'Stanford',
-      'locationKey': 'filterResultLocationUSA',
-      'typeKey': 'filterResultTypeFullScholarship',
-      'deadline': '2026-02-14',
-    },
-  ];
-
-  List<Map<String, String>> get _filteredResults => _allResultKeys;
-
-  void _removeFilter(String filterKey) {
-    setState(() => _activeFilterKeys.remove(filterKey));
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.put(FilterResultController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
 
@@ -54,7 +22,7 @@ class _FilterResultScreenState extends State<FilterResultScreen> {
       backgroundColor:
           WallpaperService().hasAny ? Colors.transparent : colorScheme.surface,
       body: SafeArea(
-        child: Column(
+        child: Obx(() => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── App Bar ───────────────────────────────────────────────────
@@ -70,7 +38,7 @@ class _FilterResultScreenState extends State<FilterResultScreen> {
                           : colorScheme.onSurface,
                       size: 20,
                     ),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Get.back(),
                   ),
                   Expanded(
                     child: Text(
@@ -90,16 +58,16 @@ class _FilterResultScreenState extends State<FilterResultScreen> {
             ),
 
             // ── Active Filter Chips ───────────────────────────────────────
-            if (_activeFilterKeys.isNotEmpty)
+            if (controller.activeFilterKeys.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _activeFilterKeys.map((filterKey) {
+                  children: controller.activeFilterKeys.map((filterKey) {
                     return _FilterChip(
                       label: t.translate(filterKey),
-                      onRemove: () => _removeFilter(filterKey),
+                      onRemove: () => controller.removeFilter(filterKey),
                     );
                   }).toList(),
                 ),
@@ -112,7 +80,7 @@ class _FilterResultScreenState extends State<FilterResultScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Text(
-                '${t.translate('filterResultFoundCount')} ${_filteredResults.length} ${t.translate('filterResultScholarships')}',
+                '${t.translate('filterResultFoundCount')} ${controller.filteredResults.length} ${t.translate('filterResultScholarships')}',
                 style: TextStyle(
                   fontSize: 13,
                   color: colorScheme.onSurfaceVariant,
@@ -124,18 +92,18 @@ class _FilterResultScreenState extends State<FilterResultScreen> {
 
             // ── Results List ──────────────────────────────────────────────
             Expanded(
-              child: _filteredResults.isEmpty
+              child: controller.filteredResults.isEmpty
                   ? _EmptyState()
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
-                      itemCount: _filteredResults.length,
+                      itemCount: controller.filteredResults.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (_, i) =>
-                          _ScholarshipCard(data: _filteredResults[i]),
+                          _ScholarshipCard(data: controller.filteredResults[i]),
                     ),
             ),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -340,7 +308,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           OutlinedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: colorScheme.primary),
               shape: RoundedRectangleBorder(

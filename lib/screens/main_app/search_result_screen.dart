@@ -1,19 +1,17 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
-import 'package:scholarship_app/screens/main_app/discover_screen.dart';
-import 'package:scholarship_app/screens/main_app/profile_screen.dart';
-import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
 
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/main_app/search_result_controller.dart';
+
 /// A dedicated screen that shows search / filter results exactly like
 /// DiscoverScreen — with real Firestore data, favorite toggling, etc.
-class SearchResultScreen extends StatefulWidget {
+class SearchResultScreen extends StatelessWidget {
   final String searchQuery;
   final String? filterCountry;
   final String? filterType;
@@ -25,72 +23,30 @@ class SearchResultScreen extends StatefulWidget {
     this.filterType,
   });
 
-  @override
-  State<SearchResultScreen> createState() => _SearchResultScreenState();
-}
-
-class _SearchResultScreenState extends State<SearchResultScreen> {
-  final ScholarshipService _scholarshipService = ScholarshipService();
-  final ScholarshipRepository _scholarshipRepo = ScholarshipRepository();
-  final SavedScholarshipRepository _savedRepo = SavedScholarshipRepository();
-
-  late final Stream<List<FirestoreScholarship>> _scholarshipsStream;
-  late String _searchQuery;
-  String? _filterCountry;
-  String? _filterType;
-
-  final Set<String> _favoriteIds = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _searchQuery = widget.searchQuery;
-    _filterCountry = widget.filterCountry;
-    _filterType = widget.filterType;
-    _scholarshipsStream = _scholarshipService.streamActiveScholarships();
-    _loadSavedIds();
-  }
-
-  Future<void> _loadSavedIds() async {
-    final ids = await _savedRepo.getSavedFirestoreIds();
-    if (mounted) setState(() => _favoriteIds.addAll(ids));
-  }
-
-  bool get _hasActiveFilter => _filterCountry != null || _filterType != null;
-
-  void _clearFilters() {
-    setState(() {
-      _filterCountry = null;
-      _filterType = null;
-    });
-  }
-
-  void _clearSearch() {
-    setState(() {
-      _searchQuery = '';
-    });
-  }
-
-  Future<void> _openSearchFilter() async {
-    final result = await Navigator.pushNamed(
-      context,
-      AppRoutes.searchFilterScreen,
-    );
-    if (!mounted) return;
+  Future<void> _openSearchFilter(SearchResultController controller) async {
+    final result = await Get.toNamed(AppRoutes.searchFilterScreen);
     if (result is String && result.isNotEmpty) {
-      setState(() {
-        _searchQuery = result;
-      });
+      controller.updateFilters(query: result);
     } else if (result is Map) {
-      setState(() {
-        _filterCountry = result['country'] as String?;
-        _filterType = result['type'] as String?;
-      });
+      controller.updateFilters(
+        country: result['country'] as String?,
+        type: result['type'] as String?,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Unique tag allows pushing multiple of these pages if needed.
+    final tag = '${searchQuery}_${filterCountry}_$filterType';
+    final controller = Get.put(
+      SearchResultController(
+        query: searchQuery,
+        country: filterCountry,
+        type: filterType,
+      ),
+      tag: tag,
+    );
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
 
@@ -114,7 +70,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                     ? WallpaperService().onThemeColor
                     : colorScheme.onSurface,
                 size: 20),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
           ),
           titleSpacing: 0,
           flexibleSpace: Container(
@@ -142,63 +98,44 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           ),
         ),
       ),
-      body: StreamBuilder<List<FirestoreScholarship>>(
-        stream: _scholarshipsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-                child: CircularProgressIndicator(color: colorScheme.primary));
-          }
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return Center(
+              child: CircularProgressIndicator(color: colorScheme.primary));
+        }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.cloud_off, size: 64, color: colorScheme.outline),
-                    const SizedBox(height: 16),
-                    Text(
-                      t.translate('discoverError'),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+        if (controller.hasError.value) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.cloud_off, size: 64, color: colorScheme.outline),
+                  const SizedBox(height: 16),
+                  Text(
+                    t.translate('discoverError'),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          final allScholarships = snapshot.data ?? [];
-
-          // Apply search + filter
-          final scholarships = allScholarships.where((s) {
-            final q = _searchQuery.toLowerCase();
-            final matchesSearch = _searchQuery.isEmpty ||
-                s.titleEn.toLowerCase().contains(q) ||
-                s.titleKm.contains(_searchQuery) ||
-                s.university.toLowerCase().contains(q) ||
-                s.country.toLowerCase().contains(q) ||
-                s.fieldOfStudy.toLowerCase().contains(q);
-            final matchesCountry = _filterCountry == null ||
-                s.country.toLowerCase().contains(_filterCountry!.toLowerCase());
-            final matchesType = _filterType == null ||
-                s.fundingType
-                    .toLowerCase()
-                    .contains(_filterType!.toLowerCase());
-            return matchesSearch && matchesCountry && matchesType;
-          }).toList();
+        // Apply search + filter
+        final scholarships = controller.filteredScholarships;
 
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Search Bar Section ──────────────────────────────────
-                _buildSearchBar(colorScheme, t),
+                _buildSearchBar(colorScheme, t, controller),
 
                 // ── Results Header ──────────────────────────────────────
                 Padding(
@@ -258,7 +195,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                           ),
                           const SizedBox(height: 16),
                           OutlinedButton.icon(
-                            onPressed: _openSearchFilter,
+                            onPressed: () => _openSearchFilter(controller),
                             icon: const Icon(Icons.search, size: 18),
                             label: Text(t.translate('searchNewSearch')),
                             style: OutlinedButton.styleFrom(
@@ -282,62 +219,14 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                     itemBuilder: (context, index) {
                       final scholarship = scholarships[index];
                       scholarship.isFavorite =
-                          _favoriteIds.contains(scholarship.id);
+                          controller.favoriteIds.contains(scholarship.id);
                       return ScholarshipCard(
                         scholarship: scholarship,
                         onFavoriteToggle: () async {
-                          final isFav = _favoriteIds.contains(scholarship.id);
-                          setState(() {
-                            if (isFav) {
-                              _favoriteIds.remove(scholarship.id);
-                            } else {
-                              _favoriteIds.add(scholarship.id);
-                            }
-                          });
-                          if (isFav) {
-                            await _savedRepo
-                                .unsaveByFirestoreId(scholarship.id);
-                          } else {
-                            final sqliteId =
-                                await _scholarshipRepo.upsertByFirestoreId(
-                              firestoreId: scholarship.id,
-                              scholarship: Scholarship(
-                                title: scholarship.titleEn,
-                                titleKm: scholarship.titleKm,
-                                institution: scholarship.university,
-                                country: scholarship.country,
-                                type: scholarship.fundingType,
-                                deadline: scholarship.deadline,
-                                openDate: scholarship.openDate,
-                                numberOfPlaces: scholarship.numberOfPlaces,
-                                description: scholarship.descriptionEn,
-                                descriptionKm: scholarship.descriptionKm,
-                                applicationUrl: scholarship.applicationLink,
-                                imageUrl: scholarship.imageUrl,
-                                logoUrl: scholarship.logoUrl,
-                                level: scholarship.degree,
-                                fieldOfStudy: scholarship.fieldOfStudy,
-                                eligibility: scholarship.eligibilityEn,
-                                eligibilityKm: scholarship.eligibilityKm,
-                                benefits: scholarship.benefitsEn,
-                                benefitsKm: scholarship.benefitsKm,
-                                requiredDocuments:
-                                    scholarship.requiredDocumentsEn,
-                                requiredDocumentsKm:
-                                    scholarship.requiredDocumentsKm,
-                                isActive: true,
-                              ),
-                            );
-                            await _savedRepo.save(
-                                SavedScholarshipModel(scholarshipId: sqliteId));
-                          }
-                          SavedScholarshipScreen.refreshNotifier.value++;
-                          ProfileScreen.refreshNotifier.value++;
-                          DiscoverScreen.refreshNotifier.value++;
+                          await controller.toggleFavorite(scholarship);
                         },
                         onTap: () {
-                          Navigator.pushNamed(
-                            context,
+                          Get.toNamed(
                             AppRoutes.scholarshipDetailScreen,
                             arguments: scholarship,
                           );
@@ -348,13 +237,12 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               ],
             ),
           );
-        },
-      ),
+      }),
     );
   }
 
-  Widget _buildSearchBar(ColorScheme colorScheme, AppLocalizations t) {
-    final hasQuery = _searchQuery.isNotEmpty;
+  Widget _buildSearchBar(ColorScheme colorScheme, AppLocalizations t, SearchResultController controller) {
+    final hasQuery = controller.searchQuery.value.isNotEmpty;
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -374,7 +262,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: _openSearchFilter,
+                  onTap: () => _openSearchFilter(controller),
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 48),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -398,7 +286,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                         Expanded(
                           child: Text(
                             hasQuery
-                                ? _searchQuery
+                                ? controller.searchQuery.value
                                 : t.translate('homeSearchHint'),
                             style: TextStyle(
                               color: hasQuery
@@ -413,7 +301,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                         ),
                         if (hasQuery)
                           GestureDetector(
-                            onTap: _clearSearch,
+                            onTap: controller.clearSearch,
                             child: Icon(Icons.close,
                                 size: 18, color: colorScheme.onSurfaceVariant),
                           ),
@@ -424,7 +312,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               ),
               const SizedBox(width: 10),
               GestureDetector(
-                onTap: _openSearchFilter,
+                onTap: () => _openSearchFilter(controller),
                 child: Container(
                   width: 48,
                   height: 48,
@@ -447,7 +335,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                         child: Icon(Icons.tune_rounded,
                             color: colorScheme.onPrimary, size: 22),
                       ),
-                      if (_hasActiveFilter)
+                      if (controller.hasActiveFilter)
                         Positioned(
                           top: 8,
                           right: 8,
@@ -466,32 +354,32 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               ),
             ],
           ),
-          if (_hasActiveFilter) ...[
+          if (controller.hasActiveFilter) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                if (_filterCountry != null)
+                if (controller.filterCountry.value != null)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Chip(
-                      label: Text(_filterCountry!,
+                      label: Text(controller.filterCountry.value!,
                           style: const TextStyle(fontSize: 12)),
                       deleteIcon: const Icon(Icons.close, size: 14),
-                      onDeleted: () => setState(() => _filterCountry = null),
+                      onDeleted: () => controller.filterCountry.value = null,
                       visualDensity: VisualDensity.compact,
                       backgroundColor: colorScheme.primaryContainer,
                       labelStyle:
                           TextStyle(color: colorScheme.onPrimaryContainer),
                     ),
                   ),
-                if (_filterType != null)
+                if (controller.filterType.value != null)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Chip(
-                      label: Text(_filterType!,
+                      label: Text(controller.filterType.value!,
                           style: const TextStyle(fontSize: 12)),
                       deleteIcon: const Icon(Icons.close, size: 14),
-                      onDeleted: () => setState(() => _filterType = null),
+                      onDeleted: () => controller.filterType.value = null,
                       visualDensity: VisualDensity.compact,
                       backgroundColor: colorScheme.primaryContainer,
                       labelStyle:
@@ -499,7 +387,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                     ),
                   ),
                 TextButton(
-                  onPressed: _clearFilters,
+                  onPressed: controller.clearFilters,
                   style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 8)),
                   child: Text(t.translate('discoverClearFilters'),

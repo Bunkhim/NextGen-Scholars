@@ -1,20 +1,18 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:scholarship_app/controllers/scholarship/my_applications_controller.dart';
 import 'package:scholarship_app/screens/scholarship/application_status_screen.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
-class MyApplicationsScreen extends StatefulWidget {
-  const MyApplicationsScreen({super.key});
+class MyApplicationsScreen extends StatelessWidget {
+  MyApplicationsScreen({super.key});
 
-  @override
-  State<MyApplicationsScreen> createState() => _MyApplicationsScreenState();
-}
-
-class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
-  final _service = ApplicationService();
+  final MyApplicationsController controller =
+      Get.put(MyApplicationsController());
 
   @override
   Widget build(BuildContext context) {
@@ -56,104 +54,94 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         ),
         centerTitle: false,
       ),
-      body: StreamBuilder<List<ScholarshipApplication>>(
-        stream: _service.streamMyApplications(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: colorScheme.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    t.translate('myApplicationsError'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+        if (controller.errorMessage.value.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: colorScheme.error),
+                const SizedBox(height: 16),
+                Text(
+                  t.translate('myApplicationsError'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                ],
-              ),
-            );
-          }
-
-          final apps = snapshot.data ?? [];
-
-          if (apps.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.send_outlined,
-                      size: 64, color: colorScheme.onSurfaceVariant),
-                  const SizedBox(height: 16),
-                  Text(
-                    t.translate('myApplicationsEmpty'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // Summary counts
-          final total = apps.length;
-          final pending =
-              apps.where((a) => a.isSubmitted || a.isUnderReview).length;
-          final accepted = apps.where((a) => a.isAccepted).length;
-          final rejected = apps.where((a) => a.isRejected).length;
-
-          return Column(
-            children: [
-              // ── Summary bar ──────────────────────────────────────
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _SummaryItem(
-                        count: total,
-                        label: t.translate('myAppTotal'),
-                        color: WallpaperService().themedPrimary(colorScheme)),
-                    _SummaryItem(
-                        count: pending,
-                        label: t.translate('myAppPending'),
-                        color: Colors.orange),
-                    _SummaryItem(
-                        count: accepted,
-                        label: t.translate('myAppAccepted'),
-                        color: Colors.green),
-                    _SummaryItem(
-                        count: rejected,
-                        label: t.translate('myAppReject'),
-                        color: Colors.red),
-                  ],
                 ),
-              ),
-              const Divider(height: 1),
-
-              // ── Application list ─────────────────────────────────
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  itemCount: apps.length,
-                  itemBuilder: (context, i) =>
-                      _ApplicationCard(application: apps[i]),
-                ),
-              ),
-            ],
+              ],
+            ),
           );
-        },
-      ),
+        }
+
+        if (controller.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.send_outlined,
+                    size: 64, color: colorScheme.onSurfaceVariant),
+                const SizedBox(height: 16),
+                Text(
+                  t.translate('myApplicationsEmpty'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final apps = controller.applications;
+
+        return Column(
+          children: [
+            // ── Summary bar ──────────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _SummaryItem(
+                      count: controller.total,
+                      label: t.translate('myAppTotal'),
+                      color: WallpaperService().themedPrimary(colorScheme)),
+                  _SummaryItem(
+                      count: controller.pendingCount,
+                      label: t.translate('myAppPending'),
+                      color: Colors.orange),
+                  _SummaryItem(
+                      count: controller.acceptedCount,
+                      label: t.translate('myAppAccepted'),
+                      color: Colors.green),
+                  _SummaryItem(
+                      count: controller.rejectedCount,
+                      label: t.translate('myAppReject'),
+                      color: Colors.red),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // ── Application list ─────────────────────────────────
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                itemCount: apps.length,
+                itemBuilder: (context, i) =>
+                    _ApplicationCard(application: apps[i]),
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }
