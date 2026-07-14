@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 
 class EditProfileController extends GetxController {
@@ -21,6 +21,8 @@ class EditProfileController extends GetxController {
 
   final RxBool isSaving = false.obs;
   final RxBool isLoading = true.obs;
+  final _usersApi = UsersApiService();
+
   final Rxn<File> pickedPhoto = Rxn<File>();
   final RxnString existingPhotoUrl = RxnString();
 
@@ -84,17 +86,24 @@ class EditProfileController extends GetxController {
 
   Future<void> _loadProfile() async {
     try {
-      final profile = await UserFirestoreService().getProfile();
+      Map<String, dynamic> profile = {};
+      try {
+        profile = await _usersApi.getProfile();
+      } catch (_) {}
+
       final jwtName = JwtService().displayNameSync;
       final jwtEmail = JwtService().emailSync;
 
-      if (profile != null) {
-        nameController.text = profile['name'] ?? jwtName ?? '';
-        emailController.text = profile['email'] ?? jwtEmail ?? '';
-        phoneController.text = profile['phone'] ?? '';
-        dobController.text = profile['dob'] ?? '';
-        countryController.text = profile['country'] ?? '';
-        existingPhotoUrl.value = profile['photoUrl'];
+      if (profile.isNotEmpty) {
+        nameController.text = profile['displayName'] as String? ??
+            profile['name'] as String? ??
+            jwtName ??
+            '';
+        emailController.text = profile['email'] as String? ?? jwtEmail ?? '';
+        phoneController.text = profile['phone'] as String? ?? '';
+        dobController.text = profile['dob'] as String? ?? '';
+        countryController.text = profile['country'] as String? ?? '';
+        existingPhotoUrl.value = profile['photoUrl'] as String?;
         savedInterests.assignAll(
           List<String>.from(profile['interestedFields'] ?? []),
         );
@@ -306,9 +315,8 @@ class EditProfileController extends GetxController {
         if (selectedFields[i]) interests.add(fields[i]);
       }
 
-      await UserFirestoreService().updateProfile(
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
+      await _usersApi.updateProfile(
+        displayName: nameController.text.trim(),
         phone: phoneController.text.trim(),
         dob: dobController.text.trim(),
         country: countryController.text.trim(),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/data/repositories/saved_scholarship_repository.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
@@ -12,7 +13,6 @@ import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 import 'package:scholarship_app/services/user_data_sync_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
 import 'package:scholarship_app/services/viewed_scholarship_service.dart';
 
 class ProfileController extends GetxController {
@@ -26,6 +26,7 @@ class ProfileController extends GetxController {
   final RxBool isDeletingAccount = false.obs;
 
   final _authApi = AuthApiService();
+  final _usersApi = UsersApiService();
   final _jwt = JwtService();
 
   @override
@@ -54,10 +55,14 @@ class ProfileController extends GetxController {
   }
 
   Future<void> loadProfile() async {
-    final profile = await UserFirestoreService().getProfile();
     final jwtEmail = await _jwt.currentUserEmail;
     final jwtName = await _jwt.currentUserDisplayName;
     final jwtUid = await _jwt.currentUid;
+
+    Map<String, dynamic> profile = {};
+    try {
+      profile = await _usersApi.getProfile();
+    } catch (_) {}
 
     final realSavedCount = await SavedScholarshipRepository().count();
     final realViewedCount = await ViewedScholarshipService().count();
@@ -66,14 +71,15 @@ class ProfileController extends GetxController {
     try {
       final apps = await ApplicationService().streamMyApplications().first;
       realAppliedCount = apps.length;
-    } catch (_) {
-      realAppliedCount = (profile?['applications'] as int?) ?? 0;
-    }
+    } catch (_) {}
 
-    if (profile != null) {
-      userName.value = profile['name'] ?? jwtName ?? '';
-      userEmail.value = profile['email'] ?? jwtEmail ?? '';
-      photoUrl.value = profile['photoUrl'];
+    if (profile.isNotEmpty) {
+      userName.value = profile['displayName'] as String? ??
+          profile['name'] as String? ??
+          jwtName ??
+          '';
+      userEmail.value = profile['email'] as String? ?? jwtEmail ?? '';
+      photoUrl.value = profile['photoUrl'] as String?;
       ProfileScreen.activePhotoPath = photoUrl.value;
       ProfileScreen.photoRefreshNotifier.value++;
     } else if (jwtUid != null) {
@@ -116,11 +122,11 @@ class ProfileController extends GetxController {
       final uid = await _jwt.currentUid;
       if (uid == null) return;
 
+      await _usersApi.deleteAccount();
       await FillInfoPersistenceService().onAccountDeleted(uid);
       await UserDataSyncService.deleteAllCloudData(uid);
       await UserDataSyncService.deleteAllLocalData(uid);
       await SessionSecurityService().clearLoginTimestamp();
-      await UserFirestoreService().deleteUserDocument(uid);
 
       try {
         final googleSignIn = GoogleSignIn();

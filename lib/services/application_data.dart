@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Singleton class to store application form data across screens.
@@ -196,11 +196,10 @@ class ApplicationData {
   String? referencePhone;
   String? referenceEmail;
 
-  // ── Firestore cloud backup ─────────────────────────────────────────────
+  // ── Backend API cloud backup ─────────────────────────────────────────────
 
-  static final _firestore = FirebaseFirestore.instance;
+  static final _usersApi = UsersApiService();
 
-  /// Returns true if at least one important Fill Info field is populated.
   bool get _hasAnyData =>
       firstName != null ||
       lastName != null ||
@@ -209,7 +208,6 @@ class ApplicationData {
       institution != null ||
       degree != null;
 
-  /// Convert all in-memory fields to a Map for Firestore storage.
   Map<String, dynamic> toMap() {
     return {
       'firstName': firstName,
@@ -219,7 +217,6 @@ class ApplicationData {
       'dateOfBirth': dateOfBirth?.millisecondsSinceEpoch,
       'phoneNumber': phoneNumber,
       'email': email,
-      // profileImage is a local file — not meaningful after reinstall
       'institution': institution,
       'degree': degree,
       'major': major,
@@ -253,7 +250,6 @@ class ApplicationData {
     };
   }
 
-  /// Populate in-memory fields from a Map (e.g. restored from Firestore).
   void fromMap(Map<String, dynamic> map) {
     firstName = map['firstName'] as String?;
     lastName = map['lastName'] as String?;
@@ -264,7 +260,6 @@ class ApplicationData {
         dobMs != null ? DateTime.fromMillisecondsSinceEpoch(dobMs) : null;
     phoneNumber = map['phoneNumber'] as String?;
     email = map['email'] as String?;
-    // profileImage: local file — not restored from cloud
     institution = map['institution'] as String?;
     degree = map['degree'] as String?;
     major = map['major'] as String?;
@@ -297,53 +292,29 @@ class ApplicationData {
     referenceEmail = map['referenceEmail'] as String?;
   }
 
-  /// Upload current Fill Info to Firestore as a cloud backup.
-  Future<void> _syncToFirestore() async {
+  Future<void> _syncToBackend() async {
     if (_activeUid == null) return;
     try {
       final data = toMap();
-      data['lastActivity'] = FieldValue.serverTimestamp();
-      await _firestore
-          .collection('users')
-          .doc(_activeUid)
-          .collection('fill_info')
-          .doc('data')
-          .set(data);
-      debugPrint('☁️ Fill Info synced to Firestore');
+      await _usersApi.updateFillInfo(data: data);
+      debugPrint('☁️ Fill Info synced to backend');
     } catch (e) {
       debugPrint('⚠️ Fill Info cloud sync failed: $e');
     }
   }
 
-  /// Attempt to restore Fill Info from Firestore (e.g. after app reinstall).
-  /// Returns true if data was successfully restored.
-  Future<bool> _restoreFromFirestore() async {
+  Future<bool> _restoreFromBackend() async {
     if (_activeUid == null) return false;
     try {
-      final doc = await _firestore
-          .collection('users')
-          .doc(_activeUid)
-          .collection('fill_info')
-          .doc('data')
-          .get();
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        // Check 30-day inactivity on cloud data
-        final ts = data['lastActivity'] as Timestamp?;
-        if (ts != null) {
-          final lastActivity = ts.toDate();
-          if (DateTime.now().difference(lastActivity).inDays > 30) {
-            // Stale cloud data — delete instead of restoring
-            await deleteUserCloudData(_activeUid!);
-            debugPrint('☁️ Stale cloud Fill Info deleted (>30 days)');
-            return false;
-          }
+      final res = await _usersApi.getFillInfo();
+      if (res.isNotEmpty && res.containsKey('data')) {
+        final data = res['data'] as Map<String, dynamic>? ?? {};
+        if (data.isNotEmpty) {
+          fromMap(data);
+          await _saveToLocal();
+          debugPrint('☁️ Fill Info restored from backend');
+          return true;
         }
-        fromMap(data);
-        // Cache to SharedPreferences (without re-syncing to Firestore)
-        await _saveToLocal();
-        debugPrint('☁️ Fill Info restored from Firestore after reinstall');
-        return true;
       }
     } catch (e) {
       debugPrint('⚠️ Fill Info cloud restore failed: $e');
@@ -351,16 +322,10 @@ class ApplicationData {
     return false;
   }
 
-  /// Delete Fill Info cloud backup for a specific user.
   static Future<void> deleteUserCloudData(String uid) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('fill_info')
-          .doc('data')
-          .delete();
-      debugPrint('☁️ Fill Info cloud data deleted for user: $uid');
+      await _usersApi.deleteFillInfo();
+      debugPrint('☁️ Fill Info cloud data deleted');
     } catch (e) {
       debugPrint('⚠️ Fill Info cloud delete failed: $e');
     }
@@ -432,7 +397,7 @@ class ApplicationData {
     await _recordLastActivity();
 
     // Sync to Firestore cloud backup (fire-and-forget)
-    _syncToFirestore();
+    _syncToBackend();
   }
 
   /// Save to SharedPreferences only (no Firestore sync).
@@ -561,7 +526,7 @@ class ApplicationData {
 
     // If local storage is empty (e.g. app was reinstalled), try Firestore
     if (!_hasAnyData && _activeUid != null) {
-      await _restoreFromFirestore();
+      await _restoreFromBackend();
     }
   }
 
