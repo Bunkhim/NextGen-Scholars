@@ -69,7 +69,7 @@ class ProfileController extends GetxController {
 
     int realAppliedCount = 0;
     try {
-      final apps = await ApplicationService().streamMyApplications().first;
+      final apps = await ApplicationService().fetchMyApplications();
       realAppliedCount = apps.length;
     } catch (_) {}
 

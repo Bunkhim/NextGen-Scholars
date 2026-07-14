@@ -6,27 +6,17 @@ import 'package:scholarship_app/services/application_service.dart';
 
 /// Controller for [ApplicationStatusScreen].
 ///
-/// Owns the reactive application state and the pure status-derived logic
-/// (icon/color/date formatting) so the widget tree can stay declarative.
-/// Text that depends on `AppLocalizations` still lives in the widget, since
-/// that needs a `BuildContext`.
-///
-/// Auto-refresh: `ApplicationService` has no single-document getter, so
-/// instead of polling, this controller subscribes to
-/// `streamMyApplications()` (a live Firestore snapshot listener) and picks
-/// out the matching application by id. Any status change made elsewhere
-/// (e.g. by an admin) is reflected here automatically, no manual refresh
-/// needed.
+/// Loads the application from the backend API and polls for updates.
 class ApplicationStatusController extends GetxController {
   ApplicationStatusController(ScholarshipApplication initial)
       : application = initial.obs;
 
-  /// The current application, kept in sync with Firestore.
+  /// The current application, kept in sync via polling.
   final Rx<ScholarshipApplication> application;
 
   final RxString errorMessage = ''.obs;
 
-  StreamSubscription<List<ScholarshipApplication>>? _sub;
+  Timer? _pollTimer;
 
   String get id => application.value.id;
   String get status => application.value.status;
@@ -38,23 +28,25 @@ class ApplicationStatusController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _sub = ApplicationService().streamMyApplications().listen(
-      (apps) {
-        final match = apps.where((a) => a.id == id);
-        if (match.isNotEmpty) {
-          application.value = match.first;
-        }
-      },
-      onError: (_) {
-        errorMessage.value = 'Failed to load application updates.';
-      },
-    );
+    _refreshApplication();
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshApplication());
   }
 
   @override
   void onClose() {
-    _sub?.cancel();
+    _pollTimer?.cancel();
     super.onClose();
+  }
+
+  Future<void> _refreshApplication() async {
+    try {
+      final fresh = await ApplicationService().getApplication(id);
+      if (fresh != null) {
+        application.value = fresh;
+      }
+    } catch (_) {
+      errorMessage.value = 'Failed to load application updates.';
+    }
   }
 
   // ── Pure status-derived helpers (no context/translation needed) ─────────
