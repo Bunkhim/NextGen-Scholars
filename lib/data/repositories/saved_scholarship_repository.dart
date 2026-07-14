@@ -1,6 +1,3 @@
-import 'package:flutter/foundation.dart';
-
-import '../../services/user_data_sync_service.dart';
 import '../../database/database_helper.dart';
 import '../models/saved_scholarship_model.dart';
 
@@ -35,7 +32,6 @@ class SavedScholarshipRepository {
           whereArgs: [id],
         );
       }
-      _triggerCloudSync();
       return id;
     }
 
@@ -43,7 +39,6 @@ class SavedScholarshipRepository {
       DatabaseHelper.tableSavedScholarships,
       saved.toMap(),
     );
-    _triggerCloudSync();
     return newId;
   }
 
@@ -55,7 +50,6 @@ class SavedScholarshipRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _triggerCloudSync();
     return result;
   }
 
@@ -67,7 +61,6 @@ class SavedScholarshipRepository {
       where: 'scholarship_id = ? AND (user_id = ? OR user_id IS NULL)',
       whereArgs: [scholarshipId, userId],
     );
-    _triggerCloudSync();
     return result;
   }
 
@@ -182,7 +175,6 @@ class SavedScholarshipRepository {
         WHERE firestore_id = ?
       ) $userFilter
     ''', args);
-    _triggerCloudSync();
   }
 
   /// Update note on a saved scholarship.
@@ -194,17 +186,6 @@ class SavedScholarshipRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-  }
-
-  /// Fire-and-forget Firestore sync after any local change.
-  void _triggerCloudSync() {
-    Future.microtask(() async {
-      try {
-        await UserDataSyncService().syncSavedScholarships();
-      } catch (e) {
-        debugPrint('⚠️ Saved scholarships cloud sync failed: $e');
-      }
-    });
   }
 
   /// Count saved scholarships.
