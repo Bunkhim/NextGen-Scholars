@@ -34,6 +34,7 @@ class ApplyResult {
 class ScholarshipDetailController extends GetxController {
   final _savedRepo = SavedScholarshipRepository();
   final _scholarshipRepo = ScholarshipRepository();
+  final _scholarshipService = ScholarshipService();
 
   bool _initialized = false;
 
@@ -142,7 +143,7 @@ class ScholarshipDetailController extends GetxController {
     if (alreadyApplied) return const ApplyResult(ApplyOutcome.alreadyApplied);
 
     // 3. Scholarship still active
-    final fresh = await ScholarshipService().getScholarshipById(current.id);
+    final fresh = await _scholarshipService.getScholarshipById(current.id);
     if (fresh == null || !fresh.isActive) {
       return const ApplyResult(ApplyOutcome.scholarshipUnavailable);
     }

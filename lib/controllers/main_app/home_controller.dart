@@ -24,8 +24,6 @@ class HomeController extends GetxController {
   final savedRepo = SavedScholarshipRepository();
   final appData = ApplicationData();
 
-  late final Stream<List<FirestoreScholarship>> scholarshipsStream;
-
   final RxSet<String> favoriteIds = <String>{}.obs;
   final RxnString photoUrl = RxnString();
   final RxList<String> actionOrder =
@@ -36,7 +34,6 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    scholarshipsStream = scholarshipService.streamActiveScholarships();
     loadFavorites();
     loadPhoto();
     loadActionOrder();

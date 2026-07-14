@@ -3,9 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
+import 'package:scholarship_app/routes/app_routes.dart';
+import 'package:scholarship_app/screens/main_app/profile_screen.dart';
+import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/filter_result_controller.dart';
+import 'package:scholarship_app/widgets/scholarship_card.dart';
+import 'package:scholarship_app/database/database.dart';
+import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -66,7 +72,7 @@ class FilterResultScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: controller.activeFilterKeys.map((filterKey) {
                     return _FilterChip(
-                      label: t.translate(filterKey),
+                      label: filterKey,
                       onRemove: () => controller.removeFilter(filterKey),
                     );
                   }).toList(),
@@ -90,17 +96,73 @@ class FilterResultScreen extends StatelessWidget {
             ),
             Divider(height: 1, color: colorScheme.outline),
 
-            // ── Results List ──────────────────────────────────────────────
+            // ── Results ───────────────────────────────────────────────────
             Expanded(
-              child: controller.filteredResults.isEmpty
-                  ? _EmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: controller.filteredResults.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) =>
-                          _ScholarshipCard(data: controller.filteredResults[i]),
-                    ),
+              child: controller.isLoading.value
+                  ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+                  : controller.hasError.value
+                      ? _ErrorState(onRetry: () => controller.fetchResults())
+                      : controller.filteredResults.isEmpty
+                          ? _EmptyState()
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: controller.filteredResults.length,
+                              itemBuilder: (_, i) {
+                                final scholarship = controller.filteredResults[i];
+                                final discoverCtrl = Get.find<DiscoverController>();
+                                scholarship.isFavorite = discoverCtrl.favoriteIds.contains(scholarship.id);
+                                return ScholarshipCard(
+                                  scholarship: scholarship,
+                                  onFavoriteToggle: () async {
+                                    final savedRepo = SavedScholarshipRepository();
+                                    final scholarshipRepo = ScholarshipRepository();
+                                    final isFav = discoverCtrl.favoriteIds.contains(scholarship.id);
+                                    if (isFav) {
+                                      discoverCtrl.favoriteIds.remove(scholarship.id);
+                                      await savedRepo.unsaveByFirestoreId(scholarship.id);
+                                    } else {
+                                      discoverCtrl.favoriteIds.add(scholarship.id);
+                                      final sqliteId = await scholarshipRepo.upsertByFirestoreId(
+                                        firestoreId: scholarship.id,
+                                        scholarship: Scholarship(
+                                          title: scholarship.titleEn,
+                                          titleKm: scholarship.titleKm,
+                                          institution: scholarship.university,
+                                          country: scholarship.country,
+                                          type: scholarship.fundingType,
+                                          deadline: scholarship.deadline,
+                                          openDate: scholarship.openDate,
+                                          numberOfPlaces: scholarship.numberOfPlaces,
+                                          description: scholarship.descriptionEn,
+                                          descriptionKm: scholarship.descriptionKm,
+                                          applicationUrl: scholarship.applicationLink,
+                                          imageUrl: scholarship.imageUrl,
+                                          logoUrl: scholarship.logoUrl,
+                                          level: scholarship.degree,
+                                          fieldOfStudy: scholarship.fieldOfStudy,
+                                          eligibility: scholarship.eligibilityEn,
+                                          eligibilityKm: scholarship.eligibilityKm,
+                                          benefits: scholarship.benefitsEn,
+                                          benefitsKm: scholarship.benefitsKm,
+                                          requiredDocuments: scholarship.requiredDocumentsEn,
+                                          requiredDocumentsKm: scholarship.requiredDocumentsKm,
+                                          isActive: true,
+                                        ),
+                                      );
+                                      await savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+                                    }
+                                    SavedScholarshipScreen.refreshNotifier.value++;
+                                    ProfileScreen.refreshNotifier.value++;
+                                  },
+                                  onTap: () {
+                                    Get.toNamed(
+                                      AppRoutes.scholarshipDetailScreen,
+                                      arguments: scholarship,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
             ),
           ],
         )),
@@ -158,126 +220,6 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// ── Scholarship Card ──────────────────────────────────────────────────────────
-
-class _ScholarshipCard extends StatelessWidget {
-  final Map<String, String> data;
-
-  const _ScholarshipCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final t = AppLocalizations.of(context);
-    final ws = WallpaperService();
-    final themed = ws.hasTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: themed
-          ? ws.glassCard(radius: 12)
-          : BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            t.translate(data['titleKey']!),
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // University + Location
-          Row(
-            children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  '${data['university']!}, ${t.translate(data['locationKey']!)}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Type + Deadline
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Type badge
-              Flexible(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    t.translate(data['typeKey']!),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Deadline
-              Row(
-                children: [
-                  const Icon(
-                    Icons.calendar_month_outlined,
-                    size: 14,
-                    color: Color(0xffFF9800),
-                  ),
-                  const SizedBox(width: 4),
-                  const Text(
-                    '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xffFF9800),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    data['deadline']!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xffFF9800),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Empty State ───────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
@@ -324,6 +266,61 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Error State ───────────────────────────────────────────────────────────────
+
+class _ErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorState({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final t = AppLocalizations.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off, size: 64, color: colorScheme.outline),
+            const SizedBox(height: 16),
+            Text(
+              t.translate('discoverLoadFailedTitle'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t.translate('discoverLoadFailedSubtitle'),
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(t.translate('savedRetry')),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colorScheme.primary,
+                side: BorderSide(color: colorScheme.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

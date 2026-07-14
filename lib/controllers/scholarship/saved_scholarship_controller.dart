@@ -8,6 +8,7 @@ import 'package:scholarship_app/screens/main_app/main_navigation_screen.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 
 class SavedScholarshipView {
@@ -25,7 +26,7 @@ class SavedScholarshipView {
 class SavedScholarshipController extends GetxController {
   final SavedScholarshipRepository savedRepo = SavedScholarshipRepository();
   final ScholarshipService scholarshipService = ScholarshipService();
-  StreamSubscription<List<FirestoreScholarship>>? _firestoreSub;
+  final UsersApiService _usersApi = UsersApiService();
 
   final RxList<SavedScholarshipView> scholarships =
       <SavedScholarshipView>[].obs;
@@ -39,53 +40,37 @@ class SavedScholarshipController extends GetxController {
   void onInit() {
     super.onInit();
     loadSavedScholarships();
-    // Reload whenever discover screen saves or unsaves a scholarship.
-    // Kept as a static ValueNotifier (not moved into GetX) since other
-    // screens reference it directly by class name (e.g. HomeController).
     SavedScholarshipScreen.refreshNotifier.addListener(loadSavedScholarships);
-    // Subscribe to Firestore so any admin edit is reflected immediately.
-    _firestoreSub = scholarshipService
-        .streamActiveScholarships()
-        .listen(_onFirestoreUpdate);
   }
 
   @override
   void onClose() {
     SavedScholarshipScreen.refreshNotifier
         .removeListener(loadSavedScholarships);
-    _firestoreSub?.cancel();
     super.onClose();
-  }
-
-  /// Called whenever Firestore emits a new scholarship list.
-  /// Updates only the items that are already saved without reloading from SQLite.
-  void _onFirestoreUpdate(List<FirestoreScholarship> latest) {
-    if (scholarships.isEmpty) return;
-    final map = {for (final s in latest) s.id: s};
-    bool changed = false;
-
-    final updated = scholarships.map((view) {
-      final fresh = map[view.scholarship.id];
-      if (fresh == null) {
-        // Admin deactivated / deleted — hide it.
-        if (view.isVisible) {
-          changed = true;
-          view.isVisible = false;
-        }
-        return view;
-      }
-      changed = true;
-      return SavedScholarshipView(
-        savedId: view.savedId,
-        scholarship: fresh..isFavorite = true,
-      );
-    }).toList();
-
-    if (changed) scholarships.value = updated;
   }
 
   Future<void> loadSavedScholarships() async {
     try {
+      // Try backend API first
+      final savedItems = await _usersApi.getSavedScholarships();
+      if (savedItems.isNotEmpty && savedItems.first is Map<String, dynamic>) {
+        final views = <SavedScholarshipView>[];
+        for (int i = 0; i < savedItems.length; i++) {
+          final item = savedItems[i] as Map<String, dynamic>;
+          final scholarship = FirestoreScholarship.fromJson(item);
+          scholarship.isFavorite = true;
+          views.add(SavedScholarshipView(
+            savedId: i,
+            scholarship: scholarship,
+          ));
+        }
+        scholarships.value = views;
+        isLoading.value = false;
+        return;
+      }
+
+      // Fallback to SQLite
       final savedWithDetails = await savedRepo.getSavedWithDetails();
       scholarships.value = savedWithDetails.map((row) {
         final deadlineStr = row['deadline'] as String?;
@@ -150,6 +135,7 @@ class SavedScholarshipController extends GetxController {
     scholarships.refresh();
 
     savedRepo.hide(savedId);
+    _usersApi.unsaveScholarship(scholarships[index].scholarship.id);
     ProfileScreen.refreshNotifier.value++;
     DiscoverScreen.refreshNotifier.value++;
 
@@ -161,6 +147,7 @@ class SavedScholarshipController extends GetxController {
           scholarships[index].isVisible = true;
           scholarships.refresh();
           savedRepo.restore(savedId);
+          _usersApi.saveScholarship(scholarships[index].scholarship.id);
           ProfileScreen.refreshNotifier.value++;
           DiscoverScreen.refreshNotifier.value++;
           Get.closeCurrentSnackbar();

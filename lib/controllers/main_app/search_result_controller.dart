@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:get/get.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
@@ -16,12 +15,10 @@ class SearchResultController extends GetxController {
   final RxnString filterType = RxnString();
 
   final RxSet<String> favoriteIds = <String>{}.obs;
-  final RxList<FirestoreScholarship> _allScholarships = <FirestoreScholarship>[].obs;
+  final RxList<FirestoreScholarship> filteredScholarships = <FirestoreScholarship>[].obs;
   
   final RxBool isLoading = true.obs;
   final RxBool hasError = false.obs;
-
-  StreamSubscription? _subscription;
 
   SearchResultController({
     String query = '',
@@ -37,23 +34,25 @@ class SearchResultController extends GetxController {
   void onInit() {
     super.onInit();
     _loadSavedIds();
-    _subscription = _scholarshipService.streamActiveScholarships().listen(
-      (data) {
-        _allScholarships.value = data;
-        isLoading.value = false;
-        hasError.value = false;
-      },
-      onError: (e) {
-        hasError.value = true;
-        isLoading.value = false;
-      },
-    );
+    _loadScholarships();
   }
 
-  @override
-  void onClose() {
-    _subscription?.cancel();
-    super.onClose();
+  Future<void> _loadScholarships() async {
+    isLoading.value = true;
+    hasError.value = false;
+    try {
+      final results = await _scholarshipService.fetchActiveScholarships(
+        search: searchQuery.value.isNotEmpty ? searchQuery.value : null,
+        country: filterCountry.value,
+        funding: filterType.value,
+        limit: 100,
+      );
+      filteredScholarships.assignAll(results);
+      isLoading.value = false;
+    } catch (e) {
+      hasError.value = true;
+      isLoading.value = false;
+    }
   }
 
   Future<void> _loadSavedIds() async {
@@ -66,36 +65,19 @@ class SearchResultController extends GetxController {
   void clearFilters() {
     filterCountry.value = null;
     filterType.value = null;
+    _loadScholarships();
   }
 
   void clearSearch() {
     searchQuery.value = '';
+    _loadScholarships();
   }
 
   void updateFilters({String? query, String? country, String? type}) {
     if (query != null) searchQuery.value = query;
     if (country != null) filterCountry.value = country;
     if (type != null) filterType.value = type;
-  }
-
-  List<FirestoreScholarship> get filteredScholarships {
-    return _allScholarships.where((s) {
-      final q = searchQuery.value.toLowerCase();
-      final matchesSearch = q.isEmpty ||
-          s.titleEn.toLowerCase().contains(q) ||
-          s.titleKm.contains(searchQuery.value) ||
-          s.university.toLowerCase().contains(q) ||
-          s.country.toLowerCase().contains(q) ||
-          s.fieldOfStudy.toLowerCase().contains(q);
-      
-      final fCountry = filterCountry.value?.toLowerCase();
-      final matchesCountry = fCountry == null || s.country.toLowerCase().contains(fCountry);
-      
-      final fType = filterType.value?.toLowerCase();
-      final matchesType = fType == null || s.fundingType.toLowerCase().contains(fType);
-      
-      return matchesSearch && matchesCountry && matchesType;
-    }).toList();
+    _loadScholarships();
   }
 
   Future<void> toggleFavorite(FirestoreScholarship scholarship) async {

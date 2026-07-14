@@ -681,8 +681,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildScholarshipCards() {
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    return StreamBuilder<List<FirestoreScholarship>>(
-      stream: controller.scholarshipsStream,
+    return FutureBuilder<List<FirestoreScholarship>>(
+      future: controller.scholarshipService.fetchActiveScholarships(limit: 10),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Padding(
