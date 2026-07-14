@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
 
 /// Represents a user's scholarship application.
@@ -99,9 +99,8 @@ class ApplicationService {
 
   final _db = FirebaseFirestore.instance;
   CollectionReference get _applications => _db.collection('applications');
-  final _auth = FirebaseAuth.instance;
 
-  String? get _uid => _auth.currentUser?.uid;
+  String? get _uid => JwtService().uidSync;
 
   /// Submit a new application for a scholarship.
   /// Returns null if not logged in, scholarship doesn't exist, or on error.
@@ -149,8 +148,9 @@ class ApplicationService {
 
     // ── Create notification for admin ─────────────────────────────────────
     try {
-      final user = _auth.currentUser;
-      final userName = user?.displayName ?? user?.email ?? 'A user';
+      final userName = JwtService().displayNameSync ??
+          JwtService().emailSync ??
+          'A user';
       await _db.collection('notifications').add({
         'title': 'New Application Received',
         'titleKm': 'ពាក្យសុំថ្មីត្រូវបានទទួល',

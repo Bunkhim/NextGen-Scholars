@@ -1,9 +1,10 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/data/repositories/saved_scholarship_repository.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
@@ -15,7 +16,6 @@ import 'package:scholarship_app/services/user_firestore_service.dart';
 import 'package:scholarship_app/services/viewed_scholarship_service.dart';
 
 class ProfileController extends GetxController {
-  // ── Observable State ──────────────────────────────────────────────────────
   final RxString userName = ''.obs;
   final RxString userEmail = ''.obs;
   final RxnString photoUrl = RxnString();
@@ -25,13 +25,14 @@ class ProfileController extends GetxController {
   final RxBool isLoggingOut = false.obs;
   final RxBool isDeletingAccount = false.obs;
 
+  final _authApi = AuthApiService();
+  final _jwt = JwtService();
+
   @override
   void onInit() {
     super.onInit();
     loadProfile();
-    // Listen for refresh triggers from other screens
     ProfileScreen.refreshNotifier.addListener(loadProfile);
-    // Listen for instant photo update (no Firestore delay)
     ProfileScreen.photoRefreshNotifier.addListener(_onPhotoRefresh);
   }
 
@@ -45,7 +46,6 @@ class ProfileController extends GetxController {
   void _onPhotoRefresh() {
     if (ProfileScreen.activePhotoPath != null) {
       final path = ProfileScreen.activePhotoPath!;
-      // Evict cached file so the new image is loaded from disk
       if (!path.startsWith('http') && File(path).existsSync()) {
         FileImage(File(path)).evict();
       }
@@ -54,14 +54,14 @@ class ProfileController extends GetxController {
   }
 
   Future<void> loadProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
     final profile = await UserFirestoreService().getProfile();
+    final jwtEmail = await _jwt.currentUserEmail;
+    final jwtName = await _jwt.currentUserDisplayName;
+    final jwtUid = await _jwt.currentUid;
 
-    // Get real counts from actual data sources
     final realSavedCount = await SavedScholarshipRepository().count();
     final realViewedCount = await ViewedScholarshipService().count();
 
-    // Count applications from Firestore collection
     int realAppliedCount = 0;
     try {
       final apps = await ApplicationService().streamMyApplications().first;
@@ -71,15 +71,14 @@ class ProfileController extends GetxController {
     }
 
     if (profile != null) {
-      userName.value = profile['name'] ?? user?.displayName ?? '';
-      userEmail.value = profile['email'] ?? user?.email ?? '';
-      photoUrl.value = profile['photoUrl'] ?? user?.photoURL;
+      userName.value = profile['name'] ?? jwtName ?? '';
+      userEmail.value = profile['email'] ?? jwtEmail ?? '';
+      photoUrl.value = profile['photoUrl'];
       ProfileScreen.activePhotoPath = photoUrl.value;
       ProfileScreen.photoRefreshNotifier.value++;
-    } else if (user != null) {
-      userName.value = user.displayName ?? '';
-      userEmail.value = user.email ?? '';
-      photoUrl.value = user.photoURL;
+    } else if (jwtUid != null) {
+      userName.value = jwtName ?? '';
+      userEmail.value = jwtEmail ?? '';
     }
     savedCount.value = realSavedCount;
     appliedCount.value = realAppliedCount;
@@ -89,72 +88,52 @@ class ProfileController extends GetxController {
   Future<void> handleLogout() async {
     isLoggingOut.value = true;
     try {
-      // Backup ALL user data to Firestore before signing out
-      await UserDataSyncService().backupAll();
-      // Preserve Fill Info data but detach from current user
-      await FillInfoPersistenceService().onUserLoggedOut();
-      // Clear session timestamp so next login resets the 7-day timer
-      await SessionSecurityService().clearLoginTimestamp();
+      await _authApi.logout();
+    } catch (_) {}
 
-      // Sign out Google if used
+    try {
+      await UserDataSyncService().backupAll();
+    } catch (_) {}
+
+    await FillInfoPersistenceService().onUserLoggedOut();
+    await SessionSecurityService().clearLoginTimestamp();
+
+    try {
       final googleSignIn = GoogleSignIn();
       if (await googleSignIn.isSignedIn()) {
         await googleSignIn.signOut();
       }
-      // Sign out Firebase
-      await FirebaseAuth.instance.signOut();
+    } catch (_) {}
 
-      // Clear entire navigation stack and go to login
-      Get.offAllNamed(AppRoutes.loginScreen);
-    } catch (e) {
-      isLoggingOut.value = false;
-      Get.snackbar('Error', 'Logout failed. Please try again.',
-          backgroundColor: Colors.red, colorText: Colors.white);
-    }
+    await _jwt.clearUserSession();
+
+    Get.offAllNamed(AppRoutes.loginScreen);
   }
 
   Future<void> handleDeleteAccount() async {
     isDeletingAccount.value = true;
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-      final uid = user.uid;
+      final uid = await _jwt.currentUid;
+      if (uid == null) return;
 
-      // 1. Delete Fill Info local data permanently (local + Firestore)
       await FillInfoPersistenceService().onAccountDeleted(uid);
-
-      // 2. Delete ALL other cloud-synced data
       await UserDataSyncService.deleteAllCloudData(uid);
       await UserDataSyncService.deleteAllLocalData(uid);
-
-      // 3. Clear session security timestamp
       await SessionSecurityService().clearLoginTimestamp();
-
-      // 4. Delete Firestore user document
       await UserFirestoreService().deleteUserDocument(uid);
 
-      // 5. Sign out Google if used
-      final googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        await googleSignIn.signOut();
-      }
+      try {
+        final googleSignIn = GoogleSignIn();
+        if (await googleSignIn.isSignedIn()) {
+          await googleSignIn.signOut();
+        }
+      } catch (_) {}
 
-      // 6. Delete Firebase Auth account
-      await user.delete();
+      await _jwt.clearUserSession();
 
       Get.snackbar('', 'Account deleted successfully.',
           backgroundColor: Colors.green, colorText: Colors.white);
-
-      // Navigate to login and clear stack
       Get.offAllNamed(AppRoutes.loginScreen);
-    } on FirebaseAuthException catch (e) {
-      isDeletingAccount.value = false;
-      String errorMsg = 'Failed to delete account.';
-      if (e.code == 'requires-recent-login') {
-        errorMsg = 'Please re-authenticate and try again.';
-      }
-      Get.snackbar('Error', errorMsg,
-          backgroundColor: Colors.red, colorText: Colors.white);
     } catch (e) {
       isDeletingAccount.value = false;
       Get.snackbar('Error', 'Failed to delete account.',

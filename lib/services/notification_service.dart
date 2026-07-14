@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 
 /// Model representing a Firestore notification.
 class AppNotification {
@@ -31,7 +31,7 @@ class AppNotification {
   });
 
   bool get isRead {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final uid = JwtService().uidSync ?? '';
     return readBy.contains(uid);
   }
 
@@ -62,7 +62,7 @@ class NotificationService {
   final _db = FirebaseFirestore.instance;
   CollectionReference get _notifications => _db.collection('notifications');
 
-  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
+  String get _uid => JwtService().uidSync ?? '';
 
   /// Stream notifications relevant to the current user.
   /// Returns broadcast notifications (targetUserId == null) + user-specific ones.

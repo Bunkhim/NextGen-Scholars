@@ -2,9 +2,9 @@
 
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/application_data.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
@@ -68,9 +68,10 @@ class HomeController extends GetxController {
   }
 
   Future<void> loadUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
     final profile = await UserFirestoreService().getProfile();
-    final name = profile?['name'] as String? ?? user?.displayName ?? 'User';
+    final name = profile?['name'] as String? ??
+        JwtService().displayNameSync ??
+        'User';
     userName.value = name;
   }
 
@@ -95,8 +96,7 @@ class HomeController extends GetxController {
       return;
     }
     final profile = await UserFirestoreService().getProfile();
-    final user = FirebaseAuth.instance.currentUser;
-    final url = profile?['photoUrl'] as String? ?? user?.photoURL;
+    final url = profile?['photoUrl'] as String?;
     ProfileScreen.activePhotoPath = url;
     photoUrl.value = url;
   }

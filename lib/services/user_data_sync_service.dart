@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/database_helper.dart';
@@ -50,7 +50,7 @@ class UserDataSyncService {
   /// Backup ALL local user data to Firestore.
   /// Call on logout or periodically while user is active.
   Future<void> backupAll() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = JwtService().uidSync;
     if (uid == null) return;
     try {
       await Future.wait([
@@ -77,7 +77,7 @@ class UserDataSyncService {
   /// Public: sync saved scholarships to Firestore immediately.
   /// Call after every save / unsave operation.
   Future<void> syncSavedScholarships() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = JwtService().uidSync;
     if (uid == null) return;
     await _backupSavedScholarships(uid);
     // Also update activity timestamp
@@ -223,7 +223,7 @@ class UserDataSyncService {
   /// Public: sync viewed scholarships to Firestore immediately.
   /// Call after every markViewed operation.
   Future<void> syncViewedScholarships() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = JwtService().uidSync;
     if (uid == null) return;
     await _backupViewedScholarships(uid);
     await _appData(uid).doc('_meta').set({
@@ -608,7 +608,7 @@ class UserDataSyncService {
 
   /// Record activity timestamp (call periodically).
   Future<void> recordActivity() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = JwtService().uidSync;
     if (uid == null) return;
     try {
       await _appData(uid).doc('_meta').set({

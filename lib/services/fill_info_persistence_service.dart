@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/application_data.dart';
 
 /// Manages persistent Fill Info data lifecycle tied to user accounts.
@@ -24,16 +24,13 @@ class FillInfoPersistenceService {
   /// Run stale-data cleanup, then restore Fill Info if a user is already
   /// logged in (e.g. app relaunch without explicit logout).
   Future<void> initialize() async {
-    // 1. Purge any user data older than 30 days
     await ApplicationData.cleanupStaleData();
 
-    // 2. If a user is still signed in, load their stored Fill Info
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      await _appData.setActiveUser(user.uid);
-      debugPrint('📋 Fill Info loaded for user: ${user.uid}');
+    final uid = JwtService().uidSync;
+    if (uid != null) {
+      await _appData.setActiveUser(uid);
+      debugPrint('📋 Fill Info loaded for user: $uid');
     } else {
-      // No user signed in — keep memory clean
       _appData.clearAll();
     }
   }

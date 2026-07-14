@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 
 /// Service to sync Firebase Auth users to Firestore `users` collection.
 ///
@@ -52,24 +52,21 @@ class UserFirestoreService {
 
   /// Ensure a user document exists for Google/social sign-in.
   /// Creates one if missing, updates lastLoginAt if it exists.
-  Future<void> ensureUser(User firebaseUser) async {
-    final doc = _users.doc(firebaseUser.uid);
+  Future<void> ensureUser(String uid, {String? displayName, String? email, String? photoUrl}) async {
+    final doc = _users.doc(uid);
     final snapshot = await doc.get();
 
     if (snapshot.exists) {
-      // Returning user — just update lastLoginAt
       await doc.update({
         'lastLoginAt': FieldValue.serverTimestamp(),
       });
     } else {
-      // First-time social login — create document
       await doc.set({
-        'name': firebaseUser.displayName ?? '',
-        'email': firebaseUser.email ?? '',
-        'phone': firebaseUser.phoneNumber,
+        'name': displayName ?? '',
+        'email': email ?? '',
         'role': 'user',
         'isActive': true,
-        'photoUrl': firebaseUser.photoURL,
+        'photoUrl': photoUrl,
         'savedScholarships': 0,
         'applications': 0,
         'createdAt': FieldValue.serverTimestamp(),
@@ -95,7 +92,7 @@ class UserFirestoreService {
 
   /// Get the current user's profile data from Firestore.
   Future<Map<String, dynamic>?> getProfile() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = await JwtService().currentUid;
     if (uid == null) return null;
     try {
       final doc = await _users.doc(uid).get();
@@ -107,10 +104,13 @@ class UserFirestoreService {
   }
 
   /// Stream the current user's profile data in real time.
-  Stream<Map<String, dynamic>?> streamProfile() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return Stream.value(null);
-    return _users.doc(uid).snapshots().map((snap) {
+  Stream<Map<String, dynamic>?> streamProfile() async* {
+    final uid = await JwtService().currentUid;
+    if (uid == null) {
+      yield null;
+      return;
+    }
+    yield* _users.doc(uid).snapshots().map((snap) {
       if (snap.exists) return snap.data() as Map<String, dynamic>?;
       return null;
     });
@@ -126,7 +126,7 @@ class UserFirestoreService {
     String? country,
     List<String>? interestedFields,
   }) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = await JwtService().currentUid;
     if (uid == null) return;
 
     final updates = <String, dynamic>{};

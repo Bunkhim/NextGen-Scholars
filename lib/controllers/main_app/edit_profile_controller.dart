@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/services/user_firestore_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
@@ -85,15 +85,16 @@ class EditProfileController extends GetxController {
   Future<void> _loadProfile() async {
     try {
       final profile = await UserFirestoreService().getProfile();
-      final user = FirebaseAuth.instance.currentUser;
+      final jwtName = JwtService().displayNameSync;
+      final jwtEmail = JwtService().emailSync;
 
       if (profile != null) {
-        nameController.text = profile['name'] ?? user?.displayName ?? '';
-        emailController.text = profile['email'] ?? user?.email ?? '';
+        nameController.text = profile['name'] ?? jwtName ?? '';
+        emailController.text = profile['email'] ?? jwtEmail ?? '';
         phoneController.text = profile['phone'] ?? '';
         dobController.text = profile['dob'] ?? '';
         countryController.text = profile['country'] ?? '';
-        existingPhotoUrl.value = profile['photoUrl'] ?? user?.photoURL;
+        existingPhotoUrl.value = profile['photoUrl'];
         savedInterests.assignAll(
           List<String>.from(profile['interestedFields'] ?? []),
         );
@@ -103,21 +104,18 @@ class EditProfileController extends GetxController {
         for (int i = 0; i < fields.length; i++) {
           selectedFields[i] = savedInterests.contains(fields[i]);
         }
-      } else if (user != null) {
-        nameController.text = user.displayName ?? '';
-        emailController.text = user.email ?? '';
-        existingPhotoUrl.value = user.photoURL;
+      } else {
+        nameController.text = jwtName ?? '';
+        emailController.text = jwtEmail ?? '';
       }
 
       _snapshotOriginalValues();
     } catch (_) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        nameController.text = user.displayName ?? '';
-        emailController.text = user.email ?? '';
-        existingPhotoUrl.value = user.photoURL;
-        _snapshotOriginalValues();
-      }
+      final jwtName = JwtService().displayNameSync;
+      final jwtEmail = JwtService().emailSync;
+      nameController.text = jwtName ?? '';
+      emailController.text = jwtEmail ?? '';
+      _snapshotOriginalValues();
     }
 
     isLoading.value = false;
@@ -317,11 +315,6 @@ class EditProfileController extends GetxController {
         photoUrl: photoPath,
         interestedFields: interests,
       );
-
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null && user.displayName != nameController.text.trim()) {
-        await user.updateDisplayName(nameController.text.trim());
-      }
 
       _snapshotOriginalValues();
       pickedPhoto.value = null;
