@@ -104,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   Widget _buildErrorText(String? error, ColorScheme cs) {
     if (error == null) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: 6, left: 4),
+      padding: const EdgeInsets.only(top: 6, left: 0),
       child: Text(
         error,
         style: TextStyle(fontSize: 12, color: cs.error, height: 1.2),
@@ -128,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     ];
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8, left: 4),
+      padding: const EdgeInsets.only(top: 8, left: 0),
       child: Wrap(
         spacing: 12,
         runSpacing: 4,
