@@ -1,55 +1,39 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 
-// import 'package:your_app/models/app_notification.dart';
-// import 'package:your_app/services/notification_service.dart';
-
-class NotificationController extends ChangeNotifier {
+class NotificationController extends GetxController {
   final NotificationService _service = NotificationService();
 
-  // State variables
-  List<AppNotification> _notifications = [];
-  int _unreadCount = 0;
-  bool _isLoading = true;
+  final RxList<AppNotification> notifications = <AppNotification>[].obs;
+  final RxInt unreadCount = 0.obs;
+  final RxBool isLoading = true.obs;
 
-  // Getters for the UI
-  List<AppNotification> get notifications => _notifications;
-  int get unreadCount => _unreadCount;
-  bool get isLoading => _isLoading;
-
-  // Stream subscriptions to manage memory efficiently
   StreamSubscription<List<AppNotification>>? _notificationsSub;
   StreamSubscription<int>? _unreadCountSub;
 
-  /// Initializes the controller and starts listening to Firestore streams.
   NotificationController() {
     _initStreams();
   }
 
   void _initStreams() {
-    _isLoading = true;
-    notifyListeners();
+    isLoading.value = true;
 
-    // Listen to the notifications list
     _notificationsSub = _service.streamMyNotifications().listen(
       (data) {
-        _notifications = data;
-        _isLoading = false;
-        notifyListeners();
+        notifications.assignAll(data);
+        isLoading.value = false;
       },
       onError: (error) {
         debugPrint('Error streaming notifications: $error');
-        _isLoading = false;
-        notifyListeners();
+        isLoading.value = false;
       },
     );
 
-    // Listen to the unread count
     _unreadCountSub = _service.streamUnreadCount().listen(
       (count) {
-        _unreadCount = count;
-        notifyListeners();
+        unreadCount.value = count;
       },
       onError: (error) {
         debugPrint('Error streaming unread count: $error');
@@ -57,18 +41,14 @@ class NotificationController extends ChangeNotifier {
     );
   }
 
-  /// Marks a specific notification as read.
   Future<void> markAsRead(String notificationId) async {
     try {
       await _service.markAsRead(notificationId);
-      // No need to manually update the list/count or call notifyListeners(), 
-      // the Firestore stream will trigger an update automatically.
     } catch (e) {
       debugPrint('Error marking notification as read: $e');
     }
   }
 
-  /// Marks all visible notifications as read.
   Future<void> markAllAsRead() async {
     try {
       await _service.markAllAsRead();
@@ -77,7 +57,6 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
-  /// Dismisses a notification so it no longer appears for the user.
   Future<void> dismissNotification(String notificationId) async {
     try {
       await _service.dismissNotification(notificationId);
@@ -87,10 +66,9 @@ class NotificationController extends ChangeNotifier {
   }
 
   @override
-  void dispose() {
-    // Always cancel subscriptions to prevent memory leaks when the controller is destroyed
+  void onClose() {
     _notificationsSub?.cancel();
     _unreadCountSub?.cancel();
-    super.dispose();
+    super.onClose();
   }
 }
