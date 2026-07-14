@@ -258,8 +258,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             GestureDetector(
               onTap: () =>
                   Navigator.pushNamed(context, AppRoutes.notificationScreen),
-              child: StreamBuilder<int>(
-                stream: NotificationService().streamUnreadCount(),
+              child: FutureBuilder<int>(
+                future: NotificationService().fetchUnreadCount(),
                 builder: (context, snap) {
                   final notificationCount = snap.data ?? 0;
                   final ws = WallpaperService();

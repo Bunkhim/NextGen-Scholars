@@ -2,20 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/services/websocket_service.dart';
 import 'package:scholarship_app/services/application_service.dart';
 
 /// Controller for [ApplicationStatusScreen].
 ///
-/// Loads the application from the backend API and polls for updates.
+/// Loads the application from the backend API, listens to WebSocket for
+/// real-time status updates, and polls every 30s as fallback.
 class ApplicationStatusController extends GetxController {
   ApplicationStatusController(ScholarshipApplication initial)
       : application = initial.obs;
 
-  /// The current application, kept in sync via polling.
   final Rx<ScholarshipApplication> application;
-
   final RxString errorMessage = ''.obs;
 
+  final WebSocketService _ws = WebSocketService();
   Timer? _pollTimer;
 
   String get id => application.value.id;
@@ -29,12 +30,27 @@ class ApplicationStatusController extends GetxController {
   void onInit() {
     super.onInit();
     _refreshApplication();
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshApplication());
+
+    _ws.addListener(this, (type, data) {
+      if (type == 'notification') {
+        final refId = data['reference_id'] as String?;
+        final notifType = data['notification_type'] as String?;
+        if (notifType == 'application_status' && refId == id) {
+          _refreshApplication();
+        }
+      }
+    });
+
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshApplication(),
+    );
   }
 
   @override
   void onClose() {
     _pollTimer?.cancel();
+    _ws.removeListener(this);
     super.onClose();
   }
 

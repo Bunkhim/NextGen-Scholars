@@ -1,15 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:scholarship_app/core/api/services/notifications_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 
-/// Model representing a Firestore notification.
+/// Model representing a notification from the backend.
 class AppNotification {
   final String id;
   final String title;
   final String? titleKm;
   final String body;
   final String? bodyKm;
-  final String
-      type; // 'new_scholarship' | 'new_application' | 'application_status' | 'system'
+  final String type;
   final String? targetUserId;
   final String? referenceId;
   final DateTime? createdAt;
@@ -35,96 +34,67 @@ class AppNotification {
     return readBy.contains(uid);
   }
 
-  factory AppNotification.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
-      id: doc.id,
-      title: (data['title'] as String?) ?? '',
-      titleKm: data['titleKm'] as String?,
-      body: (data['body'] as String?) ?? '',
-      bodyKm: data['bodyKm'] as String?,
-      type: (data['type'] as String?) ?? 'system',
-      targetUserId: data['targetUserId'] as String?,
-      referenceId: data['referenceId'] as String?,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
-      readBy: List<String>.from(data['readBy'] ?? []),
-      dismissedBy: List<String>.from(data['dismissedBy'] ?? []),
+      id: (json['id'] ?? json['_id'] ?? '') as String,
+      title: (json['title'] ?? '') as String,
+      titleKm: json['titleKm'] as String?,
+      body: (json['body'] ?? '') as String,
+      bodyKm: json['bodyKm'] as String?,
+      type: (json['type'] ?? 'system') as String,
+      targetUserId: json['targetUserId'] as String?,
+      referenceId: json['referenceId'] as String?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'] as String)
+          : null,
+      readBy: List<String>.from(json['readBy'] ?? []),
+      dismissedBy: List<String>.from(json['dismissedBy'] ?? []),
     );
   }
 }
 
-/// Service to query Firestore notifications for the current user.
+/// Service to query notifications from the backend API.
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
   factory NotificationService() => _instance;
   NotificationService._();
 
-  final _db = FirebaseFirestore.instance;
-  CollectionReference get _notifications => _db.collection('notifications');
+  final NotificationsApiService _api = NotificationsApiService();
 
   String get _uid => JwtService().uidSync ?? '';
 
-  /// Stream notifications relevant to the current user.
-  /// Returns broadcast notifications (targetUserId == null) + user-specific ones.
-  Stream<List<AppNotification>> streamMyNotifications({int limit = 50}) {
-    // We query all notifications ordered by createdAt desc and filter client-side
-    // because Firestore doesn't support OR queries on different fields easily.
-    return _notifications
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snap) {
-      return snap.docs
-          .map((doc) => AppNotification.fromFirestore(doc))
-          .where((n) =>
-              // Exclude admin-only notifications
-              n.type != 'new_application' &&
-              // Exclude notifications dismissed by this user
-              !n.dismissedBy.contains(_uid) &&
-              (n.targetUserId == null ||
-                  n.targetUserId == '' ||
-                  n.targetUserId == _uid))
-          .toList();
-    });
+  /// Fetch notifications from the backend API.
+  Future<List<AppNotification>> fetchMyNotifications({int limit = 50}) async {
+    final raw = await _api.listNotifications(limit: limit);
+    final uid = _uid;
+    return raw
+        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+        .where((n) =>
+            n.type != 'new_application' &&
+            !n.dismissedBy.contains(uid) &&
+            (n.targetUserId == null ||
+                n.targetUserId == '' ||
+                n.targetUserId == uid))
+        .toList();
   }
 
-  /// Get unread notification count for the current user.
-  Stream<int> streamUnreadCount() {
-    return streamMyNotifications().map((list) {
-      return list.where((n) => !n.isRead).length;
-    });
+  /// Get unread notification count from the backend.
+  Future<int> fetchUnreadCount() async {
+    return _api.getUnreadCount();
   }
 
   /// Mark a single notification as read.
   Future<void> markAsRead(String notificationId) async {
-    if (_uid.isEmpty) return;
-    await _notifications.doc(notificationId).update({
-      'readBy': FieldValue.arrayUnion([_uid]),
-    });
+    await _api.markAsRead(notificationId);
   }
 
   /// Mark all visible notifications as read.
   Future<void> markAllAsRead() async {
-    if (_uid.isEmpty) return;
-    final snap = await _notifications.get();
-    final batch = _db.batch();
-    for (final doc in snap.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final target = data['targetUserId'] as String?;
-      if (target == null || target.isEmpty || target == _uid) {
-        batch.update(doc.reference, {
-          'readBy': FieldValue.arrayUnion([_uid]),
-        });
-      }
-    }
-    await batch.commit();
+    await _api.markAllAsRead();
   }
 
   /// Dismiss (hide) a notification for the current user.
   Future<void> dismissNotification(String notificationId) async {
-    if (_uid.isEmpty) return;
-    await _notifications.doc(notificationId).update({
-      'dismissedBy': FieldValue.arrayUnion([_uid]),
-    });
+    await _api.dismissNotification(notificationId);
   }
 }

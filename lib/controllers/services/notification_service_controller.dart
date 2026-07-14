@@ -1,49 +1,78 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
+import 'package:scholarship_app/core/services/websocket_service.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 
 class NotificationController extends GetxController {
   final NotificationService _service = NotificationService();
+  final WebSocketService _ws = WebSocketService();
 
   final RxList<AppNotification> notifications = <AppNotification>[].obs;
   final RxInt unreadCount = 0.obs;
   final RxBool isLoading = true.obs;
 
-  StreamSubscription<List<AppNotification>>? _notificationsSub;
-  StreamSubscription<int>? _unreadCountSub;
+  Timer? _pollTimer;
 
   NotificationController() {
-    _initStreams();
+    _init();
   }
 
-  void _initStreams() {
-    isLoading.value = true;
+  void _init() {
+    _loadNotifications();
 
-    _notificationsSub = _service.streamMyNotifications().listen(
-      (data) {
-        notifications.assignAll(data);
-        isLoading.value = false;
-      },
-      onError: (error) {
-        debugPrint('Error streaming notifications: $error');
-        isLoading.value = false;
-      },
-    );
+    _ws.addListener(this, (type, data) {
+      if (type == 'notification') {
+        _loadNotifications();
+      } else if (type == 'notification_read') {
+        final id = data['notification_id'] as String?;
+        if (id != null) _applyReadLocally(id);
+      }
+    });
 
-    _unreadCountSub = _service.streamUnreadCount().listen(
-      (count) {
-        unreadCount.value = count;
-      },
-      onError: (error) {
-        debugPrint('Error streaming unread count: $error');
-      },
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _loadNotifications(),
     );
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final data = await _service.fetchMyNotifications();
+      notifications.assignAll(data);
+      unreadCount.value = await _service.fetchUnreadCount();
+      isLoading.value = false;
+    } catch (e) {
+      debugPrint('Error loading notifications: $e');
+      isLoading.value = false;
+    }
+  }
+
+  void _applyReadLocally(String notificationId) {
+    final idx = notifications.indexWhere((n) => n.id == notificationId);
+    if (idx == -1) return;
+    final old = notifications[idx];
+    notifications[idx] = AppNotification(
+      id: old.id,
+      title: old.title,
+      titleKm: old.titleKm,
+      body: old.body,
+      bodyKm: old.bodyKm,
+      type: old.type,
+      targetUserId: old.targetUserId,
+      referenceId: old.referenceId,
+      createdAt: old.createdAt,
+      readBy: [...old.readBy, JwtService().uidSync ?? ''],
+      dismissedBy: old.dismissedBy,
+    );
+    unreadCount.value = notifications.where((n) => !n.isRead).length;
   }
 
   Future<void> markAsRead(String notificationId) async {
     try {
       await _service.markAsRead(notificationId);
+      _applyReadLocally(notificationId);
     } catch (e) {
       debugPrint('Error marking notification as read: $e');
     }
@@ -52,6 +81,26 @@ class NotificationController extends GetxController {
   Future<void> markAllAsRead() async {
     try {
       await _service.markAllAsRead();
+      final uid = JwtService().uidSync ?? '';
+      for (var i = 0; i < notifications.length; i++) {
+        final old = notifications[i];
+        if (!old.readBy.contains(uid)) {
+          notifications[i] = AppNotification(
+            id: old.id,
+            title: old.title,
+            titleKm: old.titleKm,
+            body: old.body,
+            bodyKm: old.bodyKm,
+            type: old.type,
+            targetUserId: old.targetUserId,
+            referenceId: old.referenceId,
+            createdAt: old.createdAt,
+            readBy: [...old.readBy, uid],
+            dismissedBy: old.dismissedBy,
+          );
+        }
+      }
+      unreadCount.value = 0;
     } catch (e) {
       debugPrint('Error marking all as read: $e');
     }
@@ -60,6 +109,7 @@ class NotificationController extends GetxController {
   Future<void> dismissNotification(String notificationId) async {
     try {
       await _service.dismissNotification(notificationId);
+      notifications.removeWhere((n) => n.id == notificationId);
     } catch (e) {
       debugPrint('Error dismissing notification: $e');
     }
@@ -67,8 +117,8 @@ class NotificationController extends GetxController {
 
   @override
   void onClose() {
-    _notificationsSub?.cancel();
-    _unreadCountSub?.cancel();
+    _pollTimer?.cancel();
+    _ws.removeListener(this);
     super.onClose();
   }
 }

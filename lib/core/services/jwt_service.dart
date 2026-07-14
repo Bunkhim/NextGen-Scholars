@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholarship_app/core/api/api_config.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/services/websocket_service.dart';
 
 class JwtService {
   static final JwtService _instance = JwtService._internal();
@@ -83,6 +84,7 @@ class JwtService {
     _cachedUid = uid;
     _cachedEmail = email ?? '';
     _cachedName = displayName ?? '';
+    WebSocketService().connect();
   }
 
   Future<void> clearUserSession() async {
@@ -94,6 +96,7 @@ class JwtService {
     _cachedUid = null;
     _cachedEmail = null;
     _cachedName = null;
+    WebSocketService().disconnect();
   }
 
   // Synchronous UID getter (reads from in-memory cache)

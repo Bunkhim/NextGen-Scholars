@@ -201,8 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     GestureDetector(
                       onTap: () =>
                           Get.toNamed(AppRoutes.notificationScreen),
-                      child: StreamBuilder<int>(
-                        stream: NotificationService().streamUnreadCount(),
+                      child: FutureBuilder<int>(
+                        future: NotificationService().fetchUnreadCount(),
                         builder: (context, snap) {
                           final unread = snap.data ?? 0;
                           return Stack(
