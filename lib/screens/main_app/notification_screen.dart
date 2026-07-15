@@ -33,19 +33,13 @@ class NotificationsScreen extends StatelessWidget {
           slivers: [
                     // AppBar
                     SliverAppBar(
-                      backgroundColor: WallpaperService().hasTheme
-                          ? WallpaperService().appBarColor
-                          : colorScheme.surface,
+                      backgroundColor: Colors.blue,
                       elevation: 0,
-                      surfaceTintColor: WallpaperService().hasTheme
-                          ? Colors.transparent
-                          : colorScheme.surface,
+                      surfaceTintColor: Colors.transparent,
                       pinned: true,
                       leading: IconButton(
-                        icon: Icon(Icons.arrow_back_ios,
-                            color: WallpaperService().hasTheme
-                                ? WallpaperService().onThemeColor
-                                : colorScheme.onSurface,
+                        icon: const Icon(Icons.arrow_back_ios,
+                            color: Colors.white,
                             size: 20),
                         onPressed: () => Navigator.pop(context),
                       ),
@@ -54,10 +48,8 @@ class NotificationsScreen extends StatelessWidget {
                         children: [
                           Text(
                             t.translate('notificationTitle'),
-                            style: TextStyle(
-                              color: WallpaperService().hasTheme
-                                  ? WallpaperService().onThemeColor
-                                  : colorScheme.onSurface,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                             ),
@@ -65,12 +57,8 @@ class NotificationsScreen extends StatelessWidget {
                           if (unreadCount > 0)
                             Text(
                               "$unreadCount ${t.translate('notificationUnreadCount')}",
-                              style: TextStyle(
-                                color: WallpaperService().hasTheme
-                                    ? WallpaperService()
-                                        .onThemeColor
-                                        .withOpacity(0.7)
-                                    : colorScheme.onSurfaceVariant,
+                              style: const TextStyle(
+                                color: Colors.white70,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -83,9 +71,8 @@ class NotificationsScreen extends StatelessWidget {
                             onPressed: () => controller.markAllAsRead(),
                             child: Text(
                               t.translate('notificationMarkAllRead'),
-                              style: TextStyle(
-                                color: WallpaperService()
-                                    .themedPrimary(colorScheme),
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),

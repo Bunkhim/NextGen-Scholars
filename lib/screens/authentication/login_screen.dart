@@ -246,6 +246,8 @@ class _LoginScreenState extends State<LoginScreen>
                             onFieldSubmitted: (_) =>
                                 controller.passwordFocusNode.requestFocus(),
                             cursorHeight: 20,
+                            cursorColor: Colors.blue,
+                            cursorErrorColor: Colors.blue,
                             style: TextStyle(
                               fontSize: 15,
                               color: colorScheme.onSurface,
@@ -279,6 +281,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   controller.validatePassword(v, t),
                               onFieldSubmitted: (_) => _submitLogin(t),
                               cursorHeight: 20,
+                              cursorColor: Colors.blue,
+                              cursorErrorColor: Colors.blue,
                               style: TextStyle(
                                 fontSize: 15,
                                 color: colorScheme.onSurface,
