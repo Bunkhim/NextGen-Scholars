@@ -13,10 +13,11 @@ class SavedScholarshipRepository {
     final db = await _db.database;
 
     // Check for any existing row, visible or hidden.
+    final hasUser = saved.userId != null;
     final existing = await db.query(
       DatabaseHelper.tableSavedScholarships,
-      where: 'scholarship_id = ? AND (user_id = ? OR user_id IS NULL)',
-      whereArgs: [saved.scholarshipId, saved.userId],
+      where: 'scholarship_id = ? AND (user_id ${hasUser ? '= ?' : 'IS NULL'}${hasUser ? ' OR user_id IS NULL' : ''})',
+      whereArgs: hasUser ? [saved.scholarshipId, saved.userId] : [saved.scholarshipId],
       limit: 1,
     );
 

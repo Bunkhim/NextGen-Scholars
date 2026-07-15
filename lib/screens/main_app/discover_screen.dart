@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/data/models/saved_scholarship_model.dart';
 import 'package:scholarship_app/data/models/scholarship_model.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
@@ -29,7 +30,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(DiscoverController());
+    controller = Get.put(DiscoverController(), permanent: true);
     controller.refreshSavedIds();
     DiscoverScreen.refreshNotifier.addListener(_onRefreshNotifier);
   }
@@ -487,6 +488,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         if (isFav) {
                           await controller.savedRepository
                               .unsaveByFirestoreId(scholarship.id);
+                          try {
+                            await UsersApiService()
+                                .unsaveScholarship(scholarship.id);
+                          } catch (_) {}
                         } else {
                           final sqliteId =
                               await controller.scholarshipRepository
@@ -521,6 +526,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           );
                           await controller.savedRepository.save(
                               SavedScholarshipModel(scholarshipId: sqliteId));
+                          try {
+                            await UsersApiService()
+                                .saveScholarship(scholarship.id);
+                          } catch (_) {}
                         }
                         // Notify saved screen to reload immediately.
                         SavedScholarshipScreen.refreshNotifier.value++;

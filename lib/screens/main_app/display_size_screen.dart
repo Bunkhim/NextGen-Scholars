@@ -113,16 +113,16 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Obx(
-                () => SingleChildScrollView(
+                () {
+                  final ws = WallpaperService();
+                  final themed = ws.hasTheme;
+                  final primary = ws.themedPrimary(cs);
+                  final options = controller.options;
+                  final currentIndex =
+                      controller.scaleToIndex(controller.currentScale.value);
+                  return SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
-                  child: Builder(builder: (context) {
-                    final ws = WallpaperService();
-                    final themed = ws.hasTheme;
-                    final primary = ws.themedPrimary(cs);
-                    final options = controller.options;
-                    final currentIndex =
-                        controller.scaleToIndex(controller.currentScale.value);
-                    return Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 8),
@@ -364,13 +364,12 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                         ),
                       ),
                     ],
-                  );
-                  }
-                ),
+                  ),
+                );
+                },
               ),
             ),
           ),
-          )
         ],
       ),
     );

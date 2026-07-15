@@ -46,6 +46,7 @@ class _ScholarshipAppState extends State<ScholarshipApp> {
         return ValueListenableBuilder<Locale>(
           valueListenable: LanguageService.localeNotifier,
           builder: (context, locale, child) {
+            Get.updateLocale(locale);
             return ValueListenableBuilder<double>(
               valueListenable: DisplaySettingsService.textScaleNotifier,
               builder: (context, textScale, child) {
