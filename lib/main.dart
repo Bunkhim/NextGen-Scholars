@@ -1,6 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,14 +14,9 @@ import 'package:scholarship_app/services/theme_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/widgets/theme_background_overlay.dart';
 
-import 'firebase_options.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   // Initialize SQLite database and seed default data.
   await DatabaseHelper().database;
   await DatabaseSeeder().seedIfEmpty();

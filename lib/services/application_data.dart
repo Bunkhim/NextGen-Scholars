@@ -7,14 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Singleton class to store application form data across screens.
 /// Data is persisted to SharedPreferences via [saveToPrefs] / [loadFromPrefs].
 ///
-/// Supports per-user storage keyed by Firebase UID so each account retains
+/// Supports per-user storage keyed by UID so each account retains
 /// its own Fill Info data across login/logout cycles.
 /// Data is automatically cleaned up after 30 days of inactivity or on
 /// account deletion.
 class ApplicationData {
   static const String _genericPrefix = 'fill_';
 
-  /// Active user's Firebase UID. When set, data is stored under a
+  /// Active user's UID. When set, data is stored under a
   /// user-specific prefix so different accounts don't share Fill Info.
   static String? _activeUid;
 

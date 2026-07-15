@@ -13,7 +13,7 @@ import 'package:scholarship_app/screens/main_app/scholarship_match_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,8 +65,8 @@ class HomeController extends GetxController {
   }
 
   Future<void> loadUserName() async {
-    final profile = await UserFirestoreService().getProfile();
-    final name = profile?['name'] as String? ??
+    final profile = await UsersApiService().getProfile();
+    final name = profile['displayName'] as String? ??
         JwtService().displayNameSync ??
         'User';
     userName.value = name;
@@ -92,8 +92,8 @@ class HomeController extends GetxController {
       photoUrl.value = ProfileScreen.activePhotoPath;
       return;
     }
-    final profile = await UserFirestoreService().getProfile();
-    final url = profile?['photoUrl'] as String?;
+    final profile = await UsersApiService().getProfile();
+    final url = profile['photoUrl'] as String?;
     ProfileScreen.activePhotoPath = url;
     photoUrl.value = url;
   }

@@ -5,7 +5,7 @@ import 'package:scholarship_app/services/application_data.dart';
 /// Manages persistent Fill Info data lifecycle tied to user accounts.
 ///
 /// Responsibilities:
-/// - Scope Fill Info data per Firebase UID
+/// - Scope Fill Info data per user UID
 /// - Preserve data across logout (don't clear)
 /// - Clean up data after 30 days of inactivity
 /// - Clean up data on account deletion
@@ -63,7 +63,7 @@ class FillInfoPersistenceService {
   // ──────────────────────────────────────────────────────
 
   /// Permanently delete all Fill Info for the given user.
-  /// Call this before or after deleting the Firebase Auth account.
+  /// Call this before or after deleting the user account.
   Future<void> onAccountDeleted(String uid) async {
     await ApplicationData.deleteUserData(uid);
     _appData.clearAll();

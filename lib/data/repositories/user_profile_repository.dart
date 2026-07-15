@@ -43,7 +43,7 @@ class UserProfileRepository {
     return UserProfile.fromMap(results.first);
   }
 
-  /// Get profile by Firebase UID.
+  /// Get profile by UID.
   Future<UserProfile?> getByFirebaseUid(String uid) async {
     final db = await _db.database;
     final results = await db.query(

@@ -322,7 +322,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Email field — always required for Firebase Auth
+                          // Email field — always required
                           TextField(
                             controller: controller.emailController,
                             keyboardType: TextInputType.emailAddress,
