@@ -314,6 +314,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         ),
       ),
       body: Obx(() {
+        // Force Obx to track favoriteIds so UI rebuilds on save/unsave.
+        // ignore: unused_local_variable
+        final _ = controller.favoriteIds.length;
+
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }

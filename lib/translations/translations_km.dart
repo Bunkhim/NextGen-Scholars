@@ -1165,9 +1165,15 @@ const Map<String, String> translationsKm = {
   'filterCountryJapan': 'ជប៉ុន',
   'filterCountryAustralia': 'អូស្ត្រាលី',
   'filterCountrySingapore': 'សិង្ហបុរី',
+  'filterCountrySouthKorea': 'កូរ៉េខាងត្បូង',
+  'filterCountryCanada': 'កាណាដា',
+  'filterCountryGermany': 'អាល្លឺម៉ង់',
+  'filterCountryFrance': 'បារាំង',
+  'filterCountryChina': 'ចិន',
   'filterTypeFullScholarship': 'អាហារូបករណ៍ពេញ',
   'filterTypePartialScholarship': 'អាហារូបករណ៍ផ្នែកខ្លះ',
   'filterTypeTuitionOnly': 'តែថ្លៃសិក្សាប៉ុណ្ណោះ',
+  'filterTypeStipend': 'ប្រាក់ឧបត្ថម្ភ',
 
   // notification_screen.dart
   'notifTitleDeadlineApproaching': 'កាលបរិច្ឆេទផុតកំណត់ជិតមកដល់',

@@ -1175,9 +1175,15 @@ const Map<String, String> translationsEn = {
   'filterCountryJapan': 'Japan',
   'filterCountryAustralia': 'Australia',
   'filterCountrySingapore': 'Singapore',
+  'filterCountrySouthKorea': 'South Korea',
+  'filterCountryCanada': 'Canada',
+  'filterCountryGermany': 'Germany',
+  'filterCountryFrance': 'France',
+  'filterCountryChina': 'China',
   'filterTypeFullScholarship': 'Full Scholarship',
   'filterTypePartialScholarship': 'Partial Scholarship',
   'filterTypeTuitionOnly': 'Tuition Only',
+  'filterTypeStipend': 'Stipend',
 
   // notification_screen.dart
   'notifTitleDeadlineApproaching': 'Application Deadline Approaching',

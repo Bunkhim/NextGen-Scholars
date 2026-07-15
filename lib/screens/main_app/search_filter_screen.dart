@@ -325,11 +325,12 @@ class _FilterSheetState extends State<_FilterSheet> {
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
             child: Container(
               width: 40,
               height: 4,
@@ -452,6 +453,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           ),
           SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 8),
         ],
+        ),
       ),
     );
   }
