@@ -91,6 +91,7 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                               () => TextField(
                                 controller: controller.searchController,
                                 focusNode: controller.focusNode,
+                                textInputAction: TextInputAction.search,
                                 autofocus: true,
                                 maxLength: SearchFilterController.maxSearchLength,
                                 style: TextStyle(color: colorScheme.onSurface),

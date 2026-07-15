@@ -501,6 +501,7 @@ class _ChatAIScreenState extends State<ChatAIScreen>
                     ),
               child: TextField(
                 controller: _messageController,
+                textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendMessage(),
                 maxLength: 2000,
                 maxLines: 5,

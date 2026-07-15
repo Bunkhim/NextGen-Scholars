@@ -1087,6 +1087,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Widget? suffixIcon,
     bool readOnly = false,
     VoidCallback? onTap,
+    TextInputAction? textInputAction,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final hasError = errorText != null && errorText.isNotEmpty;
@@ -1100,6 +1103,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         TextField(
           controller: controller,
+          focusNode: focusNode,
+          textInputAction: textInputAction ??
+              (nextFocusNode != null ? TextInputAction.next : TextInputAction.done),
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           onChanged: onChanged,

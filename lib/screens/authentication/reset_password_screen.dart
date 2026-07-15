@@ -228,6 +228,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                             Obx(
                               () => TextField(
                                 controller: controller.passwordController,
+                                textInputAction: TextInputAction.next,
                                 obscureText: controller.obscurePassword.value,
                                 decoration: InputDecoration(
                                   hintText: '••••••••',
@@ -294,6 +295,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                             Obx(
                               () => TextField(
                                 controller: controller.confirmController,
+                                textInputAction: TextInputAction.done,
                                 obscureText: controller.obscureConfirm.value,
                                 decoration: InputDecoration(
                                   hintText: '••••••••',

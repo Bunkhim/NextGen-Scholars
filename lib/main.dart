@@ -181,7 +181,15 @@ class _ScholarshipAppState extends State<ScholarshipApp> {
                                         ),
                                       );
                                     }
-                                    return content;
+
+                                    // Global keyboard dismiss on tap outside
+                                    return GestureDetector(
+                                      onTap: () => FocusManager.instance
+                                          .primaryFocus
+                                          ?.unfocus(),
+                                      behavior: HitTestBehavior.translucent,
+                                      child: content,
+                                    );
                                   },
                                   getPages: AppRoutes.getPages,
                                 );
