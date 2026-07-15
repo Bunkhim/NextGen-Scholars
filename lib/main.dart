@@ -20,6 +20,7 @@ void main() async {
   // Initialize SQLite database and seed default data.
   await DatabaseHelper().database;
   await DatabaseSeeder().seedIfEmpty();
+  await ThemeService().loadSettings();
   await LanguageService().loadSavedLanguage();
   await DisplaySettingsService().loadSettings();
   await WallpaperService().loadSettings();

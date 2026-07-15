@@ -11,8 +11,14 @@ import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/settings_controller.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showLanguagePicker(BuildContext context, SettingsController controller) {
     showModalBottomSheet(
@@ -24,7 +30,6 @@ class SettingsScreen extends StatelessWidget {
             selected: controller.selectedLanguage.value,
             onSelect: (val) {
               controller.setLanguage(val);
-              Navigator.pop(context);
             },
           )),
     );
@@ -46,7 +51,6 @@ class SettingsScreen extends StatelessWidget {
             selected: controller.notificationSound.value,
             onSelect: (val) {
               controller.saveString('settings_notification_sound', val);
-              Navigator.pop(context);
             },
           )),
     );
@@ -217,6 +221,7 @@ class SettingsScreen extends StatelessWidget {
                       trailing: DisplaySettingsService().currentFontDisplayName,
                       onTap: () async {
                         await Get.to(() => const FontPickerScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
                     _Divider(),
@@ -228,6 +233,7 @@ class SettingsScreen extends StatelessWidget {
                       trailing: t.translate(DisplaySettingsService().currentTextScaleLabelKey()),
                       onTap: () async {
                         await Get.to(() => const FontSizeScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
                     _Divider(),
@@ -239,6 +245,7 @@ class SettingsScreen extends StatelessWidget {
                       trailing: t.translate(DisplaySettingsService().currentDisplayScaleLabelKey()),
                       onTap: () async {
                         await Get.to(() => const DisplaySizeScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
 
@@ -253,6 +260,7 @@ class SettingsScreen extends StatelessWidget {
                           : t.translate('settingsWallpaperNone'),
                       onTap: () async {
                         await Get.to(() => WallpaperScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
 

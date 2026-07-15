@@ -16,7 +16,7 @@ class BaseApiService {
       );
       return response.data;
     } on DioException catch (e) {
-      debugPrint('BaseApiService GET error: $e');
+      debugPrint('BaseApiService GET error [$endpoint]: ${e.response?.statusCode} $e');
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }
   }
@@ -82,7 +82,7 @@ class BaseApiService {
       final response = await _apiConfig.dio.delete(endpoint);
       return response.data;
     } on DioException catch (e) {
-      debugPrint('BaseApiService DELETE error: $e');
+      debugPrint('BaseApiService DELETE error [$endpoint]: ${e.response?.statusCode} $e');
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }
   }

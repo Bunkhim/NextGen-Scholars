@@ -132,9 +132,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   void dispose() {
     DiscoverScreen.refreshNotifier.removeListener(_onRefreshNotifier);
-    if (Get.isRegistered<DiscoverController>()) {
-      Get.delete<DiscoverController>();
-    }
     super.dispose();
   }
 

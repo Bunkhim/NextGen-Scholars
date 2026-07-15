@@ -6,7 +6,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
-import 'package:scholarship_app/data/repositories/saved_scholarship_repository.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/services/application_service.dart';
@@ -64,7 +63,8 @@ class ProfileController extends GetxController {
       profile = await _usersApi.getProfile();
     } catch (_) {}
 
-    final realSavedCount = await SavedScholarshipRepository().count();
+    final savedItems = await _usersApi.getSavedScholarships();
+    final realSavedCount = savedItems.length;
     final realViewedCount = await ViewedScholarshipService().count();
 
     int realAppliedCount = 0;
