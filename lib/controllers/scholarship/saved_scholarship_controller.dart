@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:scholarship_app/database/database.dart';
+import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/main_app/main_navigation_screen.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
@@ -66,6 +67,13 @@ class SavedScholarshipController extends GetxController {
           ));
         }
         scholarships.value = views;
+        try {
+          final discoverCtrl = Get.find<DiscoverController>();
+          final ids = views.map((v) => v.scholarship.id).toSet();
+          discoverCtrl.favoriteIds
+            ..clear()
+            ..addAll(ids);
+        } catch (_) {}
         isLoading.value = false;
         return;
       }

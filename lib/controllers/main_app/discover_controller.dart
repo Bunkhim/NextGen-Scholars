@@ -5,6 +5,7 @@ import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
 
 class DiscoverController extends GetxController {
@@ -59,10 +60,22 @@ class DiscoverController extends GetxController {
   Future<void> refreshScholarships() => _loadScholarships();
 
   Future<void> _loadSavedIds() async {
-    final ids = await savedRepository.getSavedFirestoreIds();
-    favoriteIds
-      ..clear()
-      ..addAll(ids);
+    try {
+      final savedItems = await UsersApiService().getSavedScholarships();
+      final ids = savedItems
+          .whereType<Map<String, dynamic>>()
+          .map((item) => item['id'] as String)
+          .where((id) => id.isNotEmpty)
+          .toSet();
+      favoriteIds
+        ..clear()
+        ..addAll(ids);
+    } catch (_) {
+      final ids = await savedRepository.getSavedFirestoreIds();
+      favoriteIds
+        ..clear()
+        ..addAll(ids);
+    }
   }
 
   List<String> getCategories(AppLocalizations t) => [

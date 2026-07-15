@@ -64,7 +64,9 @@ class ProfileController extends GetxController {
       profile = await _usersApi.getProfile();
     } catch (_) {}
 
-    final realSavedCount = await SavedScholarshipRepository().count();
+    final realSavedCount = (profile.isNotEmpty)
+        ? (profile['savedScholarships'] as int? ?? 0)
+        : await SavedScholarshipRepository().count();
     final realViewedCount = await ViewedScholarshipService().count();
 
     int realAppliedCount = 0;
