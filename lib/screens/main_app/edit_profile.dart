@@ -620,13 +620,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             if (should && mounted) Navigator.of(context).pop();
                           },
                           borderRadius: BorderRadius.circular(12),
-                          child: Container(
+                          child: SizedBox(
                             width: 42,
                             height: 42,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
                             child: const Icon(
                               Icons.arrow_back_ios_new_rounded,
                               color: Colors.white,
