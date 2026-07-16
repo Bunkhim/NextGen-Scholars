@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
-import 'package:scholarship_app/screens/main_app/main_navigation_screen.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
@@ -184,6 +183,6 @@ class SavedScholarshipController extends GetxController {
   }
 
   void goToHomeTab() {
-    MainNavigationScreen.tabNotifier.value = 0;
+    Get.back();
   }
 }
