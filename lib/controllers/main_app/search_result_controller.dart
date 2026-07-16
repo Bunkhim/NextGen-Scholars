@@ -4,11 +4,13 @@ import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 class SearchResultController extends GetxController {
   final ScholarshipService _scholarshipService = ScholarshipService();
   final ScholarshipRepository _scholarshipRepo = ScholarshipRepository();
   final SavedScholarshipRepository _savedRepo = SavedScholarshipRepository();
+  final _usersApi = UsersApiService();
 
   final RxString searchQuery = ''.obs;
   final RxnString filterCountry = RxnString();
@@ -85,6 +87,7 @@ class SearchResultController extends GetxController {
     if (isFav) {
       favoriteIds.remove(scholarship.id);
       await _savedRepo.unsaveByFirestoreId(scholarship.id);
+      await _usersApi.unsaveScholarship(scholarship.id);
     } else {
       favoriteIds.add(scholarship.id);
       final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
@@ -115,6 +118,7 @@ class SearchResultController extends GetxController {
         ),
       );
       await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+      await _usersApi.saveScholarship(scholarship.id);
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;

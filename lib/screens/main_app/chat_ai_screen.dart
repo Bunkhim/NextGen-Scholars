@@ -527,39 +527,35 @@ class _ChatAIScreenState extends State<ChatAIScreen>
           Obx(() {
             final isTyping = controller.isTyping.value;
             return GestureDetector(
-              onTap: isTyping ? null : _sendMessage,
-              child: AnimatedOpacity(
-                opacity: isTyping ? 0.4 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: themed
-                          ? [
-                              ws.themedPrimary(cs),
-                              ws.themedPrimary(cs).withOpacity(0.7)
-                            ]
-                          : [cs.primary, cs.primary.withOpacity(0.7)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+              onTap: isTyping ? controller.cancelRequest : _sendMessage,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: themed
+                        ? [
+                            ws.themedPrimary(cs),
+                            ws.themedPrimary(cs).withOpacity(0.7)
+                          ]
+                        : [cs.primary, cs.primary.withOpacity(0.7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (themed ? ws.themedPrimary(cs) : cs.primary)
+                          .withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (themed ? ws.themedPrimary(cs) : cs.primary)
-                            .withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    isTyping ? Icons.hourglass_top_rounded : Icons.send_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  ],
+                ),
+                child: Icon(
+                  isTyping ? Icons.stop_rounded : Icons.send_rounded,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
             );

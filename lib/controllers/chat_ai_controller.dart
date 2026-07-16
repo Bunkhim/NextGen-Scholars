@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/chat_ai_service.dart';
@@ -22,6 +23,7 @@ class ChatAIController extends GetxController {
   final RxBool isTyping = false.obs;
 
   String sessionId = '';
+  CancelToken? _cancelToken;
 
   final ChatAIService _aiService = ChatAIService();
   final ChatMessageRepository _chatRepo = ChatMessageRepository();
@@ -70,8 +72,13 @@ class ChatAIController extends GetxController {
       content: trimmed,
     ));
 
+    _cancelToken = CancelToken();
     try {
-      final response = await _aiService.sendMessage(trimmed, sessionId: sessionId);
+      final response = await _aiService.sendMessage(
+        trimmed,
+        sessionId: sessionId,
+        cancelToken: _cancelToken,
+      );
       if (messages.isNotEmpty && !messages.last.isUser) {
         messages[messages.length - 1] = ChatMessage(text: response, isUser: false);
       }
@@ -82,14 +89,31 @@ class ChatAIController extends GetxController {
           content: messages.last.text,
         ));
       }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) {
+        if (messages.isNotEmpty && !messages.last.isUser) {
+          messages[messages.length - 1] =
+              const ChatMessage(text: '(Generation stopped)', isUser: false);
+        }
+      } else {
+        if (messages.isNotEmpty && !messages.last.isUser) {
+          messages[messages.length - 1] =
+              ChatMessage(text: errorFallbackText, isUser: false);
+        }
+      }
     } catch (_) {
-      if (messages.isNotEmpty) {
+      if (messages.isNotEmpty && !messages.last.isUser) {
         messages[messages.length - 1] =
             ChatMessage(text: errorFallbackText, isUser: false);
       }
     } finally {
+      _cancelToken = null;
       isTyping.value = false;
     }
+  }
+
+  void cancelRequest() {
+    _cancelToken?.cancel('User cancelled');
   }
 
   void startNewChat() {

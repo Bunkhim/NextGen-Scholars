@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'base_api_service.dart';
 
 class ChatApiService {
@@ -7,6 +8,7 @@ class ChatApiService {
     required String content,
     String model = 'gemini-2.5-flash',
     String? sessionId,
+    CancelToken? cancelToken,
   }) async {
     final data = <String, dynamic>{
       'content': content,
@@ -14,7 +16,11 @@ class ChatApiService {
     };
     if (sessionId != null) data['sessionId'] = sessionId;
 
-    final res = await _base.post(endpoint: '/api/v1/chat/ai', data: data);
+    final res = await _base.post(
+      endpoint: '/api/v1/chat/ai',
+      data: data,
+      cancelToken: cancelToken,
+    );
     if (res is Map<String, dynamic>) return res;
     return {'content': '', 'role': 'assistant', 'modelUsed': model};
   }

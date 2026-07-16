@@ -12,6 +12,8 @@ import 'package:scholarship_app/controllers/main_app/filter_result_controller.da
 import 'package:scholarship_app/widgets/scholarship_card.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
+import 'package:scholarship_app/screens/main_app/discover_screen.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -116,10 +118,12 @@ class FilterResultScreen extends StatelessWidget {
                                   onFavoriteToggle: () async {
                                     final savedRepo = SavedScholarshipRepository();
                                     final scholarshipRepo = ScholarshipRepository();
+                                    final usersApi = UsersApiService();
                                     final isFav = discoverCtrl.favoriteIds.contains(scholarship.id);
                                     if (isFav) {
                                       discoverCtrl.favoriteIds.remove(scholarship.id);
                                       await savedRepo.unsaveByFirestoreId(scholarship.id);
+                                      await usersApi.unsaveScholarship(scholarship.id);
                                     } else {
                                       discoverCtrl.favoriteIds.add(scholarship.id);
                                       final sqliteId = await scholarshipRepo.upsertByFirestoreId(
@@ -150,9 +154,11 @@ class FilterResultScreen extends StatelessWidget {
                                         ),
                                       );
                                       await savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+                                      await usersApi.saveScholarship(scholarship.id);
                                     }
                                     SavedScholarshipScreen.refreshNotifier.value++;
                                     ProfileScreen.refreshNotifier.value++;
+                                    DiscoverScreen.refreshNotifier.value++;
                                   },
                                   onTap: () {
                                     Get.toNamed(

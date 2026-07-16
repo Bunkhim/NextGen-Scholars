@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:scholarship_app/core/api/services/chat_api_service.dart';
 
 /// Service that routes chat messages through the backend API.
@@ -12,18 +13,23 @@ class ChatAIService {
   ChatAIService._internal();
 
   /// Send a message and get a complete response from the backend AI.
-  Future<String> sendMessage(String message, {String? sessionId}) async {
+  Future<String> sendMessage(String message, {
+    String? sessionId,
+    CancelToken? cancelToken,
+  }) async {
     try {
       final res = await _api.aiChat(
         content: message,
         sessionId: sessionId,
+        cancelToken: cancelToken,
       );
       final content = res['content'] as String? ?? '';
       if (content.isEmpty) {
         return 'I apologize, but I couldn\'t generate a response. Please try again.';
       }
       return content;
-    } catch (e) {
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
       final msg = e.toString().toLowerCase();
       if (msg.contains('429') || msg.contains('quota') || msg.contains('rate')) {
         return 'The service is temporarily busy. Please wait a moment and try again.';

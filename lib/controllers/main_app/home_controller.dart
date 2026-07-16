@@ -23,6 +23,7 @@ class HomeController extends GetxController {
   final scholarshipService = ScholarshipService();
   final savedRepo = SavedScholarshipRepository();
   final appData = ApplicationData();
+  final _usersApi = UsersApiService();
 
   final RxSet<String> favoriteIds = <String>{}.obs;
   final RxnString photoUrl = RxnString();
@@ -155,6 +156,7 @@ class HomeController extends GetxController {
 
     if (isFav) {
       await savedRepo.unsaveByFirestoreId(scholarship.id);
+      await _usersApi.unsaveScholarship(scholarship.id);
     } else {
       final sqliteId = await ScholarshipRepository().upsertByFirestoreId(
         firestoreId: scholarship.id,
@@ -184,6 +186,7 @@ class HomeController extends GetxController {
         ),
       );
       await savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+      await _usersApi.saveScholarship(scholarship.id);
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;

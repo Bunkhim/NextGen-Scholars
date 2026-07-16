@@ -414,6 +414,7 @@ class RegisterController extends GetxController {
         _showErrorMessage(msg);
       }
     } catch (e) {
+      debugPrint('Register Google sign-in error: $e');
       if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;
       _showErrorMessage(t.translate('loginGoogleFailed'));
@@ -479,6 +480,7 @@ class RegisterController extends GetxController {
         _showErrorMessage(msg);
       }
     } catch (e) {
+      debugPrint('Register Facebook sign-in error: $e');
       if (Get.isDialogOpen ?? false) Get.back();
       isFacebookLoading.value = false;
       _showErrorMessage(t.translate('loginFacebookFailed'));

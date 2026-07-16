@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:scholarship_app/core/api/services/users_api_service.dart';
+import 'package:scholarship_app/core/api/services/upload_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
@@ -296,17 +295,16 @@ class EditProfileController extends GetxController {
 
     isSaving.value = true;
     try {
-      String? photoPath = existingPhotoUrl.value;
+      String? photoUrl = existingPhotoUrl.value;
       if (pickedPhoto.value != null) {
-        final appDir = await getApplicationDocumentsDirectory();
-        final ext = p.extension(pickedPhoto.value!.path);
-        final dest = File('${appDir.path}/profile_photo$ext');
-        await pickedPhoto.value!.copy(dest.path);
-        photoPath = dest.path;
-        await FileImage(dest).evict();
+        final uploadResult = await UploadApiService().uploadImage(pickedPhoto.value!);
+        final uploadedUrl = uploadResult['url'] as String?;
+        if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+          photoUrl = uploadedUrl;
+        }
       }
 
-      ProfileScreen.activePhotoPath = photoPath;
+      ProfileScreen.activePhotoPath = photoUrl;
       ProfileScreen.photoRefreshNotifier.value++;
 
       final fields = getInterestedFields(t);
@@ -320,13 +318,13 @@ class EditProfileController extends GetxController {
         phone: phoneController.text.trim(),
         dob: dobController.text.trim(),
         country: countryController.text.trim(),
-        photoUrl: photoPath,
+        photoUrl: photoUrl,
         interestedFields: interests,
       );
 
       _snapshotOriginalValues();
       pickedPhoto.value = null;
-      existingPhotoUrl.value = photoPath;
+      existingPhotoUrl.value = photoUrl;
 
       ProfileScreen.refreshNotifier.value++;
       Get.back(result: true);

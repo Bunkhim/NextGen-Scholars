@@ -7,8 +7,15 @@ import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/font_picker_controller.dart';
 
-class FontPickerScreen extends StatelessWidget {
+class FontPickerScreen extends StatefulWidget {
   const FontPickerScreen({super.key});
+
+  @override
+  State<FontPickerScreen> createState() => _FontPickerScreenState();
+}
+
+class _FontPickerScreenState extends State<FontPickerScreen> {
+  late final FontPickerController controller;
 
   TextStyle _getFontStyle(String family, {double fontSize = 16}) {
     if (family.isEmpty) {
@@ -22,8 +29,13 @@ class FontPickerScreen extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    controller = Get.put(FontPickerController());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(FontPickerController());
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     final fonts = controller.fonts;

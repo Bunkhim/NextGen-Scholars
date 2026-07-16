@@ -11,8 +11,33 @@ import 'package:scholarship_app/screens/scholarship/my_applications_screen.dart'
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ScholarshipDetailScreen extends StatelessWidget {
+class ScholarshipDetailScreen extends StatefulWidget {
   const ScholarshipDetailScreen({super.key});
+
+  @override
+  State<ScholarshipDetailScreen> createState() => _ScholarshipDetailScreenState();
+}
+
+class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
+  ScholarshipDetailController? _controller;
+  bool _controllerInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_controllerInitialized) {
+      final scholarship =
+          ModalRoute.of(context)?.settings.arguments as FirestoreScholarship?;
+      if (scholarship != null) {
+        _controller = Get.put(
+          ScholarshipDetailController(),
+          tag: scholarship.id,
+        );
+        _controller!.init(scholarship);
+        _controllerInitialized = true;
+      }
+    }
+  }
 
   void _showSaveMessage(BuildContext context, String message,
       {bool isSaved = true}) {
@@ -226,10 +251,7 @@ class ScholarshipDetailScreen extends StatelessWidget {
       );
     }
 
-    final controller = Get.put(
-      ScholarshipDetailController(),
-      tag: scholarship.id,
-    )..init(scholarship);
+    final controller = _controller!;
 
     final title = locale == 'km' && scholarship.titleKm.isNotEmpty
         ? scholarship.titleKm

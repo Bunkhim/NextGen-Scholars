@@ -25,15 +25,18 @@ class BaseApiService {
     required String endpoint,
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _apiConfig.dio.post(
         endpoint,
         data: data,
         queryParameters: queryParameters,
+        cancelToken: cancelToken,
       );
       return response.data;
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
       debugPrint('BaseApiService POST error: $e');
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }

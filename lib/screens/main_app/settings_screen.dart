@@ -286,14 +286,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _Divider(),
 
                     _ArrowTile(
-                      icon: Icons.help_outline_rounded,
-                      iconColor: colorScheme.onSurfaceVariant,
-                      label: t.translate('settingsHelpSupport'),
-                      onTap: () => _openLink(context, controller, 'Help & Support'),
-                    ),
-                    _Divider(),
-
-                    _ArrowTile(
                       icon: Icons.star_outline_rounded,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsRateApp'),

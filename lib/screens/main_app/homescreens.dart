@@ -294,7 +294,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   shape: BoxShape.circle,
                                   color: Colors.white.withOpacity(0.2),
                                   image: (controller.photoUrl.value != null &&
-                                          controller.photoUrl.value!.isNotEmpty)
+                                          controller.photoUrl.value!.isNotEmpty &&
+                                          (controller.photoUrl.value!.startsWith('http') ||
+                                           File(controller.photoUrl.value!).existsSync()))
                                       ? DecorationImage(
                                           image: controller.photoUrl.value!
                                                   .startsWith('http')

@@ -7,12 +7,14 @@ import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 class ScholarshipMatchController extends GetxController {
   final ScholarshipService _scholarshipService = ScholarshipService();
   final SavedScholarshipRepository _savedRepo = SavedScholarshipRepository();
   final ScholarshipRepository _scholarshipRepo = ScholarshipRepository();
   final ApplicationData appData = ApplicationData();
+  final _usersApi = UsersApiService();
 
   final RxSet<String> favoriteIds = <String>{}.obs;
   final RxBool prefsLoaded = false.obs;
@@ -62,6 +64,7 @@ class ScholarshipMatchController extends GetxController {
     final isFav = favoriteIds.contains(scholarship.id);
     if (isFav) {
       await _savedRepo.unsaveByFirestoreId(scholarship.id);
+      await _usersApi.unsaveScholarship(scholarship.id);
       favoriteIds.remove(scholarship.id);
     } else {
       final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
@@ -92,6 +95,7 @@ class ScholarshipMatchController extends GetxController {
         ),
       );
       await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+      await _usersApi.saveScholarship(scholarship.id);
       favoriteIds.add(scholarship.id);
     }
     

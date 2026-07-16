@@ -220,8 +220,6 @@ class LoginController extends GetxController {
         token: idToken ?? '',
       );
 
-      Get.back();
-
       if (res.containsKey('token')) {
         final uid = res['uid'] as String;
         final token = res['token'] as String;
@@ -252,6 +250,7 @@ class LoginController extends GetxController {
         _showErrorMessage(msg);
       }
     } catch (e) {
+      debugPrint('Google sign-in error: $e');
       if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;
       _showErrorMessage(t.translate('loginGoogleFailed'));
@@ -317,6 +316,7 @@ class LoginController extends GetxController {
         _showErrorMessage(msg);
       }
     } catch (e) {
+      debugPrint('Facebook sign-in error: $e');
       if (Get.isDialogOpen ?? false) Get.back();
       isFacebookLoading.value = false;
       _showErrorMessage(t.translate('loginFacebookFailed'));

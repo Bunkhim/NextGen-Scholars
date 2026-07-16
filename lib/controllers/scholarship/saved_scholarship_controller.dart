@@ -179,6 +179,10 @@ class SavedScholarshipController extends GetxController {
   }
 
   void goToHomeTab() {
-    MainNavigationScreen.tabNotifier.value = 0;
+    if (Get.previousRoute.isNotEmpty) {
+      Get.back();
+    } else {
+      MainNavigationScreen.tabNotifier.value = 0;
+    }
   }
 }
