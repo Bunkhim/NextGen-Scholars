@@ -11,8 +11,21 @@ import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/settings_controller.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late final SettingsController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(SettingsController());
+  }
 
   void _showLanguagePicker(BuildContext context, SettingsController controller) {
     showModalBottomSheet(
@@ -24,7 +37,6 @@ class SettingsScreen extends StatelessWidget {
             selected: controller.selectedLanguage.value,
             onSelect: (val) {
               controller.setLanguage(val);
-              Navigator.pop(context);
             },
           )),
     );
@@ -46,7 +58,6 @@ class SettingsScreen extends StatelessWidget {
             selected: controller.notificationSound.value,
             onSelect: (val) {
               controller.saveString('settings_notification_sound', val);
-              Navigator.pop(context);
             },
           )),
     );
@@ -89,7 +100,6 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SettingsController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     
@@ -143,8 +153,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.notifications_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsPushNotifications'),
-                          value: controller.pushNotifications.value,
-                          onChanged: (v) => controller.saveBool('settings_push_notifications', v),
+                          value: _controller.pushNotifications.value,
+                          onChanged: (v) => _controller.saveBool('settings_push_notifications', v),
                         )),
                     _Divider(),
 
@@ -152,8 +162,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.email_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsEmailNotifications'),
-                          value: controller.emailNotifications.value,
-                          onChanged: (v) => controller.saveBool('settings_email_notifications', v),
+                          value: _controller.emailNotifications.value,
+                          onChanged: (v) => _controller.saveBool('settings_email_notifications', v),
                         )),
                     _Divider(),
 
@@ -161,8 +171,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.alarm_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsDeadlineReminders'),
-                          value: controller.deadlineReminders.value,
-                          onChanged: (v) => controller.saveBool('settings_deadline_reminders', v),
+                          value: _controller.deadlineReminders.value,
+                          onChanged: (v) => _controller.saveBool('settings_deadline_reminders', v),
                         )),
                     _Divider(),
 
@@ -170,8 +180,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.school_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsNewScholarships'),
-                          value: controller.newScholarships.value,
-                          onChanged: (v) => controller.saveBool('settings_new_scholarships', v),
+                          value: _controller.newScholarships.value,
+                          onChanged: (v) => _controller.saveBool('settings_new_scholarships', v),
                         )),
 
                     const SizedBox(height: 8),
@@ -183,8 +193,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.language_rounded,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsLanguage'),
-                          trailing: controller.selectedLanguage.value,
-                          onTap: () => _showLanguagePicker(context, controller),
+                          trailing: _controller.selectedLanguage.value,
+                          onTap: () => _showLanguagePicker(context, _controller),
                         )),
                     _Divider(),
 
@@ -192,8 +202,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.notifications_active_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsNotificationSound'),
-                          trailing: controller.notificationSound.value,
-                          onTap: () => _showSoundPicker(context, controller),
+                          trailing: _controller.notificationSound.value,
+                          onTap: () => _showSoundPicker(context, _controller),
                         )),
                     _Divider(),
 
@@ -201,8 +211,8 @@ class SettingsScreen extends StatelessWidget {
                           icon: Icons.dark_mode_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsDarkMode'),
-                          value: controller.darkMode.value,
-                          onChanged: (v) => controller.toggleTheme(v),
+                          value: _controller.darkMode.value,
+                          onChanged: (v) => _controller.toggleTheme(v),
                         )),
 
                     const SizedBox(height: 8),
@@ -217,6 +227,7 @@ class SettingsScreen extends StatelessWidget {
                       trailing: DisplaySettingsService().currentFontDisplayName,
                       onTap: () async {
                         await Get.to(() => const FontPickerScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
                     _Divider(),
@@ -228,6 +239,7 @@ class SettingsScreen extends StatelessWidget {
                       trailing: t.translate(DisplaySettingsService().currentTextScaleLabelKey()),
                       onTap: () async {
                         await Get.to(() => const FontSizeScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
                     _Divider(),
@@ -239,6 +251,7 @@ class SettingsScreen extends StatelessWidget {
                       trailing: t.translate(DisplaySettingsService().currentDisplayScaleLabelKey()),
                       onTap: () async {
                         await Get.to(() => const DisplaySizeScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
 
@@ -253,6 +266,7 @@ class SettingsScreen extends StatelessWidget {
                           : t.translate('settingsWallpaperNone'),
                       onTap: () async {
                         await Get.to(() => WallpaperScreen());
+                        if (mounted) setState(() {});
                       },
                     ),
 
@@ -265,7 +279,7 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.privacy_tip_outlined,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsPrivacyPolicy'),
-                      onTap: () => _openLink(context, controller, 'Privacy Policy'),
+                      onTap: () => _openLink(context, _controller, 'Privacy Policy'),
                     ),
                     _Divider(),
 
@@ -273,15 +287,7 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.description_outlined,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsTermsOfService'),
-                      onTap: () => _openLink(context, controller, 'Terms of Service'),
-                    ),
-                    _Divider(),
-
-                    _ArrowTile(
-                      icon: Icons.help_outline_rounded,
-                      iconColor: colorScheme.onSurfaceVariant,
-                      label: t.translate('settingsHelpSupport'),
-                      onTap: () => _openLink(context, controller, 'Help & Support'),
+                      onTap: () => _openLink(context, _controller, 'Terms of Service'),
                     ),
                     _Divider(),
 
@@ -289,7 +295,7 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.star_outline_rounded,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsRateApp'),
-                      onTap: () => _openLink(context, controller, 'Rate App'),
+                      onTap: () => _openLink(context, _controller, 'Rate App'),
                     ),
 
                     // ── VERSION ───────────────────────────────────────────

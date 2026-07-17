@@ -1,10 +1,7 @@
 // ignore_for_file: invalid_use_of_protected_member
 
-import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/application_data.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
@@ -13,7 +10,7 @@ import 'package:scholarship_app/screens/main_app/scholarship_match_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,8 +20,7 @@ class HomeController extends GetxController {
   final scholarshipService = ScholarshipService();
   final savedRepo = SavedScholarshipRepository();
   final appData = ApplicationData();
-
-  late final Stream<List<FirestoreScholarship>> scholarshipsStream;
+  final _usersApi = UsersApiService();
 
   final RxSet<String> favoriteIds = <String>{}.obs;
   final RxnString photoUrl = RxnString();
@@ -36,7 +32,6 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    scholarshipsStream = scholarshipService.streamActiveScholarships();
     loadFavorites();
     loadPhoto();
     loadActionOrder();
@@ -61,16 +56,18 @@ class HomeController extends GetxController {
 
   void _onPhotoChanged() {
     final path = ProfileScreen.activePhotoPath;
-    if (path != null && !path.startsWith('http') && File(path).existsSync()) {
-      FileImage(File(path)).evict();
+    if (path != null && path.startsWith('http')) {
+      photoUrl.value = path;
+    } else {
+      photoUrl.value = path;
     }
-    photoUrl.value = path;
   }
 
   Future<void> loadUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final profile = await UserFirestoreService().getProfile();
-    final name = profile?['name'] as String? ?? user?.displayName ?? 'User';
+    final profile = await UsersApiService().getProfile();
+    final name = profile['displayName'] as String? ??
+        JwtService().displayNameSync ??
+        'User';
     userName.value = name;
   }
 
@@ -94,9 +91,8 @@ class HomeController extends GetxController {
       photoUrl.value = ProfileScreen.activePhotoPath;
       return;
     }
-    final profile = await UserFirestoreService().getProfile();
-    final user = FirebaseAuth.instance.currentUser;
-    final url = profile?['photoUrl'] as String? ?? user?.photoURL;
+    final profile = await UsersApiService().getProfile();
+    final url = profile['photoUrl'] as String?;
     ProfileScreen.activePhotoPath = url;
     photoUrl.value = url;
   }
@@ -158,6 +154,7 @@ class HomeController extends GetxController {
 
     if (isFav) {
       await savedRepo.unsaveByFirestoreId(scholarship.id);
+      await _usersApi.unsaveScholarship(scholarship.id);
     } else {
       final sqliteId = await ScholarshipRepository().upsertByFirestoreId(
         firestoreId: scholarship.id,
@@ -187,6 +184,7 @@ class HomeController extends GetxController {
         ),
       );
       await savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+      await _usersApi.saveScholarship(scholarship.id);
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;

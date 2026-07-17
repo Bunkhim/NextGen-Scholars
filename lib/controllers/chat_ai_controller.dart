@@ -1,11 +1,9 @@
-import 'dart:async';
-
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/chat_ai_service.dart';
 
-/// A single chat bubble. Public (unlike the screen's old private
-/// `_ChatMessage`) so the controller can expose a reactive list of them.
+/// A single chat bubble.
 class ChatMessage {
   final String text;
   final bool isUser;
@@ -15,8 +13,8 @@ class ChatMessage {
 
 /// Controller for [ChatAIScreen].
 ///
-/// Owns the message list, typing state, session id, and the AI response
-/// stream. The screen keeps a small `StatefulWidget` shell only for the
+/// Owns the message list, typing state, session id, and the AI response.
+/// The screen keeps a small `StatefulWidget` shell only for the
 /// typing-dot `AnimationController` (needs `vsync`, which a `GetxController`
 /// can't provide) and for the `TextEditingController`/`ScrollController` —
 /// everything else routes through here.
@@ -25,22 +23,16 @@ class ChatAIController extends GetxController {
   final RxBool isTyping = false.obs;
 
   String sessionId = '';
+  CancelToken? _cancelToken;
 
   final ChatAIService _aiService = ChatAIService();
   final ChatMessageRepository _chatRepo = ChatMessageRepository();
-  StreamSubscription<String>? _streamSub;
 
   @override
   void onInit() {
     super.onInit();
     sessionId = DateTime.now().millisecondsSinceEpoch.toString();
     _loadLastSession();
-  }
-
-  @override
-  void onClose() {
-    _streamSub?.cancel();
-    super.onClose();
   }
 
   /// Load the most recent chat session if it exists.
@@ -61,12 +53,12 @@ class ChatAIController extends GetxController {
     }
   }
 
-  /// Sends [text] and streams the AI reply into the last message bubble.
+  /// Sends [text] and awaits the AI reply.
   ///
   /// [errorFallbackText] is passed in (already translated) rather than
   /// looked up here, since the controller has no `BuildContext` for
   /// `AppLocalizations`.
-  void sendMessage(String text, {required String errorFallbackText}) {
+  Future<void> sendMessage(String text, {required String errorFallbackText}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || isTyping.value) return;
 
@@ -80,35 +72,57 @@ class ChatAIController extends GetxController {
       content: trimmed,
     ));
 
-    _streamSub?.cancel();
-    _streamSub = _aiService.sendMessageStream(trimmed).listen(
-      (partialResponse) {
-        messages[messages.length - 1] =
-            ChatMessage(text: partialResponse, isUser: false);
-      },
-      onDone: () {
-        isTyping.value = false;
+    _cancelToken = CancelToken();
+    try {
+      final response = await _aiService.sendMessage(
+        trimmed,
+        sessionId: sessionId,
+        cancelToken: _cancelToken,
+      );
+      if (messages.isNotEmpty && !messages.last.isUser) {
+        messages[messages.length - 1] = ChatMessage(text: response, isUser: false);
+      }
+      if (messages.isNotEmpty && !messages.last.isUser) {
+        _chatRepo.insert(ChatMessageModel(
+          sessionId: sessionId,
+          role: ChatMessageModel.roleAssistant,
+          content: messages.last.text,
+        ));
+      }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) {
         if (messages.isNotEmpty && !messages.last.isUser) {
-          _chatRepo.insert(ChatMessageModel(
-            sessionId: sessionId,
-            role: ChatMessageModel.roleAssistant,
-            content: messages.last.text,
-          ));
+          messages[messages.length - 1] =
+              const ChatMessage(text: '(Generation stopped)', isUser: false);
         }
-      },
-      onError: (error) {
-        isTyping.value = false;
-        if (messages.isNotEmpty) {
+      } else {
+        if (messages.isNotEmpty && !messages.last.isUser) {
           messages[messages.length - 1] =
               ChatMessage(text: errorFallbackText, isUser: false);
         }
-      },
-    );
+      }
+    } catch (_) {
+      if (messages.isNotEmpty && !messages.last.isUser) {
+        messages[messages.length - 1] =
+            ChatMessage(text: errorFallbackText, isUser: false);
+      }
+    } finally {
+      _cancelToken = null;
+      isTyping.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    _cancelToken?.cancel('Controller disposed');
+    super.onClose();
+  }
+
+  void cancelRequest() {
+    _cancelToken?.cancel('User cancelled');
   }
 
   void startNewChat() {
-    _streamSub?.cancel();
-    _aiService.resetChat();
     messages.clear();
     isTyping.value = false;
     sessionId = DateTime.now().millisecondsSinceEpoch.toString();

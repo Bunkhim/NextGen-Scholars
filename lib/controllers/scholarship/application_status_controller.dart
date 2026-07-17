@@ -2,31 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/services/websocket_service.dart';
 import 'package:scholarship_app/services/application_service.dart';
 
 /// Controller for [ApplicationStatusScreen].
 ///
-/// Owns the reactive application state and the pure status-derived logic
-/// (icon/color/date formatting) so the widget tree can stay declarative.
-/// Text that depends on `AppLocalizations` still lives in the widget, since
-/// that needs a `BuildContext`.
-///
-/// Auto-refresh: `ApplicationService` has no single-document getter, so
-/// instead of polling, this controller subscribes to
-/// `streamMyApplications()` (a live Firestore snapshot listener) and picks
-/// out the matching application by id. Any status change made elsewhere
-/// (e.g. by an admin) is reflected here automatically, no manual refresh
-/// needed.
+/// Loads the application from the backend API, listens to WebSocket for
+/// real-time status updates, and polls every 30s as fallback.
 class ApplicationStatusController extends GetxController {
   ApplicationStatusController(ScholarshipApplication initial)
       : application = initial.obs;
 
-  /// The current application, kept in sync with Firestore.
   final Rx<ScholarshipApplication> application;
-
   final RxString errorMessage = ''.obs;
 
-  StreamSubscription<List<ScholarshipApplication>>? _sub;
+  final WebSocketService _ws = WebSocketService();
+  Timer? _pollTimer;
 
   String get id => application.value.id;
   String get status => application.value.status;
@@ -38,23 +29,40 @@ class ApplicationStatusController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _sub = ApplicationService().streamMyApplications().listen(
-      (apps) {
-        final match = apps.where((a) => a.id == id);
-        if (match.isNotEmpty) {
-          application.value = match.first;
+    _refreshApplication();
+
+    _ws.addListener(this, (type, data) {
+      if (type == 'notification') {
+        final refId = data['reference_id'] as String?;
+        final notifType = data['notification_type'] as String?;
+        if (notifType == 'application_status' && refId == id) {
+          _refreshApplication();
         }
-      },
-      onError: (_) {
-        errorMessage.value = 'Failed to load application updates.';
-      },
+      }
+    });
+
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshApplication(),
     );
   }
 
   @override
   void onClose() {
-    _sub?.cancel();
+    _pollTimer?.cancel();
+    _ws.removeListener(this);
     super.onClose();
+  }
+
+  Future<void> _refreshApplication() async {
+    try {
+      final fresh = await ApplicationService().getApplication(id);
+      if (fresh != null) {
+        application.value = fresh;
+      }
+    } catch (_) {
+      errorMessage.value = 'Failed to load application updates.';
+    }
   }
 
   // ── Pure status-derived helpers (no context/translation needed) ─────────

@@ -43,6 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       ),
     );
     _animController.forward();
+    Get.put(RegisterController());
   }
 
   @override
@@ -163,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final controller = Get.put(RegisterController());
+    final controller = Get.find<RegisterController>();
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -287,6 +288,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                           const SizedBox(height: 8),
                           TextField(
                             controller: controller.nameController,
+                            focusNode: controller.nameFocusNode,
+                            textInputAction: TextInputAction.next,
                             cursorHeight: 20,
                             style: TextStyle(
                               fontSize: 15,
@@ -322,9 +325,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Email field — always required for Firebase Auth
+                          // Email field — always required
                           TextField(
                             controller: controller.emailController,
+                            focusNode: controller.emailFocusNode,
+                            textInputAction: TextInputAction.next,
                             keyboardType: TextInputType.emailAddress,
                             cursorHeight: 20,
                             style: TextStyle(
@@ -426,6 +431,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 Expanded(
                                   child: TextField(
                                     controller: controller.phoneController,
+                                    focusNode: controller.phoneFocusNode,
+                                    textInputAction: TextInputAction.next,
                                     keyboardType: TextInputType.phone,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.digitsOnly,
@@ -512,6 +519,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                           const SizedBox(height: 8),
                           TextField(
                             controller: controller.passwordController,
+                            focusNode: controller.passwordFocusNode,
+                            textInputAction: TextInputAction.next,
                             obscureText: controller.obscurePassword.value,
                             cursorHeight: 20,
                             style: TextStyle(
@@ -562,6 +571,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                           const SizedBox(height: 8),
                           TextField(
                             controller: controller.confirmPasswordController,
+                            focusNode: controller.confirmPasswordFocusNode,
+                            textInputAction: TextInputAction.done,
                             obscureText:
                                 controller.obscureConfirmPassword.value,
                             cursorHeight: 20,
