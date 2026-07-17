@@ -14,8 +14,12 @@ class FontPickerScreen extends StatefulWidget {
   State<FontPickerScreen> createState() => _FontPickerScreenState();
 }
 
-class _FontPickerScreenState extends State<FontPickerScreen> {
+class _FontPickerScreenState extends State<FontPickerScreen>
+    with SingleTickerProviderStateMixin {
   late final FontPickerController controller;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   TextStyle _getFontStyle(String family, {double fontSize = 16}) {
     if (family.isEmpty) {
@@ -31,14 +35,40 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(FontPickerController());
+    if (!Get.isRegistered<FontPickerController>()) {
+      controller = Get.put(FontPickerController());
+    } else {
+      controller = Get.find<FontPickerController>();
+    }
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+    _animationController.forward();
+
+    // Listen to font selection changes and trigger rebuild
+    ever(controller.selectedFont, (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    if (Get.isRegistered<FontPickerController>()) {
+      Get.delete<FontPickerController>();
+    }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final fonts = controller.fonts;
 
     return Scaffold(
       backgroundColor:
@@ -102,12 +132,13 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
           // ── Font List ───────────────────────────────────────────────
           Expanded(
             child: FadeTransition(
-              opacity: controller.fadeAnimation,
+              opacity: _fadeAnimation,
               child: Builder(builder: (context) {
                 final ws = WallpaperService();
                 final themed = ws.hasTheme;
                 final primary = ws.themedPrimary(cs);
-                return Obx(() => ListView.separated(
+                final fonts = controller.fonts;
+                return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                   itemCount: fonts.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -210,7 +241,7 @@ class _FontPickerScreenState extends State<FontPickerScreen> {
                       ),
                     );
                   },
-                ));
+                );
               }),
             ),
           ),

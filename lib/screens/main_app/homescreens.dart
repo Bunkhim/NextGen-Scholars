@@ -1,7 +1,5 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:io';
-
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,7 +8,7 @@ import 'package:scholarship_app/constants/app_colors.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
-import 'package:scholarship_app/screens/main_app/chat_ai_screen.dart';
+import 'package:scholarship_app/screens/main_app/main_navigation_screen.dart';
 import 'package:scholarship_app/screens/main_app/wallpaper_screen.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
@@ -295,22 +293,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.white.withOpacity(0.2),
                                   image: (controller.photoUrl.value != null &&
                                           controller.photoUrl.value!.isNotEmpty &&
-                                          (controller.photoUrl.value!.startsWith('http') ||
-                                           File(controller.photoUrl.value!).existsSync()))
+                                          controller.photoUrl.value!.startsWith('http'))
                                       ? DecorationImage(
-                                          image: controller.photoUrl.value!
-                                                  .startsWith('http')
-                                              ? NetworkImage(
-                                                      controller.photoUrl.value!)
-                                                  as ImageProvider
-                                              : FileImage(File(
-                                                  controller.photoUrl.value!)),
+                                          image: NetworkImage(
+                                              controller.photoUrl.value!),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
                                 ),
                                 child: (controller.photoUrl.value == null ||
-                                        controller.photoUrl.value!.isEmpty)
+                                        controller.photoUrl.value!.isEmpty ||
+                                        !controller.photoUrl.value!.startsWith('http'))
                                     ? const Icon(Icons.person_rounded,
                                         color: Colors.white, size: 30)
                                     : null,
@@ -1131,7 +1124,7 @@ class _FeatureShowcaseSectionState extends State<_FeatureShowcaseSection> {
         title: t.translate('homeFeatureTitle2'),
         desc: t.translate('homeFeatureDesc2'),
         buttonLabel: t.translate('homeFeatureButton2'),
-        onTap: () => Get.to(() => const ChatAIScreen()),
+        onTap: () => MainNavigationScreen.tabNotifier.value = 2,
       ),
       _FeatureTile(
         imageUrl:

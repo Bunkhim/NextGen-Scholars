@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +15,7 @@ class ApplicationData {
   /// Active user's UID. When set, data is stored under a
   /// user-specific prefix so different accounts don't share Fill Info.
   static String? _activeUid;
+  bool _backendRestoreAttempted = false;
 
   /// The effective SharedPreferences key prefix.
   /// Falls back to generic prefix when no user is set.
@@ -48,6 +47,7 @@ class ApplicationData {
   Future<void> clearActiveUser() async {
     await _recordLastActivity();
     _activeUid = null;
+    _backendRestoreAttempted = false;
     clearAll(); // clear in-memory only; SharedPrefs data stays
   }
 
@@ -150,7 +150,7 @@ class ApplicationData {
   DateTime? dateOfBirth;
   String? phoneNumber;
   String? email;
-  File? profileImage;
+  String? profileImage;
 
   // Education Background
   String? institution;
@@ -217,6 +217,7 @@ class ApplicationData {
       'dateOfBirth': dateOfBirth?.millisecondsSinceEpoch,
       'phoneNumber': phoneNumber,
       'email': email,
+      'photoUrl': profileImage,
       'institution': institution,
       'degree': degree,
       'major': major,
@@ -260,6 +261,7 @@ class ApplicationData {
         dobMs != null ? DateTime.fromMillisecondsSinceEpoch(dobMs) : null;
     phoneNumber = map['phoneNumber'] as String?;
     email = map['email'] as String?;
+    profileImage = map['photoUrl'] as String?;
     institution = map['institution'] as String?;
     degree = map['degree'] as String?;
     major = map['major'] as String?;
@@ -305,16 +307,15 @@ class ApplicationData {
 
   Future<bool> _restoreFromBackend() async {
     if (_activeUid == null) return false;
+    if (_backendRestoreAttempted) return false;
+    _backendRestoreAttempted = true;
     try {
       final res = await _usersApi.getFillInfo();
-      if (res.isNotEmpty && res.containsKey('data')) {
-        final data = res['data'] as Map<String, dynamic>? ?? {};
-        if (data.isNotEmpty) {
-          fromMap(data);
-          await _saveToLocal();
-          debugPrint('☁️ Fill Info restored from backend');
-          return true;
-        }
+      if (res.isNotEmpty) {
+        fromMap(res);
+        await _saveToLocal();
+        debugPrint('☁️ Fill Info restored from backend');
+        return true;
       }
     } catch (e) {
       debugPrint('⚠️ Fill Info cloud restore failed: $e');
@@ -354,7 +355,7 @@ class ApplicationData {
     }
     setStr('phoneNumber', phoneNumber);
     setStr('email', email);
-    setStr('profileImagePath', profileImage?.path);
+    setStr('profileImagePath', profileImage);
 
     setStr('institution', institution);
     setStr('degree', degree);
@@ -424,7 +425,7 @@ class ApplicationData {
     }
     setStr('phoneNumber', phoneNumber);
     setStr('email', email);
-    setStr('profileImagePath', profileImage?.path);
+    setStr('profileImagePath', profileImage);
 
     setStr('institution', institution);
     setStr('degree', degree);
@@ -485,7 +486,7 @@ class ApplicationData {
     phoneNumber = s('phoneNumber');
     email = s('email');
     final imgPath = s('profileImagePath');
-    profileImage = imgPath != null ? File(imgPath) : null;
+    profileImage = imgPath;
 
     institution = s('institution');
     degree = s('degree');

@@ -38,8 +38,6 @@ class ScholarshipDetailController extends GetxController {
   final _scholarshipService = ScholarshipService();
   final _usersApi = UsersApiService();
 
-  bool _initialized = false;
-
   final Rx<FirestoreScholarship?> scholarship = Rx<FirestoreScholarship?>(null);
   final RxBool isSaved = false.obs;
   final RxBool isSaving = false.obs;
@@ -47,11 +45,8 @@ class ScholarshipDetailController extends GetxController {
   final RxBool descExpanded = true.obs;
 
   /// Call once the screen has resolved the scholarship from route
-  /// arguments. Tracks the view and loads bookmark state the first time;
-  /// subsequent calls with the same scholarship are no-ops.
+  /// arguments. Tracks the view and loads bookmark state.
   void init(FirestoreScholarship s) {
-    if (_initialized) return;
-    _initialized = true;
     scholarship.value = s;
 
     if (s.id.isNotEmpty) {

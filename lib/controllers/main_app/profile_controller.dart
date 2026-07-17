@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -47,9 +45,6 @@ class ProfileController extends GetxController {
   void _onPhotoRefresh() {
     if (ProfileScreen.activePhotoPath != null) {
       final path = ProfileScreen.activePhotoPath!;
-      if (!path.startsWith('http') && File(path).existsSync()) {
-        FileImage(File(path)).evict();
-      }
       photoUrl.value = path;
     }
   }

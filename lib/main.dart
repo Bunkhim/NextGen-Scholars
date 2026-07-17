@@ -38,175 +38,159 @@ class ScholarshipApp extends StatefulWidget {
 }
 
 class _ScholarshipAppState extends State<ScholarshipApp> {
+  final _notifiers = <Listenable>[
+    ThemeService.themeNotifier,
+    LanguageService.localeNotifier,
+    DisplaySettingsService.textScaleNotifier,
+    DisplaySettingsService.displayScaleNotifier,
+    DisplaySettingsService.fontFamilyNotifier,
+    WallpaperService.themeIdNotifier,
+    WallpaperService.wallpaperNotifier,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    for (final n in _notifiers) {
+      n.addListener(_onSettingChanged);
+    }
+  }
+
+  void _onSettingChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    for (final n in _notifiers) {
+      n.removeListener(_onSettingChanged);
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: ThemeService.themeNotifier,
-      builder: (context, isDarkMode, child) {
-        return ValueListenableBuilder<Locale>(
-          valueListenable: LanguageService.localeNotifier,
-          builder: (context, locale, child) {
-            Get.updateLocale(locale);
-            return ValueListenableBuilder<double>(
-              valueListenable: DisplaySettingsService.textScaleNotifier,
-              builder: (context, textScale, child) {
-                return ValueListenableBuilder<double>(
-                  valueListenable: DisplaySettingsService.displayScaleNotifier,
-                  builder: (context, displayScale, child) {
-                    return ValueListenableBuilder<String?>(
-                      valueListenable:
-                          DisplaySettingsService.fontFamilyNotifier,
-                      builder: (context, fontFamily, child) {
-                        // ── Wallpaper / Theme reactivity ──
-                        return ValueListenableBuilder<String?>(
-                          valueListenable: WallpaperService.themeIdNotifier,
-                          builder: (context, themeId, _) {
-                            return ValueListenableBuilder<String?>(
-                              valueListenable:
-                                  WallpaperService.wallpaperNotifier,
-                              builder: (context, wallpaperPath, _) {
-                                final ws = WallpaperService();
-                                final decoration = ws.currentDecoration;
-                                final hasWp = decoration != null;
+    // Read current values directly from notifiers
+    final isDarkMode = ThemeService.themeNotifier.value;
+    final locale = LanguageService.localeNotifier.value;
+    final textScale = DisplaySettingsService.textScaleNotifier.value;
+    final displayScale = DisplaySettingsService.displayScaleNotifier.value;
+    final fontFamily = DisplaySettingsService.fontFamilyNotifier.value;
+    final themeId = WallpaperService.themeIdNotifier.value;
 
-                                // Build light/dark themes
-                                ThemeData lt = _applyFontFamily(
-                                    ThemeService.lightTheme, fontFamily);
-                                ThemeData dt = _applyFontFamily(
-                                    ThemeService.darkTheme, fontFamily);
+    Get.updateLocale(locale);
 
-                                // When a wallpaper/theme is active override
-                                // AppBar + scaffold colours so every screen
-                                // picks them up automatically.
-                                if (hasWp) {
-                                  ThemeData themed(ThemeData base) {
-                                    final cs = base.colorScheme;
-                                    final isTheme = ws.hasTheme;
-                                    final accent =
-                                        isTheme ? ws.themedPrimary(cs) : null;
+    final ws = WallpaperService();
+    final decoration = ws.currentDecoration;
+    final hasWp = decoration != null;
 
-                                    return base.copyWith(
-                                      scaffoldBackgroundColor:
-                                          Colors.transparent,
-                                      // ── Inject theme accent into the
-                                      //    colour-scheme so every widget
-                                      //    that reads cs.primary picks it up.
-                                      colorScheme: isTheme
-                                          ? cs.copyWith(
-                                              primary: accent,
-                                              onPrimary: Colors.white,
-                                              primaryContainer:
-                                                  accent!.withOpacity(0.18),
-                                              onPrimaryContainer:
-                                                  ws.onThemeColor,
-                                            )
-                                          : null,
-                                      appBarTheme: base.appBarTheme.copyWith(
-                                        backgroundColor: isTheme
-                                            ? ws.appBarColor
-                                            : Colors.transparent,
-                                        foregroundColor:
-                                            isTheme ? ws.onThemeColor : null,
-                                        surfaceTintColor: Colors.transparent,
-                                        iconTheme: isTheme
-                                            ? IconThemeData(
-                                                color: ws.onThemeColor)
-                                            : null,
-                                        elevation: 0,
-                                      ),
-                                      // ── BottomNav picks up theme colours
-                                      bottomNavigationBarTheme: isTheme
-                                          ? BottomNavigationBarThemeData(
-                                              backgroundColor:
-                                                  ws.bottomNavColor,
-                                              selectedItemColor: accent,
-                                              unselectedItemColor: ws
-                                                  .onThemeColor
-                                                  .withOpacity(0.55),
-                                            )
-                                          : null,
-                                    );
-                                  }
+    // Build light/dark themes
+    ThemeData lt =
+        _applyFontFamily(ThemeService.lightTheme, fontFamily);
+    ThemeData dt =
+        _applyFontFamily(ThemeService.darkTheme, fontFamily);
 
-                                  lt = themed(lt);
-                                  dt = themed(dt);
-                                }
+    // When a wallpaper/theme is active override
+    // AppBar + scaffold colours so every screen
+    // picks them up automatically.
+    if (hasWp) {
+      ThemeData themed(ThemeData base) {
+        final cs = base.colorScheme;
+        final isTheme = ws.hasTheme;
+        final accent = isTheme ? ws.themedPrimary(cs) : null;
 
-                                return GetMaterialApp(
-                                  title: 'NextGen Scholars',
-                                  debugShowCheckedModeBanner: false,
-                                  // themeAnimationDuration:
-                                      // const Duration(milliseconds: 360),
-                                  // themeAnimationCurve: Curves.easeInOutCubic,
-                                  initialRoute: AppRoutes.splashScreen,
-                                  theme: lt,
-                                  darkTheme: dt,
-                                  themeMode: isDarkMode
-                                      ? ThemeMode.dark
-                                      : ThemeMode.light,
-                                  localizationsDelegates: const [
-                                    AppLocalizations.delegate,
-                                    GlobalMaterialLocalizations.delegate,
-                                    GlobalWidgetsLocalizations.delegate,
-                                    GlobalCupertinoLocalizations.delegate,
-                                  ],
-                                  supportedLocales: const [
-                                    Locale('en'),
-                                    Locale('km'),
-                                  ],
-                                  locale: locale,
-                                  builder: (context, child) {
-                                    Widget content = MediaQuery(
-                                      data: MediaQuery.of(context).copyWith(
-                                        boldText: false,
-                                        textScaler: TextScaler.linear(
-                                            textScale * displayScale),
-                                      ),
-                                      child: child!,
-                                    );
+        return base.copyWith(
+          scaffoldBackgroundColor: Colors.transparent,
+          // ── Inject theme accent into the
+          //    colour-scheme so every widget
+          //    that reads cs.primary picks it up.
+          colorScheme: isTheme
+              ? cs.copyWith(
+                  primary: accent,
+                  onPrimary: Colors.white,
+                  primaryContainer: accent!.withOpacity(0.18),
+                  onPrimaryContainer: ws.onThemeColor,
+                )
+              : null,
+          appBarTheme: base.appBarTheme.copyWith(
+            backgroundColor:
+                isTheme ? ws.appBarColor : Colors.transparent,
+            foregroundColor: isTheme ? ws.onThemeColor : null,
+            surfaceTintColor: Colors.transparent,
+            iconTheme: isTheme
+                ? IconThemeData(color: ws.onThemeColor)
+                : null,
+            elevation: 0,
+          ),
+          // ── BottomNav picks up theme colours
+          bottomNavigationBarTheme: isTheme
+              ? BottomNavigationBarThemeData(
+                  backgroundColor: ws.bottomNavColor,
+                  selectedItemColor: accent,
+                  unselectedItemColor:
+                      ws.onThemeColor.withOpacity(0.55),
+                )
+              : null,
+        );
+      }
 
-                                    // Wrap with wallpaper/gradient
-                                    if (hasWp) {
-                                      content = Container(
-                                        decoration: decoration,
-                                        child: Stack(
-                                          children: [
-                                            // Per-theme illustrated background pattern
-                                            if (ws.hasTheme)
-                                              ThemeBackgroundOverlay(
-                                                themeId: themeId,
-                                                themeData: ws.currentThemeData,
-                                              ),
-                                            content,
-                                          ],
-                                        ),
-                                      );
-                                    }
+      lt = themed(lt);
+      dt = themed(dt);
+    }
 
-                                    // Global keyboard dismiss on tap outside
-                                    return GestureDetector(
-                                      onTap: () => FocusManager.instance
-                                          .primaryFocus
-                                          ?.unfocus(),
-                                      behavior: HitTestBehavior.translucent,
-                                      child: content,
-                                    );
-                                  },
-                                  getPages: AppRoutes.getPages,
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            );
-          },
+    return GetMaterialApp(
+      title: 'NextGen Scholars',
+      debugShowCheckedModeBanner: false,
+      initialRoute: AppRoutes.splashScreen,
+      theme: lt,
+      darkTheme: dt,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('km'),
+      ],
+      locale: locale,
+      builder: (context, child) {
+        Widget content = MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            boldText: false,
+            textScaler:
+                TextScaler.linear(textScale * displayScale),
+          ),
+          child: child!,
+        );
+
+        // Wrap with wallpaper/gradient
+        if (hasWp) {
+          content = Container(
+            decoration: decoration,
+            child: Stack(
+              children: [
+                // Per-theme illustrated background pattern
+                if (ws.hasTheme)
+                  ThemeBackgroundOverlay(
+                    themeId: themeId,
+                    themeData: ws.currentThemeData,
+                  ),
+                content,
+              ],
+            ),
+          );
+        }
+
+        // Global keyboard dismiss on tap outside
+        return GestureDetector(
+          onTap: () =>
+              FocusManager.instance.primaryFocus?.unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: content,
         );
       },
+      getPages: AppRoutes.getPages,
     );
   }
 

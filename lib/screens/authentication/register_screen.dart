@@ -43,6 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       ),
     );
     _animController.forward();
+    Get.put(RegisterController());
   }
 
   @override
@@ -163,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final controller = Get.put(RegisterController());
+    final controller = Get.find<RegisterController>();
 
     return Scaffold(
       backgroundColor: cs.surface,

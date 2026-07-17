@@ -115,10 +115,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void _clearFilters() => controller.clearFilters();
 
   Future<void> _openSearchFilter() async {
-    final result = await Navigator.pushNamed(
-      context,
-      AppRoutes.searchFilterScreen,
-    );
+    final result = await Get.toNamed(AppRoutes.searchFilterScreen);
     if (!mounted) return;
     if (result is String && result.isNotEmpty) {
       controller.updateSearchQuery(result);
@@ -473,7 +470,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewPadding.bottom + 110),
                   itemCount: scholarships.length,
                   itemBuilder: (context, index) {
                     final scholarship = scholarships[index];
@@ -549,12 +546,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           );
                         }
                       },
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
+                      onTap: () async {
+                        await Get.toNamed(
                           AppRoutes.scholarshipDetailScreen,
                           arguments: scholarship,
-                        ).then((_) => controller.refreshSavedIds());
+                        );
+                        controller.refreshSavedIds();
                       },
                     );
                   },

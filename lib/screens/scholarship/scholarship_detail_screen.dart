@@ -29,6 +29,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
       final scholarship =
           ModalRoute.of(context)?.settings.arguments as FirestoreScholarship?;
       if (scholarship != null) {
+        Get.delete<ScholarshipDetailController>(tag: scholarship.id, force: true);
         _controller = Get.put(
           ScholarshipDetailController(),
           tag: scholarship.id,
@@ -107,7 +108,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
 
     Overlay.of(context).insert(overlayEntry);
     Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
+      if (mounted) overlayEntry.remove();
     });
   }
 
@@ -542,11 +543,22 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   /// Parse multi-line text into bullet points.
   /// Supports newline-separated, "- " prefixed, or "• " prefixed text.
   List<String> _parseBulletPoints(String text) {
-    final lines = text
+    // Try newline-separated first (properly formatted data)
+    var lines = text
         .split(RegExp(r'[\n\r]+'))
         .map((line) => line.replaceFirst(RegExp(r'^[-•*]\s*'), '').trim())
         .where((line) => line.isNotEmpty)
         .toList();
+
+    // Fallback: comma/semicolon-separated (legacy seed data format)
+    if (lines.length <= 1 && text.contains(RegExp(r'[,;]'))) {
+      lines = text
+          .split(RegExp(r'[,;]'))
+          .map((s) => s.replaceFirst(RegExp(r'^[-•*]\s*'), '').trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+
     return lines.isEmpty ? [text] : lines;
   }
 
@@ -555,6 +567,11 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
       FirestoreScholarship scholarship,
       ColorScheme colorScheme,
       ScholarshipDetailController controller) {
+    // Fallback chain: imageUrl → logoUrl → placeholder
+    final headerUrl = scholarship.imageUrl.isNotEmpty
+        ? scholarship.imageUrl
+        : scholarship.logoUrl;
+
     return SizedBox(
       height: 220,
       width: double.infinity,
@@ -562,9 +579,9 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         fit: StackFit.expand,
         children: [
           // Main scholarship image (campus / building photo)
-          if (scholarship.imageUrl.isNotEmpty)
+          if (headerUrl.isNotEmpty)
             Image.network(
-              scholarship.imageUrl,
+              headerUrl,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) =>
                   _buildHeaderPlaceholder(colorScheme),

@@ -1,8 +1,5 @@
 // ignore_for_file: invalid_use_of_protected_member
 
-import 'dart:io';
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/database/database.dart';
@@ -59,10 +56,11 @@ class HomeController extends GetxController {
 
   void _onPhotoChanged() {
     final path = ProfileScreen.activePhotoPath;
-    if (path != null && !path.startsWith('http') && File(path).existsSync()) {
-      FileImage(File(path)).evict();
+    if (path != null && path.startsWith('http')) {
+      photoUrl.value = path;
+    } else {
+      photoUrl.value = path;
     }
-    photoUrl.value = path;
   }
 
   Future<void> loadUserName() async {

@@ -158,7 +158,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     Overlay.of(context).insert(overlayEntry);
     Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
+      if (mounted) overlayEntry.remove();
     });
   }
 

@@ -112,6 +112,12 @@ class ChatAIController extends GetxController {
     }
   }
 
+  @override
+  void onClose() {
+    _cancelToken?.cancel('Controller disposed');
+    super.onClose();
+  }
+
   void cancelRequest() {
     _cancelToken?.cancel('User cancelled');
   }

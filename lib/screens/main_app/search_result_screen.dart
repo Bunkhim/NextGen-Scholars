@@ -11,7 +11,7 @@ import 'package:scholarship_app/controllers/main_app/search_result_controller.da
 
 /// A dedicated screen that shows search / filter results exactly like
 /// DiscoverScreen — with real Firestore data, favorite toggling, etc.
-class SearchResultScreen extends StatelessWidget {
+class SearchResultScreen extends StatefulWidget {
   final String searchQuery;
   final String? filterCountry;
   final String? filterType;
@@ -23,7 +23,14 @@ class SearchResultScreen extends StatelessWidget {
     this.filterType,
   });
 
-  Future<void> _openSearchFilter(SearchResultController controller) async {
+  @override
+  State<SearchResultScreen> createState() => _SearchResultScreenState();
+}
+
+class _SearchResultScreenState extends State<SearchResultScreen> {
+  late final SearchResultController controller;
+
+  Future<void> _openSearchFilter() async {
     final result = await Get.toNamed(AppRoutes.searchFilterScreen);
     if (result is String && result.isNotEmpty) {
       controller.updateFilters(query: result);
@@ -36,17 +43,21 @@ class SearchResultScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Unique tag allows pushing multiple of these pages if needed.
-    final tag = '${searchQuery}_${filterCountry}_$filterType';
-    final controller = Get.put(
+  void initState() {
+    super.initState();
+    final tag = '${widget.searchQuery}_${widget.filterCountry}_${widget.filterType}';
+    controller = Get.put(
       SearchResultController(
-        query: searchQuery,
-        country: filterCountry,
-        type: filterType,
+        query: widget.searchQuery,
+        country: widget.filterCountry,
+        type: widget.filterType,
       ),
       tag: tag,
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
 
@@ -195,7 +206,7 @@ class SearchResultScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           OutlinedButton.icon(
-                            onPressed: () => _openSearchFilter(controller),
+                            onPressed: () => _openSearchFilter(),
                             icon: const Icon(Icons.search, size: 18),
                             label: Text(t.translate('searchNewSearch')),
                             style: OutlinedButton.styleFrom(
@@ -262,7 +273,7 @@ class SearchResultScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _openSearchFilter(controller),
+                  onTap: () => _openSearchFilter(),
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 48),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -312,7 +323,7 @@ class SearchResultScreen extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               GestureDetector(
-                onTap: () => _openSearchFilter(controller),
+                onTap: () => _openSearchFilter(),
                 child: Container(
                   width: 48,
                   height: 48,

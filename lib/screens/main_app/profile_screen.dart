@@ -1,7 +1,5 @@
 ﻿// ignore_for_file: deprecated_member_use, avoid_print
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/profile_controller.dart';
@@ -318,14 +316,12 @@ class _HeroHeader extends StatelessWidget {
   bool get _hasPhoto {
     if (photoUrl == null || photoUrl!.isEmpty) return false;
     if (photoUrl!.startsWith('http')) return true;
-    return File(photoUrl!).existsSync();
+    return false;
   }
 
   ImageProvider? get _photoImageProvider {
     if (photoUrl == null || photoUrl!.isEmpty) return null;
     if (photoUrl!.startsWith('http')) return NetworkImage(photoUrl!);
-    final f = File(photoUrl!);
-    if (f.existsSync()) return FileImage(f);
     return null;
   }
 

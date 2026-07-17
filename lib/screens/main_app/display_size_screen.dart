@@ -23,7 +23,11 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
   @override
   void initState() {
     super.initState();
-    controller = Get.put(DisplaySizeController());
+    if (!Get.isRegistered<DisplaySizeController>()) {
+      controller = Get.put(DisplaySizeController());
+    } else {
+      controller = Get.find<DisplaySizeController>();
+    }
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -33,6 +37,11 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
       curve: Curves.easeOut,
     );
     _animationController.forward();
+
+    // Listen to scale changes and trigger rebuild
+    ever(controller.currentScale, (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -112,8 +121,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Obx(
-                () {
+              child: Builder(builder: (context) {
                   final ws = WallpaperService();
                   final themed = ws.hasTheme;
                   final primary = ws.themedPrimary(cs);
@@ -366,8 +374,7 @@ class _DisplaySizeScreenState extends State<DisplaySizeScreen>
                     ],
                   ),
                 );
-                },
-              ),
+              }),
             ),
           ),
         ],

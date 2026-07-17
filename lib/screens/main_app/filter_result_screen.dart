@@ -17,12 +17,24 @@ import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-class FilterResultScreen extends StatelessWidget {
+class FilterResultScreen extends StatefulWidget {
   const FilterResultScreen({super.key});
 
   @override
+  State<FilterResultScreen> createState() => _FilterResultScreenState();
+}
+
+class _FilterResultScreenState extends State<FilterResultScreen> {
+  late final FilterResultController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(FilterResultController());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(FilterResultController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
 

@@ -423,7 +423,7 @@ class _OTPBox extends StatelessWidget {
             : cs.surfaceContainerHighest.withOpacity(0.4);
 
     return KeyboardListener(
-      focusNode: FocusNode(),
+      focusNode: focusNode,
       onKeyEvent: onKeyDown,
       child: SizedBox(
         width: 44,
