@@ -1416,78 +1416,80 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   itemCount: scholarships.length,
                   itemBuilder: (context, index) {
                     final scholarship = scholarships[index];
-                    scholarship.isFavorite =
-                        controller.favoriteIds.contains(scholarship.id);
-                    return ScholarshipCard(
-                      scholarship: scholarship,
-                      onFavoriteToggle: () async {
-                        final isFav =
-                            controller.favoriteIds.contains(scholarship.id);
-                        if (isFav) {
-                          controller.favoriteIds.remove(scholarship.id);
-                        } else {
-                          controller.favoriteIds.add(scholarship.id);
-                        }
-                        if (isFav) {
-                          await controller.savedRepository
-                              .unsaveByFirestoreId(scholarship.id);
-                        } else {
-                          final sqliteId =
-                              await controller.scholarshipRepository
-                                  .upsertByFirestoreId(
-                            firestoreId: scholarship.id,
-                            scholarship: Scholarship(
-                              title: scholarship.titleEn,
-                              titleKm: scholarship.titleKm,
-                              institution: scholarship.university,
-                              country: scholarship.country,
-                              type: scholarship.fundingType,
-                              deadline: scholarship.deadline,
-                              openDate: scholarship.openDate,
-                              numberOfPlaces: scholarship.numberOfPlaces,
-                              description: scholarship.descriptionEn,
-                              descriptionKm: scholarship.descriptionKm,
-                              applicationUrl: scholarship.applicationLink,
-                              imageUrl: scholarship.imageUrl,
-                              logoUrl: scholarship.logoUrl,
-                              level: scholarship.degree,
-                              fieldOfStudy: scholarship.fieldOfStudy,
-                              eligibility: scholarship.eligibilityEn,
-                              eligibilityKm: scholarship.eligibilityKm,
-                              benefits: scholarship.benefitsEn,
-                              benefitsKm: scholarship.benefitsKm,
-                              requiredDocuments:
-                                  scholarship.requiredDocumentsEn,
-                              requiredDocumentsKm:
-                                  scholarship.requiredDocumentsKm,
-                              isActive: true,
-                            ),
-                          );
-                          await controller.savedRepository.save(
-                              SavedScholarshipModel(scholarshipId: sqliteId));
-                        }
-                        // Notify saved screen to reload immediately.
-                        SavedScholarshipScreen.refreshNotifier.value++;
-                        ProfileScreen.refreshNotifier.value++;
-                        // Show feedback message
-                        if (mounted) {
-                          final t = AppLocalizations.of(context);
-                          _showSaveMessage(
-                            isFav
-                                ? t.translate('savedRemoved')
-                                : t.translate('savedAdded'),
-                            isSaved: !isFav,
-                          );
-                        }
-                      },
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.scholarshipDetailScreen,
-                          arguments: scholarship,
-                        ).then((_) => controller.refreshSavedIds());
-                      },
-                    );
+                    return Obx(() {
+                      scholarship.isFavorite =
+                          controller.favoriteIds.contains(scholarship.id);
+                      return ScholarshipCard(
+                        scholarship: scholarship,
+                        onFavoriteToggle: () async {
+                          final isFav =
+                              controller.favoriteIds.contains(scholarship.id);
+                          if (isFav) {
+                            controller.favoriteIds.remove(scholarship.id);
+                          } else {
+                            controller.favoriteIds.add(scholarship.id);
+                          }
+                          if (isFav) {
+                            await controller.savedRepository
+                                .unsaveByFirestoreId(scholarship.id);
+                          } else {
+                            final sqliteId =
+                                await controller.scholarshipRepository
+                                    .upsertByFirestoreId(
+                              firestoreId: scholarship.id,
+                              scholarship: Scholarship(
+                                title: scholarship.titleEn,
+                                titleKm: scholarship.titleKm,
+                                institution: scholarship.university,
+                                country: scholarship.country,
+                                type: scholarship.fundingType,
+                                deadline: scholarship.deadline,
+                                openDate: scholarship.openDate,
+                                numberOfPlaces: scholarship.numberOfPlaces,
+                                description: scholarship.descriptionEn,
+                                descriptionKm: scholarship.descriptionKm,
+                                applicationUrl: scholarship.applicationLink,
+                                imageUrl: scholarship.imageUrl,
+                                logoUrl: scholarship.logoUrl,
+                                level: scholarship.degree,
+                                fieldOfStudy: scholarship.fieldOfStudy,
+                                eligibility: scholarship.eligibilityEn,
+                                eligibilityKm: scholarship.eligibilityKm,
+                                benefits: scholarship.benefitsEn,
+                                benefitsKm: scholarship.benefitsKm,
+                                requiredDocuments:
+                                    scholarship.requiredDocumentsEn,
+                                requiredDocumentsKm:
+                                    scholarship.requiredDocumentsKm,
+                                isActive: true,
+                              ),
+                            );
+                            await controller.savedRepository.save(
+                                SavedScholarshipModel(scholarshipId: sqliteId));
+                          }
+                          // Notify saved screen to reload immediately.
+                          SavedScholarshipScreen.refreshNotifier.value++;
+                          ProfileScreen.refreshNotifier.value++;
+                          // Show feedback message
+                          if (mounted) {
+                            final t = AppLocalizations.of(context);
+                            _showSaveMessage(
+                              isFav
+                                  ? t.translate('savedRemoved')
+                                  : t.translate('savedAdded'),
+                              isSaved: !isFav,
+                            );
+                          }
+                        },
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.scholarshipDetailScreen,
+                            arguments: scholarship,
+                          ).then((_) => controller.refreshSavedIds());
+                        },
+                      );
+                    });
                   },
                 ),
             ],
