@@ -1,14 +1,14 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 import 'package:scholarship_app/services/user_data_sync_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
 
 class LoginController extends GetxController {
   final emailController = TextEditingController();
@@ -20,6 +20,9 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isGoogleLoading = false.obs;
   final RxBool isFacebookLoading = false.obs;
+
+  final _authApi = AuthApiService();
+  final _jwt = JwtService();
 
   bool get anyLoading =>
       isLoading.value || isGoogleLoading.value || isFacebookLoading.value;
@@ -129,6 +132,14 @@ class LoginController extends GetxController {
     );
   }
 
+  // ============ POST-AUTH HELPERS ============
+
+  Future<void> _postAuthActions(String uid) async {
+    await FillInfoPersistenceService().onUserLoggedIn(uid);
+    await SessionSecurityService().recordLogin();
+    await UserDataSyncService().restoreAll(uid);
+  }
+
   // ============ AUTHENTICATION ============
 
   Future<void> handleLogin(AppLocalizations t, {required bool formValid}) async {
@@ -137,53 +148,41 @@ class LoginController extends GetxController {
     isLoading.value = true;
 
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final res = await _authApi.login(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
-      final user = credential.user;
-      final userName = user?.displayName ?? emailController.text.split('@')[0];
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final displayName = (res['displayName'] as String?) ??
+            emailController.text.split('@')[0];
 
-      if (user != null) {
-        await UserFirestoreService().updateLastLogin(user.uid);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: displayName,
+        );
+
+        await _postAuthActions(uid);
+
+        isLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginSuccess'),
+          t.translate('loginWelcomeUser').replaceAll('\$userName', displayName),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginFailed');
+        _showErrorMessage(msg);
       }
-
-      isLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginSuccess'),
-        t.translate('loginWelcomeUser').replaceAll('\$userName', userName),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      isLoading.value = false;
-
-      String errorMsg;
-      switch (e.code) {
-        case 'user-not-found':
-          errorMsg = t.translate('loginErrorUserNotFound');
-          break;
-        case 'wrong-password':
-          errorMsg = t.translate('loginErrorWrongPassword');
-          break;
-        case 'invalid-credential':
-          errorMsg = t.translate('loginErrorInvalidCredential');
-          break;
-        case 'user-disabled':
-          errorMsg = t.translate('loginErrorUserDisabled');
-          break;
-        case 'too-many-requests':
-          errorMsg = t.translate('loginErrorTooManyRequests');
-          break;
-        default:
-          errorMsg = e.message ?? t.translate('loginFailed');
-      }
-      _showErrorMessage(errorMsg);
     } catch (e) {
       isLoading.value = false;
       _showErrorMessage(t.translate('loginFailed'));
@@ -203,7 +202,7 @@ class LoginController extends GetxController {
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      Get.back(); // dismiss loading dialog
+      Get.back();
 
       if (googleUser == null) {
         isGoogleLoading.value = false;
@@ -214,45 +213,45 @@ class LoginController extends GetxController {
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      final idToken = googleAuth.idToken ?? googleAuth.accessToken;
+
+      final res = await _authApi.socialAuth(
+        provider: 'google',
+        token: idToken ?? '',
       );
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final userName = (res['displayName'] as String?) ?? 'User';
 
-      final User? user = userCredential.user;
-      final String userName = user?.displayName ?? 'User';
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: userName,
+        );
 
-      if (user != null) {
-        await UserFirestoreService().ensureUser(user);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
+        await _postAuthActions(uid);
+
+        isGoogleLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
+          t.translate('loginGoogleSignInSuccess'),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isGoogleLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginGoogleFailed');
+        _showErrorMessage(msg);
       }
-
-      isGoogleLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
-        t.translate('loginGoogleSignInSuccess'),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      Get.back();
-      isGoogleLoading.value = false;
-
-      String errorMessage = t.translate('loginAuthFailed');
-      if (e.code == 'account-exists-with-different-credential') {
-        errorMessage = t.translate('loginEmailExistsDifferentMethod');
-      } else if (e.code == 'invalid-credential') {
-        errorMessage = t.translate('loginInvalidCredentials');
-      }
-      _showErrorMessage(errorMessage);
     } catch (e) {
-      Get.back();
+      debugPrint('Google sign-in error: $e');
+      if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;
       _showErrorMessage(t.translate('loginGoogleFailed'));
     }
@@ -268,7 +267,7 @@ class LoginController extends GetxController {
         permissions: ['email', 'public_profile'],
       );
 
-      Get.back(); // dismiss loading dialog
+      Get.back();
 
       if (result.status == LoginStatus.cancelled) {
         isFacebookLoading.value = false;
@@ -282,42 +281,42 @@ class LoginController extends GetxController {
         return;
       }
 
-      final OAuthCredential facebookCredential =
-          FacebookAuthProvider.credential(result.accessToken!.tokenString);
-
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(facebookCredential);
-
-      final User? user = userCredential.user;
-      final String userName = user?.displayName ?? 'User';
-
-      if (user != null) {
-        await UserFirestoreService().ensureUser(user);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
-      }
-
-      isFacebookLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginFacebookSignInSuccess'),
-        userName,
+      final res = await _authApi.socialAuth(
+        provider: 'facebook',
+        token: result.accessToken!.tokenString,
       );
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
-      isFacebookLoading.value = false;
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final userName = (res['displayName'] as String?) ?? 'User';
 
-      String errorMessage = t.translate('loginAuthFailed');
-      if (e.code == 'account-exists-with-different-credential') {
-        errorMessage = t.translate('loginEmailExistsDifferentMethod');
-      } else if (e.code == 'invalid-credential') {
-        errorMessage = t.translate('loginInvalidCredentials');
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: userName,
+        );
+
+        await _postAuthActions(uid);
+
+        isFacebookLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginFacebookSignInSuccess'),
+          userName,
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isFacebookLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginFacebookFailed');
+        _showErrorMessage(msg);
       }
-      _showErrorMessage(errorMessage);
     } catch (e) {
+      debugPrint('Facebook sign-in error: $e');
       if (Get.isDialogOpen ?? false) Get.back();
       isFacebookLoading.value = false;
       _showErrorMessage(t.translate('loginFacebookFailed'));

@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:scholarship_app/services/scholarship_service.dart';
+import 'package:scholarship_app/core/api/services/applications_api_service.dart';
 
 /// Represents a user's scholarship application.
 class ScholarshipApplication {
@@ -26,29 +24,21 @@ class ScholarshipApplication {
     required this.status,
   });
 
-  factory ScholarshipApplication.fromFirestore(DocumentSnapshot doc) {
-    final d = doc.data()! as Map<String, dynamic>;
+  /// Parse from the FastAPI backend JSON response.
+  factory ScholarshipApplication.fromJson(Map<String, dynamic> json) {
     return ScholarshipApplication(
-      id: doc.id,
-      scholarshipId: d['scholarshipId'] ?? '',
-      scholarshipTitle: d['scholarshipTitle'] ?? '',
-      university: d['university'] ?? '',
-      country: d['country'] ?? '',
-      userId: d['userId'] ?? '',
-      appliedAt: (d['appliedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      status: d['status'] ?? 'submitted',
+      id: (json['id'] ?? '').toString(),
+      scholarshipId: (json['scholarshipId'] ?? '').toString(),
+      scholarshipTitle: json['scholarshipTitle'] ?? '',
+      university: json['university'] ?? '',
+      country: json['country'] ?? '',
+      userId: (json['userId'] ?? '').toString(),
+      appliedAt: json['appliedAt'] != null
+          ? DateTime.tryParse(json['appliedAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      status: json['status'] ?? 'submitted',
     );
   }
-
-  Map<String, dynamic> toFirestore() => {
-        'scholarshipId': scholarshipId,
-        'scholarshipTitle': scholarshipTitle,
-        'university': university,
-        'country': country,
-        'userId': userId,
-        'appliedAt': Timestamp.fromDate(appliedAt),
-        'status': status,
-      };
 
   // ── Status helpers ──────────────────────────────────────────────────────
   bool get isSubmitted => status == 'submitted';
@@ -91,120 +81,64 @@ class ScholarshipApplication {
   }
 }
 
-/// Service for managing scholarship applications in Firestore.
+/// Service for managing scholarship applications via the FastAPI backend.
 class ApplicationService {
   static final ApplicationService _instance = ApplicationService._();
   factory ApplicationService() => _instance;
   ApplicationService._();
 
-  final _db = FirebaseFirestore.instance;
-  CollectionReference get _applications => _db.collection('applications');
-  final _auth = FirebaseAuth.instance;
-
-  String? get _uid => _auth.currentUser?.uid;
+  final ApplicationsApiService _api = ApplicationsApiService();
 
   /// Submit a new application for a scholarship.
-  /// Returns null if not logged in, scholarship doesn't exist, or on error.
-  Future<ScholarshipApplication?> apply(
-      FirestoreScholarship scholarship) async {
-    final uid = _uid;
-    if (uid == null) return null;
-
-    // ── Verify scholarship exists in admin's collection & is active ──
-    final scholarshipDoc =
-        await _db.collection('scholarships').doc(scholarship.id).get();
-    if (!scholarshipDoc.exists) return null;
-    final sData = scholarshipDoc.data();
-    if (sData != null && sData['isActive'] == false) return null;
-
-    // Prevent duplicate application
-    final existing = await _applications
-        .where('userId', isEqualTo: uid)
-        .where('scholarshipId', isEqualTo: scholarship.id)
-        .limit(1)
-        .get();
-    if (existing.docs.isNotEmpty) {
-      return ScholarshipApplication.fromFirestore(existing.docs.first);
+  /// The backend handles: application creation + notification + counter increment.
+  /// Returns null on error or if not logged in.
+  Future<ScholarshipApplication?> apply(dynamic scholarship) async {
+    try {
+      final scholarshipId = scholarship.id;
+      final res = await _api.apply(scholarshipId: scholarshipId);
+      if (res.containsKey('id')) {
+        return ScholarshipApplication.fromJson(res);
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
-
-    final app = ScholarshipApplication(
-      id: '',
-      scholarshipId: scholarship.id,
-      scholarshipTitle: scholarship.titleEn,
-      university: scholarship.university,
-      country: scholarship.country,
-      userId: uid,
-      appliedAt: DateTime.now(),
-      status: 'submitted',
-    );
-
-    final docRef = await _applications.add(app.toFirestore());
-
-    // Increment application count on user doc
-    try {
-      await _db.collection('users').doc(uid).update({
-        'applications': FieldValue.increment(1),
-      });
-    } catch (_) {}
-
-    // ── Create notification for admin ─────────────────────────────────────
-    try {
-      final user = _auth.currentUser;
-      final userName = user?.displayName ?? user?.email ?? 'A user';
-      await _db.collection('notifications').add({
-        'title': 'New Application Received',
-        'titleKm': 'ពាក្យសុំថ្មីត្រូវបានទទួល',
-        'body':
-            '$userName applied for "${scholarship.titleEn}" at ${scholarship.university}.',
-        'bodyKm':
-            '$userName បានដាក់ពាក្យសុំ "${scholarship.titleKm.isNotEmpty ? scholarship.titleKm : scholarship.titleEn}" នៅ ${scholarship.university}។',
-        'type': 'new_application',
-        'targetUserId': null, // broadcast to all admins
-        'referenceId': docRef.id,
-        'createdAt': FieldValue.serverTimestamp(),
-        'readBy': [],
-      });
-    } catch (_) {}
-
-    return ScholarshipApplication(
-      id: docRef.id,
-      scholarshipId: app.scholarshipId,
-      scholarshipTitle: app.scholarshipTitle,
-      university: app.university,
-      country: app.country,
-      userId: uid,
-      appliedAt: app.appliedAt,
-      status: app.status,
-    );
   }
 
   /// Check if the current user already applied to a scholarship.
   Future<bool> hasApplied(String scholarshipId) async {
-    final uid = _uid;
-    if (uid == null) return false;
-    final snap = await _applications
-        .where('userId', isEqualTo: uid)
-        .where('scholarshipId', isEqualTo: scholarshipId)
-        .limit(1)
-        .get();
-    return snap.docs.isNotEmpty;
+    try {
+      final res = await _api.checkApplication(scholarshipId: scholarshipId);
+      return res['applied'] == true;
+    } catch (_) {
+      return false;
+    }
   }
 
-  /// Stream all applications for the current user.
-  Stream<List<ScholarshipApplication>> streamMyApplications() {
-    final uid = _uid;
-    if (uid == null) return Stream.value([]);
-    // Only filter by userId (no orderBy) to avoid composite-index requirement.
-    // Sort in-memory instead.
-    return _applications
-        .where('userId', isEqualTo: uid)
-        .snapshots()
-        .map((snap) {
-      final list = snap.docs
-          .map((doc) => ScholarshipApplication.fromFirestore(doc))
+  /// Fetch all applications for the current user from the backend.
+  Future<List<ScholarshipApplication>> fetchMyApplications() async {
+    try {
+      final items = await _api.myApplications();
+      final applications = items
+          .map((json) => ScholarshipApplication.fromJson(json))
           .toList();
-      list.sort((a, b) => b.appliedAt.compareTo(a.appliedAt));
-      return list;
-    });
+      applications.sort((a, b) => b.appliedAt.compareTo(a.appliedAt));
+      return applications;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Get a single application by ID from the backend.
+  Future<ScholarshipApplication?> getApplication(String id) async {
+    try {
+      final res = await _api.getApplication(id);
+      if (res.isNotEmpty && res.containsKey('id')) {
+        return ScholarshipApplication.fromJson(res);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 }

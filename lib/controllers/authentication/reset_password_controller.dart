@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 
@@ -18,6 +17,8 @@ class ResetPasswordController extends GetxController {
   final RxnString passwordError = RxnString();
   final RxnString confirmError = RxnString();
   final RxnString errorMessage = RxnString();
+
+  final _authApi = AuthApiService();
 
   @override
   void onClose() {
@@ -74,15 +75,14 @@ class ResetPasswordController extends GetxController {
     isLoading.value = true;
 
     try {
-      final response = await http.post(
-        Uri.parse('https://scholarship-email-otp.onrender.com/api/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'newPassword': pwd}),
+      final res = await _authApi.resetPassword(
+        email: email,
+        newPassword: pwd,
       );
 
       isLoading.value = false;
 
-      if (response.statusCode == 200) {
+      if (res.containsKey('success')) {
         Get.snackbar(
           '',
           t.translate('resetPasswordSuccess'),
@@ -96,14 +96,8 @@ class ResetPasswordController extends GetxController {
         await Future.delayed(const Duration(milliseconds: 1200));
         Get.offAllNamed(AppRoutes.loginScreen);
       } else {
-        Map<String, dynamic> body;
-        try {
-          body = jsonDecode(response.body) as Map<String, dynamic>;
-        } catch (_) {
-          body = {};
-        }
         errorMessage.value =
-            (body['error'] as String?) ?? t.translate('resetPasswordFailed');
+            res['detail'] as String? ?? t.translate('resetPasswordFailed');
       }
     } catch (_) {
       isLoading.value = false;

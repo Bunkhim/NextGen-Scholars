@@ -1,13 +1,7 @@
-import 'dart:async';
-
 import 'package:get/get.dart';
 import 'package:scholarship_app/services/application_service.dart';
 
 /// Controller for [MyApplicationsScreen].
-///
-/// Subscribes to `ApplicationService().streamMyApplications()` and exposes
-/// the list plus derived summary counts as reactive state, so the screen
-/// can drop its `StreamBuilder`/`StatefulWidget` in favor of `Obx`.
 class MyApplicationsController extends GetxController {
   final RxList<ScholarshipApplication> applications =
       <ScholarshipApplication>[].obs;
@@ -15,28 +9,23 @@ class MyApplicationsController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
 
-  StreamSubscription<List<ScholarshipApplication>>? _sub;
-
   @override
   void onInit() {
     super.onInit();
-    _sub = ApplicationService().streamMyApplications().listen(
-      (apps) {
-        applications.assignAll(apps);
-        isLoading.value = false;
-        errorMessage.value = '';
-      },
-      onError: (_) {
-        isLoading.value = false;
-        errorMessage.value = 'Failed to load your applications.';
-      },
-    );
+    loadApplications();
   }
 
-  @override
-  void onClose() {
-    _sub?.cancel();
-    super.onClose();
+  Future<void> loadApplications() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final apps = await ApplicationService().fetchMyApplications();
+      applications.assignAll(apps);
+      isLoading.value = false;
+    } catch (e) {
+      isLoading.value = false;
+      errorMessage.value = 'Failed to load your applications.';
+    }
   }
 
   bool get isEmpty => applications.isEmpty;

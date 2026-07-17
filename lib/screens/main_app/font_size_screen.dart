@@ -6,12 +6,55 @@ import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/font_size_controller.dart';
 
-class FontSizeScreen extends StatelessWidget {
+class FontSizeScreen extends StatefulWidget {
   const FontSizeScreen({super.key});
 
   @override
+  State<FontSizeScreen> createState() => _FontSizeScreenState();
+}
+
+class _FontSizeScreenState extends State<FontSizeScreen>
+    with SingleTickerProviderStateMixin {
+  late final FontSizeController controller;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!Get.isRegistered<FontSizeController>()) {
+      controller = Get.put(FontSizeController());
+    } else {
+      controller = Get.find<FontSizeController>();
+    }
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+    _animationController.forward();
+
+    // Listen to scale changes and trigger rebuild
+    ever(controller.currentScale, (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    if (Get.isRegistered<FontSizeController>()) {
+      Get.delete<FontSizeController>();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(FontSizeController());
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     final options = controller.options;
@@ -78,16 +121,15 @@ class FontSizeScreen extends StatelessWidget {
           // ── Content ─────────────────────────────────────────────────
           Expanded(
             child: FadeTransition(
-              opacity: controller.fadeAnimation,
+              opacity: _fadeAnimation,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Builder(builder: (context) {
                   final ws = WallpaperService();
                   final themed = ws.hasTheme;
-                  return Obx(() {
-                    final currentScale = controller.currentScale.value;
-                    final currentIndex = controller.scaleToIndex(currentScale);
-                    return Column(
+                  final currentScale = controller.currentScale.value;
+                  final currentIndex = controller.scaleToIndex(currentScale);
+                  return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                       // ── Preview Label ──────────────────────────────────
@@ -226,7 +268,6 @@ class FontSizeScreen extends StatelessWidget {
                       ),
                       ],
                     );
-                  });
                 }),
               ),
             ),

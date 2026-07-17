@@ -8,13 +8,25 @@ import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/scholarship_match_controller.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
-class ScholarshipMatchScreen extends StatelessWidget {
+
+class ScholarshipMatchScreen extends StatefulWidget {
   const ScholarshipMatchScreen({super.key});
 
+  @override
+  State<ScholarshipMatchScreen> createState() => _ScholarshipMatchScreenState();
+}
+
+class _ScholarshipMatchScreenState extends State<ScholarshipMatchScreen> {
+  late final ScholarshipMatchController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(ScholarshipMatchController());
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ScholarshipMatchController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     final ws = WallpaperService();

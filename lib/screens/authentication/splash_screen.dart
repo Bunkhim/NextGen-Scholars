@@ -2,9 +2,9 @@
 
 import 'dart:math' as math;
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -97,29 +97,24 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNext() async {
-    final user = FirebaseAuth.instance.currentUser;
-    var pref = await SharedPreferences.getInstance();
-    var hasSeenOnboarding = pref.getBool("isLogin") ?? false;
+    final hasToken = await JwtService().hasToken();
+    final pref = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = pref.getBool("isLogin") ?? false;
 
     if (!mounted) return;
 
-    if (user != null) {
-      // Check weekly session validity (must login at least once per 7 days)
+    if (hasToken) {
       final sessionValid = await SessionSecurityService().isSessionValid();
       if (!sessionValid) {
-        // Session expired — force logout for security
         await SessionSecurityService().forceLogout();
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
         return;
       }
-      // Session valid — go straight to home
       Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
     } else if (hasSeenOnboarding) {
-      // Has seen onboarding before — go to login
       Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
     } else {
-      // First time — show onboarding
       Navigator.pushReplacementNamed(context, AppRoutes.onboardingScreen);
     }
   }

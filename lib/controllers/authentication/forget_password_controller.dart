@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/services/email_otp_service.dart';
@@ -14,34 +14,35 @@ class ForgetPasswordController extends GetxController {
 
   final PhoneOTPService _phoneOtpService = PhoneOTPService();
   final EmailOTPService _emailOtpService = EmailOTPService();
+  final AuthApiService _authApi = AuthApiService();
 
   final RxBool isLoading = false.obs;
   final RxnString error = RxnString();
   final RxString selectedCountryCode = '+855'.obs;
-  final RxInt selectedTab = 0.obs; // 0 = Phone, 1 = Email
+  final RxInt selectedTab = 0.obs;
 
   final Map<String, Map<String, String>> countryCodes = {
-    '+855': {'flag': '🇰🇭', 'nameKey': 'countryNameCambodia', 'code': '+855'},
-    '+1': {'flag': '🇺🇸', 'nameKey': 'countryNameUSA', 'code': '+1'},
-    '+44': {'flag': '🇬🇧', 'nameKey': 'countryNameUK', 'code': '+44'},
-    '+91': {'flag': '🇮🇳', 'nameKey': 'countryNameIndia', 'code': '+91'},
-    '+86': {'flag': '🇨🇳', 'nameKey': 'countryNameChina', 'code': '+86'},
-    '+81': {'flag': '🇯🇵', 'nameKey': 'countryNameJapan', 'code': '+81'},
-    '+82': {'flag': '🇰🇷', 'nameKey': 'countryNameSouthKorea', 'code': '+82'},
-    '+84': {'flag': '🇻🇳', 'nameKey': 'countryNameVietnam', 'code': '+84'},
-    '+65': {'flag': '🇸🇬', 'nameKey': 'countryNameSingapore', 'code': '+65'},
-    '+60': {'flag': '🇲🇾', 'nameKey': 'countryNameMalaysia', 'code': '+60'},
-    '+62': {'flag': '🇮🇩', 'nameKey': 'countryNameIndonesia', 'code': '+62'},
-    '+63': {'flag': '🇵🇭', 'nameKey': 'countryNamePhilippines', 'code': '+63'},
-    '+61': {'flag': '🇦🇺', 'nameKey': 'countryNameAustralia', 'code': '+61'},
-    '+33': {'flag': '🇫🇷', 'nameKey': 'countryNameFrance', 'code': '+33'},
-    '+49': {'flag': '🇩🇪', 'nameKey': 'countryNameGermany', 'code': '+49'},
+    '+855': {'flag': '\uD83C\uDDF0\uD83C\uDDED', 'nameKey': 'countryNameCambodia', 'code': '+855'},
+    '+1': {'flag': '\uD83C\uDDFA\uD83C\uDDF8', 'nameKey': 'countryNameUSA', 'code': '+1'},
+    '+44': {'flag': '\uD83C\uDDEC\uD83C\uDDE7', 'nameKey': 'countryNameUK', 'code': '+44'},
+    '+91': {'flag': '\uD83C\uDDEE\uD83C\uDDF3', 'nameKey': 'countryNameIndia', 'code': '+91'},
+    '+86': {'flag': '\uD83C\uDDE8\uD83C\uDDF3', 'nameKey': 'countryNameChina', 'code': '+86'},
+    '+81': {'flag': '\uD83C\uDDEF\uD83C\uDDF5', 'nameKey': 'countryNameJapan', 'code': '+81'},
+    '+82': {'flag': '\uD83C\uDDF0\uD83C\uDDF7', 'nameKey': 'countryNameSouthKorea', 'code': '+82'},
+    '+84': {'flag': '\uD83C\uDDFB\uD83C\uDDF3', 'nameKey': 'countryNameVietnam', 'code': '+84'},
+    '+65': {'flag': '\uD83C\uDDF8\uD83C\uDDEC', 'nameKey': 'countryNameSingapore', 'code': '+65'},
+    '+60': {'flag': '\uD83C\uDDF2\uD83C\uDDFE', 'nameKey': 'countryNameMalaysia', 'code': '+60'},
+    '+62': {'flag': '\uD83C\uDDEE\uD83C\uDDE9', 'nameKey': 'countryNameIndonesia', 'code': '+62'},
+    '+63': {'flag': '\uD83C\uDDF5\uD83C\uDDED', 'nameKey': 'countryNamePhilippines', 'code': '+63'},
+    '+61': {'flag': '\uD83C\uDDE6\uD83C\uDDFA', 'nameKey': 'countryNameAustralia', 'code': '+61'},
+    '+33': {'flag': '\uD83C\uDDEB\uD83C\uDDF7', 'nameKey': 'countryNameFrance', 'code': '+33'},
+    '+49': {'flag': '\uD83C\uDDE9\uD83C\uDDEA', 'nameKey': 'countryNameGermany', 'code': '+49'},
   };
 
   @override
   void onInit() {
     super.onInit();
-    phoneFocusNode.addListener(update); // GetxController's built-in refresh
+    phoneFocusNode.addListener(update);
     emailFocusNode.addListener(update);
   }
 
@@ -68,7 +69,6 @@ class ForgetPasswordController extends GetxController {
     if (error.value != null) error.value = null;
   }
 
-  // ── Validation ──────────────────────────────────────────────────────────
   String? validatePhone(String? value, AppLocalizations t) {
     if (value == null || value.isEmpty) {
       return t.translate('forgotPasswordPhoneRequired');
@@ -97,7 +97,6 @@ class ForgetPasswordController extends GetxController {
     return null;
   }
 
-  // ── Send Phone OTP ──────────────────────────────────────────────────────
   Future<void> sendPhoneOTP(AppLocalizations t) async {
     error.value = null;
     final value = phoneController.text.trim();
@@ -113,17 +112,12 @@ class ForgetPasswordController extends GetxController {
     final fullPhoneNumber = '${selectedCountryCode.value}$cleanPhone';
 
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('users')
-          .where('phone', isEqualTo: fullPhoneNumber)
-          .limit(1)
-          .get();
-      if (snap.docs.isEmpty) {
-        isLoading.value = false;
-        error.value = t.translate('forgotPasswordAccountNotFound');
-        return;
-      }
-    } catch (_) {}
+      await _authApi.lookupUser(email: fullPhoneNumber);
+    } catch (_) {
+      isLoading.value = false;
+      error.value = t.translate('forgotPasswordAccountNotFound');
+      return;
+    }
 
     final errorMsg = await _phoneOtpService.sendOTP(phoneNumber: fullPhoneNumber);
 
@@ -150,7 +144,6 @@ class ForgetPasswordController extends GetxController {
     }
   }
 
-  // ── Send Email OTP ──────────────────────────────────────────────────────
   Future<void> sendEmailOTP(AppLocalizations t) async {
     error.value = null;
     final email = emailController.text.trim();
@@ -163,17 +156,12 @@ class ForgetPasswordController extends GetxController {
     isLoading.value = true;
 
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .limit(1)
-          .get();
-      if (snap.docs.isEmpty) {
-        isLoading.value = false;
-        error.value = t.translate('forgotPasswordAccountNotFound');
-        return;
-      }
-    } catch (_) {}
+      await _authApi.lookupUser(email: email);
+    } catch (_) {
+      isLoading.value = false;
+      error.value = t.translate('forgotPasswordAccountNotFound');
+      return;
+    }
 
     final errorMsg = await _emailOtpService.sendOTP(email: email);
 

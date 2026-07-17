@@ -1168,10 +1168,25 @@ import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/widgets/theme_background_overlay.dart';
 
-class WallpaperScreen extends StatelessWidget {
-  WallpaperScreen({super.key});
+class WallpaperScreen extends StatefulWidget {
+  const WallpaperScreen({super.key});
 
-  final WallpaperController controller = Get.put(WallpaperController());
+  @override
+  State<WallpaperScreen> createState() => _WallpaperScreenState();
+}
+
+class _WallpaperScreenState extends State<WallpaperScreen> {
+  late final WallpaperController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!Get.isRegistered<WallpaperController>()) {
+      controller = Get.put(WallpaperController());
+    } else {
+      controller = Get.find<WallpaperController>();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

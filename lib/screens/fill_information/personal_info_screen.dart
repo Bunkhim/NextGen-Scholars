@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -358,12 +360,19 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                controller.profileImage.value!,
-                                height: 120,
-                                width: 120,
-                                fit: BoxFit.cover,
-                              ),
+                              child: controller.profileImage.value!.startsWith('http')
+                                  ? Image.network(
+                                      controller.profileImage.value!,
+                                      height: 120,
+                                      width: 120,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.file(
+                                      File(controller.profileImage.value!),
+                                      height: 120,
+                                      width: 120,
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                             Positioned(
                               right: 0,

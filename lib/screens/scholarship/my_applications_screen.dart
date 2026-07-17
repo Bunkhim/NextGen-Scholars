@@ -8,11 +8,21 @@ import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
-class MyApplicationsScreen extends StatelessWidget {
-  MyApplicationsScreen({super.key});
+class MyApplicationsScreen extends StatefulWidget {
+  const MyApplicationsScreen({super.key});
 
-  final MyApplicationsController controller =
-      Get.put(MyApplicationsController());
+  @override
+  State<MyApplicationsScreen> createState() => _MyApplicationsScreenState();
+}
+
+class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
+  late final MyApplicationsController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(MyApplicationsController());
+  }
 
   @override
   Widget build(BuildContext context) {

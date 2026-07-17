@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeService {
   static final ThemeService _instance = ThemeService._internal();
   static final ValueNotifier<bool> themeNotifier = ValueNotifier(false);
+  static const _kDarkMode = 'settings_dark_mode';
 
   factory ThemeService() {
     return _instance;
@@ -15,14 +17,27 @@ class ThemeService {
 
   bool get isDarkMode => _isDarkMode;
 
+  Future<void> loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isDarkMode = prefs.getBool(_kDarkMode) ?? false;
+    themeNotifier.value = _isDarkMode;
+  }
+
   void toggleTheme() {
     _isDarkMode = !_isDarkMode;
     themeNotifier.value = _isDarkMode;
+    _save();
   }
 
   void setTheme(bool isDark) {
     _isDarkMode = isDark;
     themeNotifier.value = isDark;
+    _save();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kDarkMode, _isDarkMode);
   }
 
   static const PageTransitionsTheme _smoothPageTransitions =

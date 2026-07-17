@@ -7,6 +7,7 @@ import 'package:scholarship_app/services/viewed_scholarship_service.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 /// Outcome of an apply attempt. The screen maps each case to the
 /// appropriate dialog/snackbar; the controller only decides *what*
@@ -34,8 +35,8 @@ class ApplyResult {
 class ScholarshipDetailController extends GetxController {
   final _savedRepo = SavedScholarshipRepository();
   final _scholarshipRepo = ScholarshipRepository();
-
-  bool _initialized = false;
+  final _scholarshipService = ScholarshipService();
+  final _usersApi = UsersApiService();
 
   final Rx<FirestoreScholarship?> scholarship = Rx<FirestoreScholarship?>(null);
   final RxBool isSaved = false.obs;
@@ -44,11 +45,8 @@ class ScholarshipDetailController extends GetxController {
   final RxBool descExpanded = true.obs;
 
   /// Call once the screen has resolved the scholarship from route
-  /// arguments. Tracks the view and loads bookmark state the first time;
-  /// subsequent calls with the same scholarship are no-ops.
+  /// arguments. Tracks the view and loads bookmark state.
   void init(FirestoreScholarship s) {
-    if (_initialized) return;
-    _initialized = true;
     scholarship.value = s;
 
     if (s.id.isNotEmpty) {
@@ -80,6 +78,7 @@ class ScholarshipDetailController extends GetxController {
     try {
       if (wasSaved) {
         await _savedRepo.unsaveByFirestoreId(current.id);
+        await _usersApi.unsaveScholarship(current.id);
       } else {
         final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
           firestoreId: current.id,
@@ -109,6 +108,7 @@ class ScholarshipDetailController extends GetxController {
           ),
         );
         await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+        await _usersApi.saveScholarship(current.id);
       }
 
       SavedScholarshipScreen.refreshNotifier.value++;
@@ -142,7 +142,7 @@ class ScholarshipDetailController extends GetxController {
     if (alreadyApplied) return const ApplyResult(ApplyOutcome.alreadyApplied);
 
     // 3. Scholarship still active
-    final fresh = await ScholarshipService().getScholarshipById(current.id);
+    final fresh = await _scholarshipService.getScholarshipById(current.id);
     if (fresh == null || !fresh.isActive) {
       return const ApplyResult(ApplyOutcome.scholarshipUnavailable);
     }
