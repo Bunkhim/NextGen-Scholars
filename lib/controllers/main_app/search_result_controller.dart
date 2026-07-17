@@ -37,6 +37,7 @@ class SearchResultController extends GetxController {
   void onInit() {
     super.onInit();
     _loadSavedIds();
+    DiscoverScreen.refreshNotifier.addListener(_refreshFavorites);
     _subscription = _scholarshipService.streamActiveScholarships().listen(
       (data) {
         _allScholarships.value = data;
@@ -50,15 +51,22 @@ class SearchResultController extends GetxController {
     );
   }
 
+  void _refreshFavorites() {
+    _loadSavedIds();
+  }
+
   @override
   void onClose() {
+    DiscoverScreen.refreshNotifier.removeListener(_refreshFavorites);
     _subscription?.cancel();
     super.onClose();
   }
 
   Future<void> _loadSavedIds() async {
     final ids = await _savedRepo.getSavedFirestoreIds();
-    favoriteIds.addAll(ids);
+    favoriteIds
+      ..clear()
+      ..addAll(ids);
   }
 
   bool get hasActiveFilter => filterCountry.value != null || filterType.value != null;

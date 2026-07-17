@@ -59,16 +59,14 @@ class SearchResultScreen extends StatelessWidget {
         child: AppBar(
           backgroundColor: WallpaperService().hasTheme
               ? WallpaperService().appBarColor
-              : colorScheme.surface,
-          surfaceTintColor: WallpaperService().hasTheme
-              ? Colors.transparent
-              : colorScheme.surface,
+              : Colors.blue,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new,
                 color: WallpaperService().hasTheme
                     ? WallpaperService().onThemeColor
-                    : colorScheme.onSurface,
+                    : Colors.white,
                 size: 20),
             onPressed: () => Get.back(),
           ),
@@ -77,7 +75,7 @@ class SearchResultScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: WallpaperService().hasTheme
                   ? WallpaperService().appBarColor
-                  : colorScheme.surface,
+                  : Colors.blue,
               boxShadow: [
                 BoxShadow(
                   color: colorScheme.onSurface.withOpacity(0.05),
@@ -92,7 +90,9 @@ class SearchResultScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
+              color: WallpaperService().hasTheme
+                  ? WallpaperService().onThemeColor
+                  : Colors.white,
               letterSpacing: -0.5,
             ),
           ),
@@ -218,20 +218,22 @@ class SearchResultScreen extends StatelessWidget {
                     itemCount: scholarships.length,
                     itemBuilder: (context, index) {
                       final scholarship = scholarships[index];
-                      scholarship.isFavorite =
-                          controller.favoriteIds.contains(scholarship.id);
-                      return ScholarshipCard(
-                        scholarship: scholarship,
-                        onFavoriteToggle: () async {
-                          await controller.toggleFavorite(scholarship);
-                        },
-                        onTap: () {
-                          Get.toNamed(
-                            AppRoutes.scholarshipDetailScreen,
-                            arguments: scholarship,
-                          );
-                        },
-                      );
+                      return Obx(() {
+                        scholarship.isFavorite =
+                            controller.favoriteIds.contains(scholarship.id);
+                        return ScholarshipCard(
+                          scholarship: scholarship,
+                          onFavoriteToggle: () async {
+                            await controller.toggleFavorite(scholarship);
+                          },
+                          onTap: () {
+                            Get.toNamed(
+                              AppRoutes.scholarshipDetailScreen,
+                              arguments: scholarship,
+                            );
+                          },
+                        );
+                      });
                     },
                   ),
               ],
