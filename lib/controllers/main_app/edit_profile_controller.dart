@@ -40,7 +40,6 @@ class EditProfileController extends GetxController {
     'countryNameJapan',
     'countryNameSouthKorea',
     'countryNameVietnam',
-    'countryNameThailand',
     'countryNameSingapore',
     'countryNameMalaysia',
     'countryNameIndonesia',

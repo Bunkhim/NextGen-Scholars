@@ -45,19 +45,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           slivers: [
                     // AppBar
                     SliverAppBar(
-                      backgroundColor: WallpaperService().hasTheme
-                          ? WallpaperService().appBarColor
-                          : colorScheme.surface,
+                      backgroundColor: Colors.blue,
                       elevation: 0,
-                      surfaceTintColor: WallpaperService().hasTheme
-                          ? Colors.transparent
-                          : colorScheme.surface,
+                      surfaceTintColor: Colors.transparent,
                       pinned: true,
                       leading: IconButton(
-                        icon: Icon(Icons.arrow_back_ios,
-                            color: WallpaperService().hasTheme
-                                ? WallpaperService().onThemeColor
-                                : colorScheme.onSurface,
+                        icon: const Icon(Icons.arrow_back_ios,
+                            color: Colors.white,
                             size: 20),
                         onPressed: () => Navigator.pop(context),
                       ),
@@ -66,10 +60,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         children: [
                           Text(
                             t.translate('notificationTitle'),
-                            style: TextStyle(
-                              color: WallpaperService().hasTheme
-                                  ? WallpaperService().onThemeColor
-                                  : colorScheme.onSurface,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                             ),
@@ -77,12 +69,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           if (unreadCount > 0)
                             Text(
                               "$unreadCount ${t.translate('notificationUnreadCount')}",
-                              style: TextStyle(
-                                color: WallpaperService().hasTheme
-                                    ? WallpaperService()
-                                        .onThemeColor
-                                        .withOpacity(0.7)
-                                    : colorScheme.onSurfaceVariant,
+                              style: const TextStyle(
+                                color: Colors.white70,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -95,9 +83,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             onPressed: () => controller.markAllAsRead(),
                             child: Text(
                               t.translate('notificationMarkAllRead'),
-                              style: TextStyle(
-                                color: WallpaperService()
-                                    .themedPrimary(colorScheme),
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
