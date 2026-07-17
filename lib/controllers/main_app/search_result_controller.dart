@@ -59,7 +59,9 @@ class SearchResultController extends GetxController {
 
   Future<void> _loadSavedIds() async {
     final ids = await _savedRepo.getSavedFirestoreIds();
-    favoriteIds.addAll(ids);
+    favoriteIds
+      ..clear()
+      ..addAll(ids);
   }
 
   bool get hasActiveFilter => filterCountry.value != null || filterType.value != null;
