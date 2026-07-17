@@ -57,7 +57,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'countryNameJapan',
     'countryNameSouthKorea',
     'countryNameVietnam',
-    'countryNameThailand',
     'countryNameSingapore',
     'countryNameMalaysia',
     'countryNameIndonesia',
@@ -479,6 +478,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       textCapitalization:
                                           TextCapitalization.words,
                                       onChanged: _validateCountryLive,
+                                      readOnly: true,
+                                      onTap: _showCountryPicker,
                                       suffixIcon: IconButton(
                                         tooltip: t.translate(
                                             'forgotPasswordSelectCountry'),
@@ -512,6 +513,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             RegExp(r'\s')),
                                       ],
                                       onChanged: _validateEmailLive,
+                                      readOnly: true,
                                     ),
                                     const SizedBox(height: 14),
                                     _buildFormField(

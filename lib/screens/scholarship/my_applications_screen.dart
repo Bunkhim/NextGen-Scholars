@@ -25,10 +25,8 @@ class MyApplicationsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: WallpaperService().hasTheme
             ? WallpaperService().appBarColor
-            : colorScheme.surface,
-        surfaceTintColor: WallpaperService().hasTheme
-            ? Colors.transparent
-            : Colors.transparent,
+            : Colors.blue,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: Navigator.canPop(context)
@@ -36,7 +34,7 @@ class MyApplicationsScreen extends StatelessWidget {
                 icon: Icon(Icons.arrow_back_ios,
                     color: WallpaperService().hasTheme
                         ? WallpaperService().onThemeColor
-                        : colorScheme.onSurface,
+                        : Colors.white,
                     size: 20),
                 onPressed: () => Navigator.pop(context),
               )
@@ -47,7 +45,7 @@ class MyApplicationsScreen extends StatelessWidget {
           style: TextStyle(
             color: WallpaperService().hasTheme
                 ? WallpaperService().onThemeColor
-                : colorScheme.onSurface,
+                : Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
