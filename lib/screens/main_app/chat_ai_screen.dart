@@ -83,6 +83,17 @@ class _ChatAIScreenState extends State<ChatAIScreen>
             WallpaperService().hasTheme ? Colors.transparent : cs.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_ios,
+                    color: WallpaperService().hasTheme
+                        ? WallpaperService().onThemeColor
+                        : cs.onSurface,
+                    size: 20),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        titleSpacing: Navigator.canPop(context) ? 0 : 16,
         title: Row(
           children: [
             // AI Avatar

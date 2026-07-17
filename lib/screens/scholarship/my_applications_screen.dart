@@ -35,10 +35,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       appBar: AppBar(
         backgroundColor: WallpaperService().hasTheme
             ? WallpaperService().appBarColor
-            : colorScheme.surface,
-        surfaceTintColor: WallpaperService().hasTheme
-            ? Colors.transparent
-            : Colors.transparent,
+            : Colors.blue,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: Navigator.canPop(context)
@@ -46,7 +44,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 icon: Icon(Icons.arrow_back_ios,
                     color: WallpaperService().hasTheme
                         ? WallpaperService().onThemeColor
-                        : colorScheme.onSurface,
+                        : Colors.white,
                     size: 20),
                 onPressed: () => Navigator.pop(context),
               )
@@ -57,7 +55,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
           style: TextStyle(
             color: WallpaperService().hasTheme
                 ? WallpaperService().onThemeColor
-                : colorScheme.onSurface,
+                : Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
