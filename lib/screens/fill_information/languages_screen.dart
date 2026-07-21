@@ -259,6 +259,7 @@ class _LanguagesScreenState extends State<LanguagesScreen> {
   final _formKey = GlobalKey<FormState>();
 
   void _submitForm() {
+    FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
     final isValid = controller.submitForm(t);
     if (isValid) {
@@ -281,11 +282,16 @@ class _LanguagesScreenState extends State<LanguagesScreen> {
       bottomNavigationBar: FillInfoNavBar(
         step: 3,
         totalSteps: 8,
-        onBack: () => Navigator.maybePop(context),
+        onBack: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          Navigator.maybePop(context);
+        },
         onNext: _submitForm,
         onSave: () => controller.onSave(t),
       ),
-      body: SingleChildScrollView(
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Obx(
           () => Form(
@@ -353,6 +359,7 @@ class _LanguagesScreenState extends State<LanguagesScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

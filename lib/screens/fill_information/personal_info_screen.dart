@@ -96,6 +96,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   }
 
   void _submitForm() {
+    FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
     final isValid = controller.submitForm(t);
     if (isValid) {
@@ -121,11 +122,16 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       bottomNavigationBar: FillInfoNavBar(
         step: 1,
         totalSteps: 8,
-        onBack: () => Navigator.maybePop(context),
+        onBack: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          Navigator.maybePop(context);
+        },
         onNext: _submitForm,
         onSave: () => controller.onSave(t),
       ),
-      body: SingleChildScrollView(
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Obx(
           () => Form(
@@ -399,6 +405,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

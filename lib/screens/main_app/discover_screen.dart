@@ -2,9 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:scholarship_app/core/api/services/users_api_service.dart';
-import 'package:scholarship_app/data/models/saved_scholarship_model.dart';
-import 'package:scholarship_app/data/models/scholarship_model.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
@@ -12,6 +9,7 @@ import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
 
 class DiscoverScreen extends StatefulWidget {
@@ -39,76 +37,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     controller.refreshSavedIds();
   }
 
-  void _showSaveMessage(String message, {bool isSaved = true}) {
-    final overlayEntry = OverlayEntry(
-      builder: (context) {
-        return Positioned(
-          top: MediaQuery.of(context).padding.top + 16,
-          left: 16,
-          right: 16,
-          child: Material(
-            color: Colors.transparent,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 300),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, -20 * (1 - value)),
-                    child: child,
-                  ),
-                );
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color:
-                      isSaved ? Colors.green.shade600 : Colors.orange.shade600,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isSaved
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_outline_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
 
-    Overlay.of(context).insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) overlayEntry.remove();
-    });
-  }
 
   bool get _hasActiveFilter => controller.hasActiveFilter;
 
@@ -352,9 +281,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
         final allScholarships = controller.scholarshipsList;
 
-        // Sync API list → SQLite so the saved screen shows fresh data.
-        controller.syncToSQLite(allScholarships);
-
         // Map category index → fieldOfStudy keyword (null = All)
         const categoryKeywords = <String?>[
           null, // 0: All
@@ -479,71 +405,45 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     return ScholarshipCard(
                       scholarship: scholarship,
                       onFavoriteToggle: () async {
-                        final isFav =
-                            controller.favoriteIds.contains(scholarship.id);
-                        if (isFav) {
-                          controller.favoriteIds.remove(scholarship.id);
-                        } else {
-                          controller.favoriteIds.add(scholarship.id);
+                        final id = scholarship.id;
+                        if (controller.savingIds.contains(id)) return;
+                        controller.savingIds.add(id);
+
+                        final wasFav =
+                            controller.favoriteIds.contains(id);
+                        if (!wasFav) {
+                          controller.favoriteIds.add(id);
                         }
-                        if (isFav) {
-                          await controller.savedRepository
-                              .unsaveByFirestoreId(scholarship.id);
-                          try {
-                            await UsersApiService()
-                                .unsaveScholarship(scholarship.id);
-                          } catch (_) {}
-                        } else {
-                          final sqliteId =
-                              await controller.scholarshipRepository
-                                  .upsertByFirestoreId(
-                            firestoreId: scholarship.id,
-                            scholarship: Scholarship(
-                              title: scholarship.titleEn,
-                              titleKm: scholarship.titleKm,
-                              institution: scholarship.university,
-                              country: scholarship.country,
-                              type: scholarship.fundingType,
-                              deadline: scholarship.deadline,
-                              openDate: scholarship.openDate,
-                              numberOfPlaces: scholarship.numberOfPlaces,
-                              description: scholarship.descriptionEn,
-                              descriptionKm: scholarship.descriptionKm,
-                              applicationUrl: scholarship.applicationLink,
-                              imageUrl: scholarship.imageUrl,
-                              logoUrl: scholarship.logoUrl,
-                              level: scholarship.degree,
-                              fieldOfStudy: scholarship.fieldOfStudy,
-                              eligibility: scholarship.eligibilityEn,
-                              eligibilityKm: scholarship.eligibilityKm,
-                              benefits: scholarship.benefitsEn,
-                              benefitsKm: scholarship.benefitsKm,
-                              requiredDocuments:
-                                  scholarship.requiredDocumentsEn,
-                              requiredDocumentsKm:
-                                  scholarship.requiredDocumentsKm,
-                              isActive: true,
-                            ),
-                          );
-                          await controller.savedRepository.save(
-                              SavedScholarshipModel(scholarshipId: sqliteId));
-                          try {
-                            await UsersApiService()
-                                .saveScholarship(scholarship.id);
-                          } catch (_) {}
-                        }
-                        // Notify saved screen to reload immediately.
-                        SavedScholarshipScreen.refreshNotifier.value++;
-                        ProfileScreen.refreshNotifier.value++;
-                        // Show feedback message
-                        if (mounted) {
-                          final t = AppLocalizations.of(context);
-                          _showSaveMessage(
-                            isFav
-                                ? t.translate('savedRemoved')
-                                : t.translate('savedAdded'),
-                            isSaved: !isFav,
-                          );
+
+                        try {
+                          if (wasFav) {
+                            await SavedScholarshipService()
+                                .unsaveScholarship(id);
+                          } else {
+                            await SavedScholarshipService()
+                                .saveScholarship(id);
+                          }
+                          SavedScholarshipScreen.refreshNotifier.value++;
+                          ProfileScreen.refreshNotifier.value++;
+                        } catch (_) {
+                          if (wasFav) {
+                            controller.favoriteIds.add(id);
+                          } else {
+                            controller.favoriteIds.remove(id);
+                          }
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(context)
+                                      .translate('savedError'),
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } finally {
+                          controller.savingIds.remove(id);
                         }
                       },
                       onTap: () async {

@@ -36,12 +36,6 @@ class UserDataSyncService {
       final db = await DatabaseHelper().database;
 
       await db.delete(
-        DatabaseHelper.tableSavedScholarships,
-        where: 'user_id = ? OR user_id IS NULL',
-        whereArgs: [uid],
-      );
-
-      await db.delete(
         DatabaseHelper.tableApplicationDrafts,
         where: 'user_id = ? OR user_id IS NULL',
         whereArgs: [uid],
