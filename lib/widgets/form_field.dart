@@ -386,6 +386,9 @@ class CustomTextField extends StatefulWidget {
   final List<TextInputFormatter>? inputFormatters;
   final Widget? suffixIcon;
   final int? maxLines;
+  final TextInputAction? textInputAction;
+  final FocusNode? focusNode;
+  final FocusNode? nextFocusNode;
 
   const CustomTextField({
     super.key,
@@ -398,6 +401,9 @@ class CustomTextField extends StatefulWidget {
     this.inputFormatters,
     this.suffixIcon,
     this.maxLines = 1,
+    this.textInputAction,
+    this.focusNode,
+    this.nextFocusNode,
   });
 
   @override
@@ -451,9 +457,20 @@ class _CustomTextFieldState extends State<CustomTextField> {
             child: Center(
               child: TextFormField(
                 controller: widget.controller,
+                focusNode: widget.focusNode,
+                textInputAction: widget.textInputAction ??
+                    (widget.nextFocusNode != null
+                        ? TextInputAction.next
+                        : null),
                 keyboardType: widget.keyboardType,
                 inputFormatters: widget.inputFormatters,
                 maxLines: widget.maxLines,
+                onFieldSubmitted: (_) {
+                  if (widget.nextFocusNode != null) {
+                    FocusScope.of(context)
+                        .requestFocus(widget.nextFocusNode);
+                  }
+                },
                 style: TextStyle(
                   fontSize: textFontSize,
                   color: ws.themedOnSurface(colorScheme),

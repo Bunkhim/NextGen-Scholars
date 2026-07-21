@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:scholarship_app/core/api/services/scholarships_api_service.dart';
 
-/// Scholarship data model for the mobile app, mapped from Firestore.
+/// Scholarship data model for the mobile app.
+/// Originally mapped from Firestore; now mapped from FastAPI backend JSON.
 class FirestoreScholarship {
   final String id;
   final String titleEn;
@@ -57,33 +58,40 @@ class FirestoreScholarship {
     this.isFavorite = false,
   });
 
-  factory FirestoreScholarship.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  /// Parse a scholarship from the FastAPI backend JSON response.
+  /// Backend returns camelCase keys matching these field names.
+  factory FirestoreScholarship.fromJson(Map<String, dynamic> json) {
     return FirestoreScholarship(
-      id: doc.id,
-      titleEn: data['titleEn'] ?? '',
-      titleKm: data['titleKm'] ?? '',
-      descriptionEn: data['descriptionEn'] ?? '',
-      descriptionKm: data['descriptionKm'] ?? '',
-      country: data['country'] ?? '',
-      university: data['university'] ?? '',
-      degree: data['degree'] ?? '',
-      fieldOfStudy: data['fieldOfStudy'] ?? '',
-      fundingType: data['fundingType'] ?? 'Full',
-      numberOfPlaces: data['numberOfPlaces'] ?? 0,
-      openDate: (data['openDate'] as Timestamp?)?.toDate(),
-      deadline: (data['deadline'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      applicationLink: data['applicationLink'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      logoUrl: data['logoUrl'] ?? '',
-      eligibilityEn: data['eligibilityEn'] ?? '',
-      eligibilityKm: data['eligibilityKm'] ?? '',
-      benefitsEn: data['benefitsEn'] ?? '',
-      benefitsKm: data['benefitsKm'] ?? '',
-      requiredDocumentsEn: data['requiredDocumentsEn'] ?? '',
-      requiredDocumentsKm: data['requiredDocumentsKm'] ?? '',
-      isActive: data['isActive'] ?? true,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      id: (json['id'] ?? '').toString(),
+      titleEn: json['titleEn'] ?? '',
+      titleKm: json['titleKm'] ?? '',
+      descriptionEn: json['descriptionEn'] ?? '',
+      descriptionKm: json['descriptionKm'] ?? '',
+      country: json['country'] ?? '',
+      university: json['university'] ?? '',
+      degree: json['degree'] ?? '',
+      fieldOfStudy: json['fieldOfStudy'] ?? '',
+      fundingType: json['fundingType'] ?? 'Full',
+      numberOfPlaces: json['numberOfPlaces'] ?? 0,
+      openDate: json['openDate'] != null
+          ? DateTime.tryParse(json['openDate'].toString())
+          : null,
+      deadline: json['deadline'] != null
+          ? DateTime.tryParse(json['deadline'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      applicationLink: json['applicationLink'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+      logoUrl: json['logoUrl'] ?? '',
+      eligibilityEn: json['eligibilityEn'] ?? '',
+      eligibilityKm: json['eligibilityKm'] ?? '',
+      benefitsEn: json['benefitsEn'] ?? '',
+      benefitsKm: json['benefitsKm'] ?? '',
+      requiredDocumentsEn: json['requiredDocumentsEn'] ?? '',
+      requiredDocumentsKm: json['requiredDocumentsKm'] ?? '',
+      isActive: json['isActive'] ?? true,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 
@@ -114,57 +122,89 @@ class FirestoreScholarship {
   }
 }
 
-/// Service that reads scholarship data from the shared Firestore collection.
+/// Service that reads scholarship data from the FastAPI backend.
 class ScholarshipService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final ScholarshipsApiService _api = ScholarshipsApiService();
 
-  CollectionReference get _scholarships => _db.collection('scholarships');
-
-  /// Stream only active scholarships (real-time updates from admin).
-  Stream<List<FirestoreScholarship>> streamActiveScholarships() {
-    return _scholarships
-        .where('isActive', isEqualTo: true)
-        .snapshots()
-        .map((snap) {
-      final docs = snap.docs
-          .map((doc) => FirestoreScholarship.fromFirestore(doc))
-          .toList();
-      // Sort by createdAt descending — newest scholarship (added from admin) appears first
-      docs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return docs;
-    });
+  /// Fetch active scholarships from backend.
+  Future<List<FirestoreScholarship>> fetchActiveScholarships({
+    String? search,
+    String? country,
+    String? degree,
+    String? funding,
+    int skip = 0,
+    int limit = 100,
+  }) async {
+    final res = await _api.listScholarships(
+      active: true,
+      search: search,
+      country: country,
+      degree: degree,
+      funding: funding,
+      skip: skip,
+      limit: limit,
+    );
+    final items = res['items'] as List<dynamic>? ?? [];
+    final scholarships =
+        items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return scholarships;
   }
 
-  /// Stream all scholarships (real-time).
-  Stream<List<FirestoreScholarship>> streamAllScholarships() {
-    return _scholarships.snapshots().map((snap) {
-      final docs = snap.docs
-          .map((doc) => FirestoreScholarship.fromFirestore(doc))
-          .toList();
-      docs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return docs;
-    });
+  /// Fetch all scholarships (including inactive) from backend.
+  Future<List<FirestoreScholarship>> fetchAllScholarships({
+    int skip = 0,
+    int limit = 100,
+  }) async {
+    final res = await _api.listScholarships(
+      active: false,
+      skip: skip,
+      limit: limit,
+    );
+    final items = res['items'] as List<dynamic>? ?? [];
+    final scholarships =
+        items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return scholarships;
   }
 
   /// Get a single scholarship by ID.
   Future<FirestoreScholarship?> getScholarshipById(String id) async {
-    final doc = await _scholarships.doc(id).get();
-    if (!doc.exists) return null;
-    return FirestoreScholarship.fromFirestore(doc);
+    final res = await _api.getScholarship(id);
+    if (res.isEmpty) return null;
+    return FirestoreScholarship.fromJson(res);
   }
 
-  /// Search scholarships by keyword.
+  /// Search scholarships by keyword via backend.
   Future<List<FirestoreScholarship>> searchScholarships(String query) async {
-    final all = await _scholarships.where('isActive', isEqualTo: true).get();
-    final lowerQuery = query.toLowerCase();
-    return all.docs
-        .map((doc) => FirestoreScholarship.fromFirestore(doc))
-        .where((s) =>
-            s.titleEn.toLowerCase().contains(lowerQuery) ||
-            s.titleKm.contains(query) ||
-            s.university.toLowerCase().contains(lowerQuery) ||
-            s.country.toLowerCase().contains(lowerQuery) ||
-            s.fieldOfStudy.toLowerCase().contains(lowerQuery))
-        .toList();
+    final res = await _api.listScholarships(
+      active: true,
+      search: query,
+      limit: 100,
+    );
+    final items = res['items'] as List<dynamic>? ?? [];
+    return items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+  }
+
+  /// Get available filter options from backend.
+  Future<Map<String, dynamic>> getFilterOptions() async {
+    return await _api.getFilters();
+  }
+
+  /// Match scholarships against user preferences via backend.
+  Future<List<FirestoreScholarship>> matchScholarships({
+    String destinationCountry = '',
+    String preferredDegree = '',
+    String preferredMajor = '',
+    String preferredUniversity = '',
+  }) async {
+    final res = await _api.match(
+      destinationCountry: destinationCountry,
+      preferredDegree: preferredDegree,
+      preferredMajor: preferredMajor,
+      preferredUniversity: preferredUniversity,
+    );
+    final items = res['items'] as List<dynamic>? ?? [];
+    return items.map((json) => FirestoreScholarship.fromJson(json)).toList();
   }
 }

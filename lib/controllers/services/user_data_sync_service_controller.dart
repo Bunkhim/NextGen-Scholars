@@ -1,51 +1,39 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:scholarship_app/services/user_data_sync_service.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 
-// import 'package:your_app/services/user_data_sync_service.dart';
-
-class UserDataSyncController extends ChangeNotifier {
+class UserDataSyncController extends GetxController {
   final UserDataSyncService _service = UserDataSyncService();
+  final JwtService _jwtService = JwtService();
 
-  bool _isLoading = false;
+  final RxBool isLoading = false.obs;
 
-  /// Exposes the loading state for UI progress indicators.
-  bool get isLoading => _isLoading;
-
-  /// Helper to safely get the current user ID
-  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
-
-  /// Backs up all local user data to Firestore.
   Future<void> backupAll() async {
-    if (_uid == null) return;
-    
-    _setLoading(true);
+    isLoading.value = true;
     try {
       await _service.backupAll();
     } catch (e) {
       debugPrint('Controller error during backupAll: $e');
     } finally {
-      _setLoading(false);
+      isLoading.value = false;
     }
   }
 
-  /// Restores all user data from Firestore to local storage.
-  /// Typically called during post-login initialization.
   Future<void> restoreAll() async {
-    final uid = _uid;
-    if (uid == null) return;
+    final token = await _jwtService.token;
+    if (token == null) return;
 
-    _setLoading(true);
+    isLoading.value = true;
     try {
-      await _service.restoreAll(uid);
+      await _service.restoreAll(token);
     } catch (e) {
       debugPrint('Controller error during restoreAll: $e');
     } finally {
-      _setLoading(false);
+      isLoading.value = false;
     }
   }
 
-  /// Syncs just the saved scholarships immediately.
   Future<void> syncSavedScholarships() async {
     try {
       await _service.syncSavedScholarships();
@@ -54,7 +42,6 @@ class UserDataSyncController extends ChangeNotifier {
     }
   }
 
-  /// Syncs just the viewed scholarships immediately.
   Future<void> syncViewedScholarships() async {
     try {
       await _service.syncViewedScholarships();
@@ -63,7 +50,6 @@ class UserDataSyncController extends ChangeNotifier {
     }
   }
 
-  /// Records user activity without blocking the UI.
   Future<void> recordActivity() async {
     try {
       await _service.recordActivity();
@@ -72,38 +58,29 @@ class UserDataSyncController extends ChangeNotifier {
     }
   }
 
-  /// Wipes all data (local and cloud) for the current user.
-  /// Used during account deletion.
   Future<void> deleteUserAccountData() async {
-    final uid = _uid;
-    if (uid == null) return;
+    final token = await _jwtService.token;
+    if (token == null) return;
 
-    _setLoading(true);
+    isLoading.value = true;
     try {
-      // Calling the static methods on the service class
-      await UserDataSyncService.deleteAllCloudData(uid);
-      await UserDataSyncService.deleteAllLocalData(uid);
+      await UserDataSyncService.deleteAllCloudData(token);
+      await UserDataSyncService.deleteAllLocalData(token);
     } catch (e) {
       debugPrint('Controller error deleting account data: $e');
     } finally {
-      _setLoading(false);
+      isLoading.value = false;
     }
   }
 
-  /// Cleans up cloud data if the user has been inactive for >30 days.
   Future<void> cleanupStaleData() async {
-    final uid = _uid;
-    if (uid == null) return;
+    final token = await _jwtService.token;
+    if (token == null) return;
 
     try {
-      await UserDataSyncService.cleanupStaleCloudData(uid);
+      await UserDataSyncService.cleanupStaleCloudData(token);
     } catch (e) {
       debugPrint('Controller error cleaning up stale data: $e');
     }
-  }
-
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
   }
 }
