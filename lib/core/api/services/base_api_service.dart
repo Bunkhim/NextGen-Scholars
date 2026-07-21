@@ -37,7 +37,10 @@ class BaseApiService {
       return response.data;
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) rethrow;
-      debugPrint('BaseApiService POST error: $e');
+      debugPrint('BaseApiService POST error [${e.requestOptions.uri}]: ${e.response?.statusCode}');
+      if (e.response?.statusCode == 422) {
+        debugPrint('BaseApiService 422 detail: ${e.response?.data}');
+      }
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }
   }
@@ -94,6 +97,9 @@ class BaseApiService {
     if (e.response?.data is Map) {
       final detail = (e.response!.data as Map)['detail'];
       if (detail is String) return detail;
+      if (detail is List) {
+        return detail.map((e) => e is Map ? '${e['loc']?.last ?? ''}: ${e['msg'] ?? ''}' : e.toString()).join('; ');
+      }
     }
     if (e.type == DioExceptionType.connectionTimeout) {
       return 'Connection timeout. Check your internet.';

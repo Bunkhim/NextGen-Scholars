@@ -10,10 +10,9 @@ import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dar
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/main_app/filter_result_controller.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
-import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
-import 'package:scholarship_app/core/api/services/users_api_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -128,49 +127,37 @@ class _FilterResultScreenState extends State<FilterResultScreen> {
                                 return ScholarshipCard(
                                   scholarship: scholarship,
                                   onFavoriteToggle: () async {
-                                    final savedRepo = SavedScholarshipRepository();
-                                    final scholarshipRepo = ScholarshipRepository();
-                                    final usersApi = UsersApiService();
-                                    final isFav = discoverCtrl.favoriteIds.contains(scholarship.id);
-                                    if (isFav) {
-                                      discoverCtrl.favoriteIds.remove(scholarship.id);
-                                      await savedRepo.unsaveByFirestoreId(scholarship.id);
-                                      await usersApi.unsaveScholarship(scholarship.id);
+                                    final id = scholarship.id;
+                                    final wasFav = discoverCtrl.favoriteIds.contains(id);
+                                    if (wasFav) {
+                                      discoverCtrl.favoriteIds.remove(id);
                                     } else {
-                                      discoverCtrl.favoriteIds.add(scholarship.id);
-                                      final sqliteId = await scholarshipRepo.upsertByFirestoreId(
-                                        firestoreId: scholarship.id,
-                                        scholarship: Scholarship(
-                                          title: scholarship.titleEn,
-                                          titleKm: scholarship.titleKm,
-                                          institution: scholarship.university,
-                                          country: scholarship.country,
-                                          type: scholarship.fundingType,
-                                          deadline: scholarship.deadline,
-                                          openDate: scholarship.openDate,
-                                          numberOfPlaces: scholarship.numberOfPlaces,
-                                          description: scholarship.descriptionEn,
-                                          descriptionKm: scholarship.descriptionKm,
-                                          applicationUrl: scholarship.applicationLink,
-                                          imageUrl: scholarship.imageUrl,
-                                          logoUrl: scholarship.logoUrl,
-                                          level: scholarship.degree,
-                                          fieldOfStudy: scholarship.fieldOfStudy,
-                                          eligibility: scholarship.eligibilityEn,
-                                          eligibilityKm: scholarship.eligibilityKm,
-                                          benefits: scholarship.benefitsEn,
-                                          benefitsKm: scholarship.benefitsKm,
-                                          requiredDocuments: scholarship.requiredDocumentsEn,
-                                          requiredDocumentsKm: scholarship.requiredDocumentsKm,
-                                          isActive: true,
-                                        ),
-                                      );
-                                      await savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
-                                      await usersApi.saveScholarship(scholarship.id);
+                                      discoverCtrl.favoriteIds.add(id);
                                     }
-                                    SavedScholarshipScreen.refreshNotifier.value++;
-                                    ProfileScreen.refreshNotifier.value++;
-                                    DiscoverScreen.refreshNotifier.value++;
+                                    try {
+                                      if (wasFav) {
+                                        await SavedScholarshipService().unsaveScholarship(id);
+                                      } else {
+                                        await SavedScholarshipService().saveScholarship(id);
+                                      }
+                                      SavedScholarshipScreen.refreshNotifier.value++;
+                                      ProfileScreen.refreshNotifier.value++;
+                                      DiscoverScreen.refreshNotifier.value++;
+                                    } catch (_) {
+                                      if (wasFav) {
+                                        discoverCtrl.favoriteIds.add(id);
+                                      } else {
+                                        discoverCtrl.favoriteIds.remove(id);
+                                      }
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(t.translate('savedError')),
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      }
+                                    }
                                   },
                                   onTap: () {
                                     Get.toNamed(

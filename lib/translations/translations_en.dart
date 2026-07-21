@@ -507,6 +507,7 @@ const Map<String, String> translationsEn = {
   'savedCount': 'Saved',
   'savedAdded': 'Scholarship saved to bookmarks',
   'savedRemoved': 'Scholarship removed from saved',
+  'savedError': 'Failed to save. Please try again.',
   'savedUndo': 'UNDO',
   'savedDeadline': 'Deadline:',
   'savedDaysLeft': 'd left',

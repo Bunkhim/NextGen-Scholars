@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -359,14 +360,18 @@ class RegisterController extends GetxController {
     try {
       _showLoadingDialog(t.translate('loginGoogleSigningIn'));
 
+      // serverClientId must be the "Web application" OAuth client ID from
+      // Google Cloud Console — NOT the Android/iOS client ID.  It must match
+      // the GOOGLE_CLIENT_ID configured in the backend .env, since that's
+      // the audience the backend validates against.
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: null,
+        serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
         scopes: <String>['email', 'profile'],
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      Get.back();
+      if (Get.isDialogOpen ?? false) Get.back();
 
       if (googleUser == null) {
         isGoogleLoading.value = false;
@@ -377,11 +382,23 @@ class RegisterController extends GetxController {
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      final idToken = googleAuth.idToken ?? googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        debugPrint(
+          'Google sign-in: idToken is null. This is usually caused by a missing '
+          'or incorrect serverClientId / GOOGLE_WEB_CLIENT_ID configuration. '
+          'Ensure the Web OAuth client ID is set in .env and matches the '
+          'backend GOOGLE_CLIENT_ID.',
+        );
+        isGoogleLoading.value = false;
+        _showErrorMessage(t.translate('loginGoogleFailed'));
+        return;
+      }
 
       final res = await _authApi.socialAuth(
         provider: 'google',
-        token: idToken ?? '',
+        token: idToken,
       );
 
       if (res.containsKey('token')) {
@@ -431,7 +448,7 @@ class RegisterController extends GetxController {
         permissions: ['email', 'public_profile'],
       );
 
-      Get.back();
+      if (Get.isDialogOpen ?? false) Get.back();
 
       if (result.status == LoginStatus.cancelled) {
         isFacebookLoading.value = false;
