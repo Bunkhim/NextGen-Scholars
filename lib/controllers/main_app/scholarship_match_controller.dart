@@ -1,20 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/application_data.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 class ScholarshipMatchController extends GetxController {
   final ScholarshipService _scholarshipService = ScholarshipService();
-  final SavedScholarshipRepository _savedRepo = SavedScholarshipRepository();
-  final ScholarshipRepository _scholarshipRepo = ScholarshipRepository();
+  final SavedScholarshipService _savedScholarshipService = SavedScholarshipService();
   final ApplicationData appData = ApplicationData();
-  final _usersApi = UsersApiService();
 
   final RxSet<String> favoriteIds = <String>{}.obs;
   final RxBool prefsLoaded = false.obs;
@@ -30,7 +27,7 @@ class ScholarshipMatchController extends GetxController {
 
   Future<void> loadAll() async {
     await appData.loadFromPrefs();
-    final ids = await _savedRepo.getSavedFirestoreIds();
+    final ids = await _savedScholarshipService.getSavedIds();
     favoriteIds.clear();
     favoriteIds.addAll(ids);
     prefsLoaded.value = true;
@@ -63,43 +60,13 @@ class ScholarshipMatchController extends GetxController {
   Future<void> toggleFavorite(FirestoreScholarship scholarship, BuildContext context, String savedAddedMsg, String savedRemovedMsg) async {
     final isFav = favoriteIds.contains(scholarship.id);
     if (isFav) {
-      await _savedRepo.unsaveByFirestoreId(scholarship.id);
-      await _usersApi.unsaveScholarship(scholarship.id);
+      await _savedScholarshipService.unsaveScholarship(scholarship.id);
       favoriteIds.remove(scholarship.id);
     } else {
-      final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
-        firestoreId: scholarship.id,
-        scholarship: Scholarship(
-          title: scholarship.titleEn,
-          titleKm: scholarship.titleKm,
-          institution: scholarship.university,
-          country: scholarship.country,
-          type: scholarship.fundingType,
-          deadline: scholarship.deadline,
-          openDate: scholarship.openDate,
-          numberOfPlaces: scholarship.numberOfPlaces,
-          description: scholarship.descriptionEn,
-          descriptionKm: scholarship.descriptionKm,
-          applicationUrl: scholarship.applicationLink,
-          imageUrl: scholarship.imageUrl,
-          logoUrl: scholarship.logoUrl,
-          level: scholarship.degree,
-          fieldOfStudy: scholarship.fieldOfStudy,
-          eligibility: scholarship.eligibilityEn,
-          eligibilityKm: scholarship.eligibilityKm,
-          benefits: scholarship.benefitsEn,
-          benefitsKm: scholarship.benefitsKm,
-          requiredDocuments: scholarship.requiredDocumentsEn,
-          requiredDocumentsKm: scholarship.requiredDocumentsKm,
-          isActive: true,
-        ),
-      );
-      await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
-      await _usersApi.saveScholarship(scholarship.id);
+      await _savedScholarshipService.saveScholarship(scholarship.id);
       favoriteIds.add(scholarship.id);
     }
-    
-    // UI Refresh Notifications
+
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;
     DiscoverScreen.refreshNotifier.value++;

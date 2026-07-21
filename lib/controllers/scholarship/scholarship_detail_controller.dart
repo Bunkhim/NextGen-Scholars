@@ -1,13 +1,12 @@
 import 'package:get/get.dart';
-import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/application_data.dart';
 import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/services/viewed_scholarship_service.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 /// Outcome of an apply attempt. The screen maps each case to the
 /// appropriate dialog/snackbar; the controller only decides *what*
@@ -33,10 +32,8 @@ class ApplyResult {
 /// pattern), so the screen calls [init] once it has resolved the argument.
 /// [init] is idempotent — safe to call on every build.
 class ScholarshipDetailController extends GetxController {
-  final _savedRepo = SavedScholarshipRepository();
-  final _scholarshipRepo = ScholarshipRepository();
+  final _savedScholarshipService = SavedScholarshipService();
   final _scholarshipService = ScholarshipService();
-  final _usersApi = UsersApiService();
 
   final Rx<FirestoreScholarship?> scholarship = Rx<FirestoreScholarship?>(null);
   final RxBool isSaved = false.obs;
@@ -58,7 +55,7 @@ class ScholarshipDetailController extends GetxController {
   }
 
   Future<void> _loadSavedState(String scholarshipId) async {
-    final ids = await _savedRepo.getSavedFirestoreIds();
+    final ids = await _savedScholarshipService.getSavedIds();
     isSaved.value = ids.contains(scholarshipId);
   }
 
@@ -77,38 +74,9 @@ class ScholarshipDetailController extends GetxController {
 
     try {
       if (wasSaved) {
-        await _savedRepo.unsaveByFirestoreId(current.id);
-        await _usersApi.unsaveScholarship(current.id);
+        await _savedScholarshipService.unsaveScholarship(current.id);
       } else {
-        final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
-          firestoreId: current.id,
-          scholarship: Scholarship(
-            title: current.titleEn,
-            titleKm: current.titleKm,
-            institution: current.university,
-            country: current.country,
-            type: current.fundingType,
-            deadline: current.deadline,
-            openDate: current.openDate,
-            numberOfPlaces: current.numberOfPlaces,
-            description: current.descriptionEn,
-            descriptionKm: current.descriptionKm,
-            applicationUrl: current.applicationLink,
-            imageUrl: current.imageUrl,
-            logoUrl: current.logoUrl,
-            level: current.degree,
-            fieldOfStudy: current.fieldOfStudy,
-            eligibility: current.eligibilityEn,
-            eligibilityKm: current.eligibilityKm,
-            benefits: current.benefitsEn,
-            benefitsKm: current.benefitsKm,
-            requiredDocuments: current.requiredDocumentsEn,
-            requiredDocumentsKm: current.requiredDocumentsKm,
-            isActive: true,
-          ),
-        );
-        await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
-        await _usersApi.saveScholarship(current.id);
+        await _savedScholarshipService.saveScholarship(current.id);
       }
 
       SavedScholarshipScreen.refreshNotifier.value++;

@@ -4,11 +4,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
-import 'package:scholarship_app/data/repositories/saved_scholarship_repository.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 import 'package:scholarship_app/services/user_data_sync_service.dart';
 import 'package:scholarship_app/services/viewed_scholarship_service.dart';
@@ -59,9 +59,7 @@ class ProfileController extends GetxController {
       profile = await _usersApi.getProfile();
     } catch (_) {}
 
-    final realSavedCount = (profile.isNotEmpty)
-        ? (profile['savedScholarships'] as int? ?? 0)
-        : await SavedScholarshipRepository().count();
+    final realSavedCount = await SavedScholarshipService().getSavedCount();
     final realViewedCount = await ViewedScholarshipService().count();
 
     int realAppliedCount = 0;

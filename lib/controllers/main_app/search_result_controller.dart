@@ -1,16 +1,13 @@
 import 'package:get/get.dart';
-import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/core/api/services/users_api_service.dart';
 
 class SearchResultController extends GetxController {
   final ScholarshipService _scholarshipService = ScholarshipService();
-  final ScholarshipRepository _scholarshipRepo = ScholarshipRepository();
-  final SavedScholarshipRepository _savedRepo = SavedScholarshipRepository();
-  final _usersApi = UsersApiService();
+  final SavedScholarshipService _savedScholarshipService = SavedScholarshipService();
 
   final RxString searchQuery = ''.obs;
   final RxnString filterCountry = RxnString();
@@ -58,7 +55,7 @@ class SearchResultController extends GetxController {
   }
 
   Future<void> _loadSavedIds() async {
-    final ids = await _savedRepo.getSavedFirestoreIds();
+    final ids = await _savedScholarshipService.getSavedIds();
     favoriteIds
       ..clear()
       ..addAll(ids);
@@ -88,39 +85,10 @@ class SearchResultController extends GetxController {
     final isFav = favoriteIds.contains(scholarship.id);
     if (isFav) {
       favoriteIds.remove(scholarship.id);
-      await _savedRepo.unsaveByFirestoreId(scholarship.id);
-      await _usersApi.unsaveScholarship(scholarship.id);
+      await _savedScholarshipService.unsaveScholarship(scholarship.id);
     } else {
       favoriteIds.add(scholarship.id);
-      final sqliteId = await _scholarshipRepo.upsertByFirestoreId(
-        firestoreId: scholarship.id,
-        scholarship: Scholarship(
-          title: scholarship.titleEn,
-          titleKm: scholarship.titleKm,
-          institution: scholarship.university,
-          country: scholarship.country,
-          type: scholarship.fundingType,
-          deadline: scholarship.deadline,
-          openDate: scholarship.openDate,
-          numberOfPlaces: scholarship.numberOfPlaces,
-          description: scholarship.descriptionEn,
-          descriptionKm: scholarship.descriptionKm,
-          applicationUrl: scholarship.applicationLink,
-          imageUrl: scholarship.imageUrl,
-          logoUrl: scholarship.logoUrl,
-          level: scholarship.degree,
-          fieldOfStudy: scholarship.fieldOfStudy,
-          eligibility: scholarship.eligibilityEn,
-          eligibilityKm: scholarship.eligibilityKm,
-          benefits: scholarship.benefitsEn,
-          benefitsKm: scholarship.benefitsKm,
-          requiredDocuments: scholarship.requiredDocumentsEn,
-          requiredDocumentsKm: scholarship.requiredDocumentsKm,
-          isActive: true,
-        ),
-      );
-      await _savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
-      await _usersApi.saveScholarship(scholarship.id);
+      await _savedScholarshipService.saveScholarship(scholarship.id);
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;
