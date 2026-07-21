@@ -12,7 +12,16 @@
           "package_name": "com.example.scholarship_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1043004620020-gfabee6bi0jd0tc160t3p6f99kp35j4e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.scholarship_app",
+            "certificate_hash": "C29605045478FD1C3F06D5B477D95D2EBB2E9BA0"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA1QFBUURr4CaD8GlkzMk6s-jDfFNro0ac"

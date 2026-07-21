@@ -20,7 +20,6 @@ class DatabaseHelper {
   // Table names
   static const String tableUserProfile = 'user_profiles';
   static const String tableScholarships = 'scholarships';
-  static const String tableSavedScholarships = 'saved_scholarships';
   static const String tableChatMessages = 'chat_messages';
   static const String tableSearchHistory = 'search_history';
   static const String tableNotifications = 'notifications';
@@ -123,20 +122,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // ── Saved Scholarships ────────────────────────────────────────────────────
-    batch.execute('''
-      CREATE TABLE $tableSavedScholarships (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        scholarship_id INTEGER NOT NULL,
-        user_id TEXT,
-        notes TEXT,
-        is_visible INTEGER DEFAULT 1,
-        priority INTEGER DEFAULT 0,
-        saved_at TEXT NOT NULL DEFAULT (datetime('now')),
-        FOREIGN KEY (scholarship_id) REFERENCES $tableScholarships(id) ON DELETE CASCADE
-      )
-    ''');
-
     // ── Chat Messages ─────────────────────────────────────────────────────────
     batch.execute('''
       CREATE TABLE $tableChatMessages (
@@ -215,8 +200,6 @@ class DatabaseHelper {
         'CREATE INDEX idx_scholarships_country ON $tableScholarships(country)');
     batch.execute(
         'CREATE INDEX idx_scholarships_active ON $tableScholarships(is_active)');
-    batch.execute(
-        'CREATE INDEX idx_saved_scholarship_id ON $tableSavedScholarships(scholarship_id)');
     batch.execute(
         'CREATE INDEX idx_scholarships_firestore_id ON $tableScholarships(firestore_id)');
     batch.execute(

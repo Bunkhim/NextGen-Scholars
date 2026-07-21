@@ -112,8 +112,10 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _submitLogin(AppLocalizations t) async {
+    debugPrint('[LoginScreen] Email login tapped');
     FocusScope.of(context).unfocus();
     final isValid = _formKey.currentState!.validate();
+    debugPrint('[LoginScreen] Form valid: $isValid');
     await controller.handleLogin(t, formValid: isValid);
   }
 
@@ -415,14 +417,17 @@ class _LoginScreenState extends State<LoginScreen>
                 // ── Social Buttons ──────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Obx(
-                    () => Row(
-                      children: [
-                        Expanded(
-                          child: _SocialButton(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Obx(
+                          () => _SocialButton(
                             onPressed: controller.anyLoading
                                 ? null
-                                : controller.handleEmailSignIn,
+                                : () {
+                                    debugPrint('[LoginScreen] Email icon tapped (anyLoading=${controller.anyLoading})');
+                                    controller.handleEmailSignIn();
+                                  },
                             child: Icon(
                               Icons.email_outlined,
                               color: colorScheme.onSurfaceVariant,
@@ -430,12 +435,17 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _SocialButton(
-                            onPressed: controller.anyLoading
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Obx(
+                          () => _SocialButton(
+                            onPressed: controller.isFacebookLoading.value
                                 ? null
-                                : () => controller.handleFacebookSignIn(t),
+                                : () {
+                                    debugPrint('[LoginScreen] Facebook button tapped (isFacebookLoading=${controller.isFacebookLoading.value})');
+                                    controller.handleFacebookSignIn(t);
+                                  },
                             isLoading: controller.isFacebookLoading.value,
                             child: Image.asset(
                               "assets/icons/facebook_icon.png",
@@ -445,12 +455,17 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _SocialButton(
-                            onPressed: controller.anyLoading
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Obx(
+                          () => _SocialButton(
+                            onPressed: controller.isGoogleLoading.value
                                 ? null
-                                : () => controller.handleGoogleSignIn(t),
+                                : () {
+                                    debugPrint('[LoginScreen] Google button tapped (isGoogleLoading=${controller.isGoogleLoading.value})');
+                                    controller.handleGoogleSignIn(t);
+                                  },
                             isLoading: controller.isGoogleLoading.value,
                             child: Image.asset(
                               "assets/icons/google_icon.png",
@@ -460,8 +475,8 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
 

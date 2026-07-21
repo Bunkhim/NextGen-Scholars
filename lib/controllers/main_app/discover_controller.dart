@@ -1,19 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:scholarship_app/database/database.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
-import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
 
 class DiscoverController extends GetxController {
   static const int maxSearchLength = 100;
 
   final ScholarshipService scholarshipService = ScholarshipService();
-  final ScholarshipRepository scholarshipRepository = ScholarshipRepository();
-  final SavedScholarshipRepository savedRepository = SavedScholarshipRepository();
+  final SavedScholarshipService savedScholarshipService = SavedScholarshipService();
 
   final RxList<FirestoreScholarship> scholarshipsList = <FirestoreScholarship>[].obs;
   final RxBool isLoading = true.obs;
@@ -28,8 +25,7 @@ class DiscoverController extends GetxController {
   final RxnString filterCountry = RxnString();
   final RxnString filterType = RxnString();
   final RxSet<String> favoriteIds = <String>{}.obs;
-
-  String? _lastSyncHash;
+  final RxSet<String> savingIds = <String>{}.obs;
 
   @override
   void onInit() {
@@ -61,20 +57,12 @@ class DiscoverController extends GetxController {
 
   Future<void> _loadSavedIds() async {
     try {
-      final savedItems = await UsersApiService().getSavedScholarships();
-      final ids = savedItems
-          .whereType<Map<String, dynamic>>()
-          .map((item) => item['id'] as String)
-          .where((id) => id.isNotEmpty)
-          .toSet();
+      final ids = await savedScholarshipService.getSavedIds();
       favoriteIds
         ..clear()
         ..addAll(ids);
     } catch (_) {
-      final ids = await savedRepository.getSavedFirestoreIds();
-      favoriteIds
-        ..clear()
-        ..addAll(ids);
+      favoriteIds.clear();
     }
   }
 
@@ -132,72 +120,6 @@ class DiscoverController extends GetxController {
   }
 
   Future<void> refreshSavedIds() => _loadSavedIds();
-
-  Future<void> syncToSQLite(List<FirestoreScholarship> active) async {
-    final hash = _computeSyncHash(active);
-    if (_lastSyncHash == hash) return;
-    _lastSyncHash = hash;
-
-    for (final scholarship in active) {
-      await scholarshipRepository.upsertByFirestoreId(
-        firestoreId: scholarship.id,
-        scholarship: Scholarship(
-          title: scholarship.titleEn,
-          titleKm: scholarship.titleKm,
-          institution: scholarship.university,
-          country: scholarship.country,
-          type: scholarship.fundingType,
-          deadline: scholarship.deadline,
-          openDate: scholarship.openDate,
-          numberOfPlaces: scholarship.numberOfPlaces,
-          description: scholarship.descriptionEn,
-          descriptionKm: scholarship.descriptionKm,
-          applicationUrl: scholarship.applicationLink,
-          imageUrl: scholarship.imageUrl,
-          logoUrl: scholarship.logoUrl,
-          level: scholarship.degree,
-          fieldOfStudy: scholarship.fieldOfStudy,
-          eligibility: scholarship.eligibilityEn,
-          eligibilityKm: scholarship.eligibilityKm,
-          benefits: scholarship.benefitsEn,
-          benefitsKm: scholarship.benefitsKm,
-          requiredDocuments: scholarship.requiredDocumentsEn,
-          requiredDocumentsKm: scholarship.requiredDocumentsKm,
-          isActive: true,
-        ),
-      );
-    }
-
-    await scholarshipRepository.syncActiveStatus(active.map((s) => s.id).toList());
-    SavedScholarshipScreen.refreshNotifier.value++;
-  }
-
-  String _computeSyncHash(List<FirestoreScholarship> active) {
-    if (active.isEmpty) return '';
-    return active
-        .map((s) => [
-              s.id,
-              s.deadline.millisecondsSinceEpoch,
-              s.titleEn,
-              s.titleKm,
-              s.imageUrl,
-              s.logoUrl,
-              s.university,
-              s.country,
-              s.fundingType,
-              s.degree,
-              s.fieldOfStudy,
-              s.numberOfPlaces,
-              s.openDate?.millisecondsSinceEpoch ?? 0,
-              s.descriptionEn,
-              s.eligibilityEn,
-              s.benefitsEn,
-              s.requiredDocumentsEn,
-              s.applicationLink,
-              s.isActive,
-            ].join(':'))
-        .join('|');
-  }
 
   void openNotifications() {
     Get.toNamed(AppRoutes.notificationScreen);
