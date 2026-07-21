@@ -11,8 +11,34 @@ import 'package:scholarship_app/screens/scholarship/my_applications_screen.dart'
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ScholarshipDetailScreen extends StatelessWidget {
+class ScholarshipDetailScreen extends StatefulWidget {
   const ScholarshipDetailScreen({super.key});
+
+  @override
+  State<ScholarshipDetailScreen> createState() => _ScholarshipDetailScreenState();
+}
+
+class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
+  ScholarshipDetailController? _controller;
+  bool _controllerInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_controllerInitialized) {
+      final scholarship =
+          ModalRoute.of(context)?.settings.arguments as FirestoreScholarship?;
+      if (scholarship != null) {
+        Get.delete<ScholarshipDetailController>(tag: scholarship.id, force: true);
+        _controller = Get.put(
+          ScholarshipDetailController(),
+          tag: scholarship.id,
+        );
+        _controller!.init(scholarship);
+        _controllerInitialized = true;
+      }
+    }
+  }
 
   void _showSaveMessage(BuildContext context, String message,
       {bool isSaved = true}) {
@@ -82,7 +108,7 @@ class ScholarshipDetailScreen extends StatelessWidget {
 
     Overlay.of(context).insert(overlayEntry);
     Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
+      if (mounted) overlayEntry.remove();
     });
   }
 
@@ -226,10 +252,7 @@ class ScholarshipDetailScreen extends StatelessWidget {
       );
     }
 
-    final controller = Get.put(
-      ScholarshipDetailController(),
-      tag: scholarship.id,
-    )..init(scholarship);
+    final controller = _controller!;
 
     final title = locale == 'km' && scholarship.titleKm.isNotEmpty
         ? scholarship.titleKm
@@ -520,11 +543,22 @@ class ScholarshipDetailScreen extends StatelessWidget {
   /// Parse multi-line text into bullet points.
   /// Supports newline-separated, "- " prefixed, or "• " prefixed text.
   List<String> _parseBulletPoints(String text) {
-    final lines = text
+    // Try newline-separated first (properly formatted data)
+    var lines = text
         .split(RegExp(r'[\n\r]+'))
         .map((line) => line.replaceFirst(RegExp(r'^[-•*]\s*'), '').trim())
         .where((line) => line.isNotEmpty)
         .toList();
+
+    // Fallback: comma/semicolon-separated (legacy seed data format)
+    if (lines.length <= 1 && text.contains(RegExp(r'[,;]'))) {
+      lines = text
+          .split(RegExp(r'[,;]'))
+          .map((s) => s.replaceFirst(RegExp(r'^[-•*]\s*'), '').trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+
     return lines.isEmpty ? [text] : lines;
   }
 
@@ -533,6 +567,11 @@ class ScholarshipDetailScreen extends StatelessWidget {
       FirestoreScholarship scholarship,
       ColorScheme colorScheme,
       ScholarshipDetailController controller) {
+    // Fallback chain: imageUrl → logoUrl → placeholder
+    final headerUrl = scholarship.imageUrl.isNotEmpty
+        ? scholarship.imageUrl
+        : scholarship.logoUrl;
+
     return SizedBox(
       height: 220,
       width: double.infinity,
@@ -540,9 +579,9 @@ class ScholarshipDetailScreen extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Main scholarship image (campus / building photo)
-          if (scholarship.imageUrl.isNotEmpty)
+          if (headerUrl.isNotEmpty)
             Image.network(
-              scholarship.imageUrl,
+              headerUrl,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) =>
                   _buildHeaderPlaceholder(colorScheme),

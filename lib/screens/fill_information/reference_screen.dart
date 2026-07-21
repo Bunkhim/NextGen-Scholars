@@ -46,7 +46,10 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
         bottomNavigationBar: FillInfoNavBar(
           step: 8,
           totalSteps: 8,
-          onBack: () => Navigator.maybePop(context),
+          onBack: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+            Navigator.maybePop(context);
+          },
           onNext: () {
             if (controller.submitForm(t)) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +70,9 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
           onSave: () => controller.onSave(t),
           isLastStep: true,
         ),
-        body: SingleChildScrollView(
+        body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Obx(
             () => Form(
@@ -225,8 +230,9 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
               ),
             ),
           ),
-        )
-      );
+        ),
+      ),
+    );
   }
 
   @override

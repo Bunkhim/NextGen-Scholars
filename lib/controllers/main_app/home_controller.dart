@@ -1,11 +1,7 @@
 // ignore_for_file: invalid_use_of_protected_member
 
-import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:scholarship_app/database/database.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/application_data.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
@@ -13,7 +9,8 @@ import 'package:scholarship_app/screens/main_app/scholarship_match_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/screens/main_app/discover_screen.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
+import 'package:scholarship_app/services/saved_scholarship_service.dart';
+import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,10 +18,8 @@ class HomeController extends GetxController {
   static const _cambodiaUtcOffset = Duration(hours: 7);
 
   final scholarshipService = ScholarshipService();
-  final savedRepo = SavedScholarshipRepository();
+  final savedScholarshipService = SavedScholarshipService();
   final appData = ApplicationData();
-
-  late final Stream<List<FirestoreScholarship>> scholarshipsStream;
 
   final RxSet<String> favoriteIds = <String>{}.obs;
   final RxnString photoUrl = RxnString();
@@ -36,7 +31,6 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    scholarshipsStream = scholarshipService.streamActiveScholarships();
     loadFavorites();
     loadPhoto();
     loadActionOrder();
@@ -61,22 +55,24 @@ class HomeController extends GetxController {
 
   void _onPhotoChanged() {
     final path = ProfileScreen.activePhotoPath;
-    if (path != null && !path.startsWith('http') && File(path).existsSync()) {
-      FileImage(File(path)).evict();
+    if (path != null && path.startsWith('http')) {
+      photoUrl.value = path;
+    } else {
+      photoUrl.value = path;
     }
-    photoUrl.value = path;
   }
 
   Future<void> loadUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final profile = await UserFirestoreService().getProfile();
-    final name = profile?['name'] as String? ?? user?.displayName ?? 'User';
+    final profile = await UsersApiService().getProfile();
+    final name = profile['displayName'] as String? ??
+        JwtService().displayNameSync ??
+        'User';
     userName.value = name;
   }
 
   Future<void> loadFavorites() async {
-    final ids = await savedRepo.getSavedFirestoreIds();
-    favoriteIds.value = ids.toSet();
+    final ids = await savedScholarshipService.getSavedIds();
+    favoriteIds.value = ids;
   }
 
   /// Returns the appropriate greeting translation key based on Cambodia time (UTC+7).
@@ -94,9 +90,8 @@ class HomeController extends GetxController {
       photoUrl.value = ProfileScreen.activePhotoPath;
       return;
     }
-    final profile = await UserFirestoreService().getProfile();
-    final user = FirebaseAuth.instance.currentUser;
-    final url = profile?['photoUrl'] as String? ?? user?.photoURL;
+    final profile = await UsersApiService().getProfile();
+    final url = profile['photoUrl'] as String?;
     ProfileScreen.activePhotoPath = url;
     photoUrl.value = url;
   }
@@ -150,43 +145,13 @@ class HomeController extends GetxController {
 
   Future<void> toggleFavorite(FirestoreScholarship scholarship) async {
     final isFav = favoriteIds.contains(scholarship.id);
-    if (isFav) {
-      favoriteIds.remove(scholarship.id);
-    } else {
-      favoriteIds.add(scholarship.id);
-    }
 
     if (isFav) {
-      await savedRepo.unsaveByFirestoreId(scholarship.id);
+      favoriteIds.remove(scholarship.id);
+      await savedScholarshipService.unsaveScholarship(scholarship.id);
     } else {
-      final sqliteId = await ScholarshipRepository().upsertByFirestoreId(
-        firestoreId: scholarship.id,
-        scholarship: Scholarship(
-          title: scholarship.titleEn,
-          titleKm: scholarship.titleKm,
-          institution: scholarship.university,
-          country: scholarship.country,
-          type: scholarship.fundingType,
-          deadline: scholarship.deadline,
-          openDate: scholarship.openDate,
-          numberOfPlaces: scholarship.numberOfPlaces,
-          description: scholarship.descriptionEn,
-          descriptionKm: scholarship.descriptionKm,
-          applicationUrl: scholarship.applicationLink,
-          imageUrl: scholarship.imageUrl,
-          logoUrl: scholarship.logoUrl,
-          level: scholarship.degree,
-          fieldOfStudy: scholarship.fieldOfStudy,
-          eligibility: scholarship.eligibilityEn,
-          eligibilityKm: scholarship.eligibilityKm,
-          benefits: scholarship.benefitsEn,
-          benefitsKm: scholarship.benefitsKm,
-          requiredDocuments: scholarship.requiredDocumentsEn,
-          requiredDocumentsKm: scholarship.requiredDocumentsKm,
-          isActive: true,
-        ),
-      );
-      await savedRepo.save(SavedScholarshipModel(scholarshipId: sqliteId));
+      favoriteIds.add(scholarship.id);
+      await savedScholarshipService.saveScholarship(scholarship.id);
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;

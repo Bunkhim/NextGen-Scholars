@@ -1,15 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/services/email_otp_service.dart';
 import 'package:scholarship_app/services/phone_otp_service.dart';
 
 class VerifyEmailController extends GetxController {
-  final String type; // 'phone' or 'email'
-  final String destination; // phone number or email
-  final String purpose; // 'forgotPassword' or 'register'
+  final String type;
+  final String destination;
+  final String purpose;
 
   VerifyEmailController({
     required this.type,
@@ -23,12 +23,13 @@ class VerifyEmailController extends GetxController {
 
   final PhoneOTPService _phoneOtpService = PhoneOTPService();
   final EmailOTPService _emailOtpService = EmailOTPService();
+  final AuthApiService _authApi = AuthApiService();
 
   final RxBool isLoading = false.obs;
   final RxnString error = RxnString();
   final RxInt remainingSeconds = 60.obs;
   final RxBool canResend = false.obs;
-  final RxInt codeVersion = 0.obs; // bumped to trigger OTP box rebuilds
+  final RxInt codeVersion = 0.obs;
 
   @override
   void onInit() {
@@ -47,7 +48,6 @@ class VerifyEmailController extends GetxController {
     super.onClose();
   }
 
-  // ── Timer ────────────────────────────────────────────────────────────────
   void _startResendTimer() {
     remainingSeconds.value = 60;
     canResend.value = false;
@@ -65,7 +65,6 @@ class VerifyEmailController extends GetxController {
     });
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
   String getOTPCode() => codeControllers.map((c) => c.text).join();
 
   String maskedDestination() {
@@ -98,7 +97,6 @@ class VerifyEmailController extends GetxController {
     }
   }
 
-  // ── Verify ───────────────────────────────────────────────────────────────
   Future<void> verifyCode(AppLocalizations t) async {
     error.value = null;
 
@@ -141,14 +139,8 @@ class VerifyEmailController extends GetxController {
         String email = destination;
         if (type == 'phone') {
           try {
-            final snap = await FirebaseFirestore.instance
-                .collection('users')
-                .where('phone', isEqualTo: destination)
-                .limit(1)
-                .get();
-            if (snap.docs.isNotEmpty) {
-              email = snap.docs.first.data()['email'] ?? '';
-            }
+            final res = await _authApi.lookupUser(email: destination);
+            email = res['email'] as String? ?? destination;
           } catch (_) {}
         }
         Get.offAllNamed(
@@ -164,7 +156,6 @@ class VerifyEmailController extends GetxController {
     }
   }
 
-  // ── Resend ───────────────────────────────────────────────────────────────
   Future<void> resendCode(AppLocalizations t) async {
     if (!canResend.value) return;
     error.value = null;

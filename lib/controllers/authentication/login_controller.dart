@@ -1,14 +1,15 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 import 'package:scholarship_app/services/user_data_sync_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
 
 class LoginController extends GetxController {
   final emailController = TextEditingController();
@@ -20,12 +21,17 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isGoogleLoading = false.obs;
   final RxBool isFacebookLoading = false.obs;
+  bool _isDisposed = false;
+
+  final _authApi = AuthApiService();
+  final _jwt = JwtService();
 
   bool get anyLoading =>
       isLoading.value || isGoogleLoading.value || isFacebookLoading.value;
 
   @override
   void onClose() {
+    _isDisposed = true;
     emailController.dispose();
     passwordController.dispose();
     emailFocusNode.dispose();
@@ -125,8 +131,16 @@ class LoginController extends GetxController {
           );
         },
       ),
-      barrierDismissible: false,
+      barrierDismissible: true,
     );
+  }
+
+  // ============ POST-AUTH HELPERS ============
+
+  Future<void> _postAuthActions(String uid) async {
+    await FillInfoPersistenceService().onUserLoggedIn(uid);
+    await SessionSecurityService().recordLogin();
+    await UserDataSyncService().restoreAll(uid);
   }
 
   // ============ AUTHENTICATION ============
@@ -137,138 +151,181 @@ class LoginController extends GetxController {
     isLoading.value = true;
 
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final res = await _authApi.login(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
-      final user = credential.user;
-      final userName = user?.displayName ?? emailController.text.split('@')[0];
+      if (_isDisposed) return;
 
-      if (user != null) {
-        await UserFirestoreService().updateLastLogin(user.uid);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final displayName = (res['displayName'] as String?) ??
+            emailController.text.split('@')[0];
+
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: displayName,
+        );
+
+        await _postAuthActions(uid);
+
+        if (_isDisposed) return;
+        isLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginSuccess'),
+          t.translate('loginWelcomeUser').replaceAll('\$userName', displayName),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (_isDisposed) return;
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginFailed');
+        _showErrorMessage(msg);
       }
-
-      isLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginSuccess'),
-        t.translate('loginWelcomeUser').replaceAll('\$userName', userName),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      isLoading.value = false;
-
-      String errorMsg;
-      switch (e.code) {
-        case 'user-not-found':
-          errorMsg = t.translate('loginErrorUserNotFound');
-          break;
-        case 'wrong-password':
-          errorMsg = t.translate('loginErrorWrongPassword');
-          break;
-        case 'invalid-credential':
-          errorMsg = t.translate('loginErrorInvalidCredential');
-          break;
-        case 'user-disabled':
-          errorMsg = t.translate('loginErrorUserDisabled');
-          break;
-        case 'too-many-requests':
-          errorMsg = t.translate('loginErrorTooManyRequests');
-          break;
-        default:
-          errorMsg = e.message ?? t.translate('loginFailed');
-      }
-      _showErrorMessage(errorMsg);
     } catch (e) {
+      if (_isDisposed) return;
       isLoading.value = false;
       _showErrorMessage(t.translate('loginFailed'));
     }
   }
 
   Future<void> handleGoogleSignIn(AppLocalizations t) async {
+    debugPrint('[LoginController] handleGoogleSignIn START');
     isGoogleLoading.value = true;
 
     try {
       _showLoadingDialog(t.translate('loginGoogleSigningIn'));
+      debugPrint('[LoginController] Loading dialog shown');
+
+      // serverClientId must be the "Web application" OAuth client ID from
+      // Google Cloud Console — NOT the Android/iOS client ID.  It must match
+      // the GOOGLE_CLIENT_ID configured in the backend .env, since that's
+      // the audience the backend validates against.
+      final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+      debugPrint('[LoginController] GOOGLE_WEB_CLIENT_ID is ${serverClientId == null ? "NULL — signIn will likely fail" : "set (${serverClientId.length} chars)"}');
 
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: null,
+        serverClientId: serverClientId,
         scopes: <String>['email', 'profile'],
       );
+      debugPrint('[LoginController] GoogleSignIn created, calling signIn()...');
 
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn()
+          .timeout(const Duration(seconds: 30), onTimeout: () {
+        debugPrint('[LoginController] signIn() TIMED OUT after 30s');
+        return null;
+      });
 
-      Get.back(); // dismiss loading dialog
+      debugPrint('[LoginController] signIn() returned: ${googleUser?.email ?? "null"}');
+
+      if (_isDisposed) return;
+      if (Get.isDialogOpen ?? false) {
+        debugPrint('[LoginController] Dismissing loading dialog');
+        Get.back();
+      }
 
       if (googleUser == null) {
+        debugPrint('[LoginController] googleUser is null — possible causes: (1) user cancelled, (2) serverClientId is wrong/missing, (3) iOS client ID in Info.plist is invalid, (4) bundle ID mismatch with Google Cloud Console');
         isGoogleLoading.value = false;
         _showErrorMessage(t.translate('loginGoogleCancelled'));
         return;
       }
 
+      debugPrint('[LoginController] Getting authentication...');
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+      final idToken = googleAuth.idToken;
+      debugPrint('[LoginController] idToken is ${idToken == null ? "NULL" : "present (${idToken.length} chars)"}');
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-
-      final User? user = userCredential.user;
-      final String userName = user?.displayName ?? 'User';
-
-      if (user != null) {
-        await UserFirestoreService().ensureUser(user);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
+      if (idToken == null) {
+        debugPrint(
+          'Google sign-in: idToken is null. This is usually caused by a missing '
+          'or incorrect serverClientId / GOOGLE_WEB_CLIENT_ID configuration. '
+          'Ensure the Web OAuth client ID is set in .env and matches the '
+          'backend GOOGLE_CLIENT_ID.',
+        );
+        isGoogleLoading.value = false;
+        _showErrorMessage(t.translate('loginGoogleFailed'));
+        return;
       }
 
-      isGoogleLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
-        t.translate('loginGoogleSignInSuccess'),
+      debugPrint('[LoginController] Calling socialAuth API...');
+      final res = await _authApi.socialAuth(
+        provider: 'google',
+        token: idToken,
       );
+      debugPrint('[LoginController] socialAuth response: $res');
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      Get.back();
-      isGoogleLoading.value = false;
+      if (_isDisposed) return;
 
-      String errorMessage = t.translate('loginAuthFailed');
-      if (e.code == 'account-exists-with-different-credential') {
-        errorMessage = t.translate('loginEmailExistsDifferentMethod');
-      } else if (e.code == 'invalid-credential') {
-        errorMessage = t.translate('loginInvalidCredentials');
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final userName = (res['displayName'] as String?) ?? 'User';
+
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: userName,
+        );
+
+        await _postAuthActions(uid);
+
+        if (_isDisposed) return;
+        isGoogleLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
+          t.translate('loginGoogleSignInSuccess'),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (_isDisposed) return;
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isGoogleLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginGoogleFailed');
+        debugPrint('[LoginController] socialAuth failed: $msg');
+        _showErrorMessage(msg);
       }
-      _showErrorMessage(errorMessage);
     } catch (e) {
-      Get.back();
+      debugPrint('[LoginController] handleGoogleSignIn EXCEPTION: $e');
+      if (_isDisposed) return;
+      if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;
       _showErrorMessage(t.translate('loginGoogleFailed'));
     }
   }
 
   Future<void> handleFacebookSignIn(AppLocalizations t) async {
+    debugPrint('[LoginController] handleFacebookSignIn START');
     isFacebookLoading.value = true;
 
     try {
       _showLoadingDialog(t.translate('loginFacebookSigningIn'));
+      debugPrint('[LoginController] Facebook loading dialog shown');
 
       final LoginResult result = await FacebookAuth.instance.login(
         permissions: ['email', 'public_profile'],
       );
+      debugPrint('[LoginController] Facebook login result: status=${result.status}');
 
-      Get.back(); // dismiss loading dialog
+      if (_isDisposed) return;
+      if (Get.isDialogOpen ?? false) {
+        debugPrint('[LoginController] Dismissing Facebook loading dialog');
+        Get.back();
+      }
 
       if (result.status == LoginStatus.cancelled) {
         isFacebookLoading.value = false;
@@ -277,47 +334,56 @@ class LoginController extends GetxController {
       }
 
       if (result.status != LoginStatus.success || result.accessToken == null) {
+        debugPrint('[LoginController] Facebook login failed: status=${result.status}, message=${result.message}');
         isFacebookLoading.value = false;
         _showErrorMessage(t.translate('loginFacebookFailed'));
         return;
       }
 
-      final OAuthCredential facebookCredential =
-          FacebookAuthProvider.credential(result.accessToken!.tokenString);
-
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(facebookCredential);
-
-      final User? user = userCredential.user;
-      final String userName = user?.displayName ?? 'User';
-
-      if (user != null) {
-        await UserFirestoreService().ensureUser(user);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
-      }
-
-      isFacebookLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginFacebookSignInSuccess'),
-        userName,
+      debugPrint('[LoginController] Calling socialAuth for Facebook...');
+      final res = await _authApi.socialAuth(
+        provider: 'facebook',
+        token: result.accessToken!.tokenString,
       );
+      debugPrint('[LoginController] Facebook socialAuth response: $res');
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
-      isFacebookLoading.value = false;
+      if (_isDisposed) return;
 
-      String errorMessage = t.translate('loginAuthFailed');
-      if (e.code == 'account-exists-with-different-credential') {
-        errorMessage = t.translate('loginEmailExistsDifferentMethod');
-      } else if (e.code == 'invalid-credential') {
-        errorMessage = t.translate('loginInvalidCredentials');
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final userName = (res['displayName'] as String?) ?? 'User';
+
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: userName,
+        );
+
+        await _postAuthActions(uid);
+
+        if (_isDisposed) return;
+        isFacebookLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginFacebookSignInSuccess'),
+          userName,
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (_isDisposed) return;
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isFacebookLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginFacebookFailed');
+        debugPrint('[LoginController] Facebook socialAuth failed: $msg');
+        _showErrorMessage(msg);
       }
-      _showErrorMessage(errorMessage);
     } catch (e) {
+      debugPrint('[LoginController] handleFacebookSignIn EXCEPTION: $e');
+      if (_isDisposed) return;
       if (Get.isDialogOpen ?? false) Get.back();
       isFacebookLoading.value = false;
       _showErrorMessage(t.translate('loginFacebookFailed'));

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/application_data.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
+import 'package:scholarship_app/core/api/services/upload_api_service.dart';
 
 class PersonalInfoController extends GetxController {
   final firstNameController = TextEditingController();
@@ -18,7 +19,7 @@ class PersonalInfoController extends GetxController {
   final Rxn<String> selectedGender = Rxn<String>();
   final Rxn<String> selectedNationality = Rxn<String>();
   final Rxn<DateTime> selectedDate = Rxn<DateTime>();
-  final Rxn<File> profileImage = Rxn<File>();
+  final RxnString profileImage = RxnString();
 
   final RxnString genderError = RxnString();
   final RxnString nationalityError = RxnString();
@@ -232,7 +233,18 @@ class PersonalInfoController extends GetxController {
       );
 
       if (image != null) {
-        profileImage.value = File(image.path);
+        final file = File(image.path);
+        try {
+          final uploadResult = await UploadApiService().uploadImage(file);
+          final uploadedUrl = uploadResult['url'] as String?;
+          if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+            profileImage.value = uploadedUrl;
+          } else {
+            profileImage.value = image.path;
+          }
+        } catch (_) {
+          profileImage.value = image.path;
+        }
         imageError.value = null;
       }
     } catch (e) {

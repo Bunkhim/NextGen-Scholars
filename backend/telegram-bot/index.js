@@ -36,33 +36,33 @@ const BOT_TOKEN =
 const MESSAGES = {
     en: {
         welcome:
-            "\ud83c\udf93 *Welcome to Scholarship App Support!*\n\n" +
+            "🎓 *Welcome to Scholarship App Support!*\n\n" +
             "I'm your virtual assistant. I can help you with:\n\n" +
-            "\ud83d\udcda Browse scholarships\n" +
-            "\ud83d\udccb Check application status\n" +
-            "\u2753 Answer common questions\n" +
-            "\ud83d\udcac Connect you with our support team\n\n" +
+            "📚 Browse scholarships\n" +
+            "📋 Check application status\n" +
+            "❓ Answer common questions\n" +
+            "💬 Connect you with our support team\n\n" +
             "Use the menu below or type a question!",
         help:
-            "\ud83d\udcd6 *Available Commands:*\n\n" +
-            "/start \u2013 Welcome & main menu\n" +
-            "/faq \u2013 Frequently Asked Questions\n" +
-            "/scholarships \u2013 Browse latest scholarships\n" +
-            "/status `<app_id>` \u2013 Check application status\n" +
-            "/contact \u2013 Contact support team\n" +
-            "/language \u2013 Switch language\n" +
-            "/help \u2013 Show this message",
-        faqTitle: "\u2753 *Frequently Asked Questions*\n\nSelect a topic:",
+            "📖 *Available Commands:*\n\n" +
+            "/start – Welcome & main menu\n" +
+            "/faq – Frequently Asked Questions\n" +
+            "/scholarships – Browse latest scholarships\n" +
+            "/status `<app_id>` – Check application status\n" +
+            "/contact – Contact support team\n" +
+            "/language – Switch language\n" +
+            "/help – Show this message",
+        faqTitle: "❓ *Frequently Asked Questions*\n\nSelect a topic:",
         faq: [
             {
                 q: "How do I apply for a scholarship?",
                 a:
-                    "1\ufe0f\u20e3 Open the Scholarship App\n" +
-                    "2\ufe0f\u20e3 Browse scholarships on Discover\n" +
-                    "3\ufe0f\u20e3 Tap a scholarship to view details\n" +
-                    "4\ufe0f\u20e3 Click \"Apply Now\"\n" +
-                    "5\ufe0f\u20e3 Complete your profile if needed\n\n" +
-                    "\u2705 Make sure your profile is complete before applying!",
+                    "1️⃣ Open the Scholarship App\n" +
+                    "2️⃣ Browse scholarships on Discover\n" +
+                    "3️⃣ Tap a scholarship to view details\n" +
+                    "4️⃣ Click \"Apply Now\"\n" +
+                    "5️⃣ Complete your profile if needed\n\n" +
+                    "✅ Make sure your profile is complete before applying!",
             },
             {
                 q: "Can I apply for multiple scholarships?",
@@ -73,200 +73,200 @@ const MESSAGES = {
             {
                 q: "How do I track my application?",
                 a:
-                    "Go to *Profile \u2192 My Applications*. You'll see all your applications with status:\n\n" +
-                    "\ud83d\udfe1 Pending \u2013 Under review\n" +
-                    "\ud83d\udfe2 Accepted \u2013 Congratulations!\n" +
-                    "\ud83d\udd34 Rejected \u2013 Try other scholarships\n" +
-                    "\ud83d\udfe3 Interview \u2013 Check your email",
+                    "Go to *Profile → My Applications*. You'll see all your applications with status:\n\n" +
+                    "🟡 Pending – Under review\n" +
+                    "🟢 Accepted – Congratulations!\n" +
+                    "🔴 Rejected – Try other scholarships\n" +
+                    "🟣 Interview – Check your email",
             },
             {
                 q: "How do I update my profile?",
                 a:
-                    "Go to *Profile \u2192 Edit Profile*. You can update your personal info, " +
+                    "Go to *Profile → Edit Profile*. You can update your personal info, " +
                     "photo, education details, and interests.",
             },
             {
                 q: "What if my application is rejected?",
                 a:
-                    "Don't give up! \ud83d\udcaa\n\n" +
-                    "\u2022 Review the scholarship requirements\n" +
-                    "\u2022 Improve your profile\n" +
-                    "\u2022 Apply to other scholarships\n" +
-                    "\u2022 New scholarships are added regularly!",
+                    "Don't give up! 💪\n\n" +
+                    "• Review the scholarship requirements\n" +
+                    "• Improve your profile\n" +
+                    "• Apply to other scholarships\n" +
+                    "• New scholarships are added regularly!",
             },
         ],
         contactMsg:
-            "\ud83d\udcac *Contact Our Support Team*\n\n" +
-            "\ud83d\udce7 Email: choubkhunrithy@gmail.com\n" +
-            "\ud83d\udcde Phone: +855 31 228 7763\n" +
-            "\ud83d\udd50 Hours: Mon-Fri, 8AM - 5PM (Cambodia Time)\n\n" +
+            "💬 *Contact Our Support Team*\n\n" +
+            "📧 Email: choubkhunrithy@gmail.com\n" +
+            "📞 Phone: +855 31 228 7763\n" +
+            "🕐 Hours: Mon-Fri, 8AM - 5PM (Cambodia Time)\n\n" +
             "Or type your message here and our team will respond!",
         agentForward:
-            "\u2705 Your message has been forwarded to our support team. " +
+            "✅ Your message has been forwarded to our support team. " +
             "We'll respond within 24 hours.\n\n" +
             "Email choubkhunrithy@gmail.com for urgent matters.",
         statusNotFound:
-            "\u274c Application not found. Please check your Application ID.\n\n" +
-            "Find it in: *Profile \u2192 My Applications \u2192 Details*",
+            "❌ Application not found. Please check your Application ID.\n\n" +
+            "Find it in: *Profile → My Applications → Details*",
         statusFound:
-            "\ud83d\udccb *Application Status*\n\n" +
-            "\ud83c\udd94 ID: `{id}`\n" +
-            "\ud83d\udcda Scholarship: {scholarship}\n" +
-            "\ud83d\udcca Status: {status}\n" +
-            "\ud83d\udcc5 Applied: {date}",
-        noScholarships: "No active scholarships found. Check back soon! \ud83d\udd14",
+            "📋 *Application Status*\n\n" +
+            "🆔 ID: `{id}`\n" +
+            "📚 Scholarship: {scholarship}\n" +
+            "📊 Status: {status}\n" +
+            "📅 Applied: {date}",
+        noScholarships: "No active scholarships found. Check back soon! 🔔",
         scholarshipItem:
-            "\ud83c\udf93 *{title}*\n\ud83c\udfeb {university}\n\ud83c\udf0d {country}\n" +
-            "\ud83d\udcc5 Deadline: {deadline}\n\ud83d\udcb0 {funding}\n",
+            "🎓 *{title}*\n🏫 {university}\n🌍 {country}\n" +
+            "📅 Deadline: {deadline}\n💰 {funding}\n",
         scholarshipsTitle:
-            "\ud83d\udcda *Latest Scholarships*\n\nHere are the latest opportunities:",
-        languageSwitch: "\ud83c\udf10 *Choose your language:*",
-        languageSet: "\u2705 Language set to *English*",
+            "📚 *Latest Scholarships*\n\nHere are the latest opportunities:",
+        languageSwitch: "🌐 *Choose your language:*",
+        languageSet: "✅ Language set to *English*",
         unknownMsg:
-            "\ud83e\udd14 I'm not sure I understand. Here's what I can help with:\n\n" +
-            "\u2022 Type /faq for common questions\n" +
-            "\u2022 Type /scholarships to browse\n" +
-            "\u2022 Type /contact to reach our team\n\n" +
+            "🤔 I'm not sure I understand. Here's what I can help with:\n\n" +
+            "• Type /faq for common questions\n" +
+            "• Type /scholarships to browse\n" +
+            "• Type /contact to reach our team\n\n" +
             "Or simply type your question!",
-        mainMenu: "\ud83d\udccb *Main Menu*\n\nWhat would you like to do?",
-        btnFaq: "\u2753 FAQ",
-        btnScholarships: "\ud83d\udcda Scholarships",
-        btnStatus: "\ud83d\udcca Check Status",
-        btnContact: "\ud83d\udcac Contact",
-        btnLanguage: "\ud83c\udf10 Language",
-        btnHelp: "\u2753 Help",
+        mainMenu: "📋 *Main Menu*\n\nWhat would you like to do?",
+        btnFaq: "❓ FAQ",
+        btnScholarships: "📚 Scholarships",
+        btnStatus: "📊 Check Status",
+        btnContact: "💬 Contact",
+        btnLanguage: "🌐 Language",
+        btnHelp: "❓ Help",
         askStatusId:
             "Please send your *Application ID*.\n\n" +
-            "Find it in: *Profile \u2192 My Applications \u2192 Details*",
-        writePrompt: "\u270d\ufe0f Please type your message...",
-        writeBtn: "\u270d\ufe0f Write a message",
-        replyFromSupport: "\ud83d\udce9 *Reply from Support Team:*",
+            "Find it in: *Profile → My Applications → Details*",
+        writePrompt: "✍️ Please type your message...",
+        writeBtn: "✍️ Write a message",
+        replyFromSupport: "📩 *Reply from Support Team:*",
     },
     km: {
         welcome:
-            "\ud83c\udf93 *\u179f\u17bc\u1798\u179f\u17d2\u179c\u17b6\u1782\u1798\u1793\u17cd\u1798\u1780\u1780\u17b6\u1793\u17cb Scholarship App Support!*\n\n" +
-            "\u1781\u17d2\u1789\u17bb\u17c6\u1787\u17b6\u1787\u17c6\u1793\u17bd\u1799\u1780\u17b6\u179a\u1793\u17b7\u1798\u17d2\u1798\u17b7\u178f\u17d4 \u1781\u17d2\u1789\u17bb\u17c6\u17a2\u17b6\u1785\u1787\u17bd\u1799\u17a2\u17d2\u1793\u1780\u1780\u17d2\u1793\u17bb\u1784:\n\n" +
-            "\ud83d\udcda \u179a\u17bb\u1780\u179a\u1780\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\n" +
-            "\ud83d\udccb \u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\n" +
-            "\u2753 \u1786\u17d2\u179b\u17be\u1799\u179f\u17c6\u178e\u17bd\u179a\u1791\u17bc\u1791\u17c5\n" +
-            "\ud83d\udcac \u1797\u17d2\u1787\u17b6\u1794\u17cb\u17a2\u17d2\u1793\u1780\u1787\u17b6\u1798\u17bd\u1799\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u1793\u17bd\u1799\n\n" +
-            "\u179f\u17bc\u1798\u1794\u17d2\u179a\u17be\u1798\u17ba\u1793\u17bb\u1799\u1781\u17b6\u1784\u1780\u17d2\u179a\u17c4\u1798 \u17ac\u179c\u17b6\u1799\u179f\u17c6\u178e\u17bd\u179a!",
+            "🎓 *សូមស្វាគមន៍មកកាន់ Scholarship App Support!*\n\n" +
+            "ខ្ញុំជាជំនួយការនិម្មិត។ ខ្ញុំអាចជួយអ្នកក្នុង:\n\n" +
+            "📚 រុករកអាហារូបករណ៍\n" +
+            "📋 ពិនិត្យស្ថានភាពពាក្យសុំ\n" +
+            "❓ ឆ្លើយសំណួរទូទៅ\n" +
+            "💬 ភ្ជាប់អ្នកជាមួយក្រុមជំនួយ\n\n" +
+            "សូមប្រើមឺនុយខាងក្រោម ឬវាយសំណួរ!",
         help:
-            "\ud83d\udcd6 *\u1796\u17b6\u1780\u17d2\u1799\u1794\u1789\u17d2\u1787\u17b6\u178a\u17c2\u179b\u1798\u17b6\u1793:*\n\n" +
-            "/start \u2013 \u179f\u17bc\u1798\u179f\u17d2\u179c\u17b6\u1782\u1798\u1793\u17cd \u1793\u17b7\u1784\u1798\u17ba\u1793\u17bb\u1799\n" +
-            "/faq \u2013 \u179f\u17c6\u178e\u17bd\u179a\u178a\u17c2\u179b\u179f\u17bd\u179a\u1787\u17b6\u179a\u17bf\u1799\u17d7\n" +
-            "/scholarships \u2013 \u179a\u17bb\u1780\u179a\u1780\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\n" +
-            "/status `<app_id>` \u2013 \u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796\u1796\u17b6\u1780\u17d2\u1799\n" +
-            "/contact \u2013 \u1791\u17b6\u1780\u17cb\u1791\u1784\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u1793\u17bd\u1799\n" +
-            "/language \u2013 \u1794\u17d2\u178f\u17bc\u179a\u1797\u17b6\u179f\u17b6\n" +
-            "/help \u2013 \u1794\u1784\u17d2\u17a0\u17b6\u1789\u179f\u17b6\u179a\u1793\u17c1\u17c7",
+            "📖 *ពាក្យបញ្ជាដែលមាន:*\n\n" +
+            "/start – សូមស្វាគមន៍ និងមឺនុយ\n" +
+            "/faq – សំណួរដែលសួរជារឿយៗ\n" +
+            "/scholarships – រុករកអាហារូបករណ៍\n" +
+            "/status `<app_id>` – ពិនិត្យស្ថានភាពពាក្យ\n" +
+            "/contact – ទាក់ទងក្រុមជំនួយ\n" +
+            "/language – ប្តូរភាសា\n" +
+            "/help – បង្ហាញសារនេះ",
         faqTitle:
-            "\u2753 *\u179f\u17c6\u178e\u17bd\u179a\u178a\u17c2\u179b\u179f\u17bd\u179a\u1787\u17b6\u179a\u17bf\u1799\u17d7*\n\n\u1787\u17d2\u179a\u17be\u179f\u179a\u17be\u179f\u1794\u17d2\u179a\u1792\u17b6\u1793\u1794\u1791:",
+            "❓ *សំណួរដែលសួរជារឿយៗ*\n\nជ្រើសរើសប្រធានបទ:",
         faq: [
             {
-                q: "\u178f\u17be\u1781\u17d2\u1789\u17bb\u17c6\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u178a\u17c4\u1799\u179a\u1794\u17c0\u1794\u178e\u17b6?",
+                q: "តើខ្ញុំដាក់ពាក្យសុំអាហារូបករណ៍ដោយរបៀបណា?",
                 a:
-                    "1\ufe0f\u20e3 \u1794\u17be\u1780\u1780\u1798\u17d2\u1798\u179c\u17b7\u1792\u17b8 Scholarship App\n" +
-                    "2\ufe0f\u20e3 \u179a\u17bb\u1780\u179a\u1780\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1793\u17c5\u1791\u17c6\u1796\u17d0\u179a\u179f\u17d2\u179c\u17c2\u1784\u179a\u1780\n" +
-                    "3\ufe0f\u20e3 \u1785\u17bb\u1785\u179b\u17be\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u178a\u17be\u1798\u17d2\u1794\u17b8\u1798\u17be\u179b\u1796\u17d0\u178f\u17cc\u1798\u17b6\u1793\u179b\u1798\u17d2\u17a2\u17b7\u178f\n" +
-                    "4\ufe0f\u20e3 \u1785\u17bb\u1785 \"\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799\u17a5\u17a1\u17bc\u179c\"\n" +
-                    "5\ufe0f\u20e3 \u1794\u17c6\u1796\u17c1\u1789\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794\u1794\u17d2\u179a\u179f\u17b7\u1793\u1794\u17be\u1785\u17b6\u17c6\u1794\u17b6\u1785\u17cb\n\n" +
-                    "\u2705 \u179f\u17bc\u1798\u1794\u17d2\u179a\u17b6\u1780\u178a\u1790\u17b6\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794\u1796\u17c1\u1789\u179b\u17c1\u1789\u1798\u17bb\u1793\u1796\u17c1\u179b\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799!",
+                    "1️⃣ បើកកម្មវិធី Scholarship App\n" +
+                    "2️⃣ រុករកអាហារូបករណ៍នៅទំព័រស្វែងរក\n" +
+                    "3️⃣ ចុចលើអាហារូបករណ៍ដើម្បីមើលព័ត៌មានលម្អិត\n" +
+                    "4️⃣ ចុច \"ដាក់ពាក្យឥឡូវ\"\n" +
+                    "5️⃣ បំពេញប្រវត្តិរូបប្រសិនបើចាំបាច់\n\n" +
+                    "✅ សូមប្រាកដថាប្រវត្តិរូបពេញលេញមុនពេលដាក់ពាក្យ!",
             },
             {
-                q: "\u178f\u17be\u1781\u17d2\u1789\u17bb\u17c6\u17a2\u17b6\u1785\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1785\u17d2\u179a\u17be\u1793\u1794\u17b6\u1793\u1791\u17c1?",
+                q: "តើខ្ញុំអាចដាក់ពាក្យអាហារូបករណ៍ច្រើនបានទេ?",
                 a:
-                    "\u1794\u17b6\u1793! \u17a2\u17d2\u1793\u1780\u17a2\u17b6\u1785\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1785\u17d2\u179a\u17be\u1793\u178f\u17b6\u1798\u178a\u17c2\u179b\u17a2\u17d2\u1793\u1780\u1798\u17b6\u1793\u179b\u1780\u17d2\u1781\u178e\u17c8\u1782\u17d2\u179a\u1794\u17cb\u1782\u17d2\u179a\u17b6\u1793\u17cb\u17d4 " +
-                    "\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u1793\u17b8\u1798\u17bd\u1799\u17d7\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u178f\u17b6\u1798\u178a\u17b6\u1793\u178a\u17b6\u1785\u17cb\u178a\u17c4\u1799\u17a1\u17c2\u1780\u17d4",
+                    "បាន! អ្នកអាចដាក់ពាក្យអាហារូបករណ៍ច្រើនតាមដែលអ្នកមានលក្ខណៈគ្រប់គ្រាន់។ " +
+                    "ពាក្យសុំនីមួយៗត្រូវបានតាមដានដាច់ដោយឡែក។",
             },
             {
-                q: "\u178f\u17be\u1781\u17d2\u1789\u17bb\u17c6\u178f\u17b6\u1798\u178a\u17b6\u1793\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u178a\u17c4\u1799\u179a\u1794\u17c0\u1794\u178e\u17b6?",
+                q: "តើខ្ញុំតាមដានស្ថានភាពពាក្យសុំដោយរបៀបណា?",
                 a:
-                    "\u1791\u17c5\u1780\u17b6\u1793\u17cb *\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794 \u2192 \u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u179a\u1794\u179f\u17cb\u1781\u17d2\u1789\u17bb\u17c6*\u17d4 \u17a2\u17d2\u1793\u1780\u1793\u17b9\u1784\u1783\u17be\u1789\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u1791\u17b6\u17c6\u1784\u17a2\u179f\u17cb\u1787\u17b6\u1798\u17bd\u1799\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796:\n\n" +
-                    "\ud83d\udfe1 \u1780\u17c6\u1796\u17bb\u1784\u179a\u1784\u17cb\u1785\u17b6\u17c6 \u2013 \u1780\u17c6\u1796\u17bb\u1784\u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\n" +
-                    "\ud83d\udfe2 \u1791\u1791\u17bd\u179b\u1799\u1780 \u2013 \u179f\u17bc\u1798\u17a2\u1794\u17a2\u179a\u179f\u17b6\u1791\u179a!\n" +
-                    "\ud83d\udd34 \u1798\u17b7\u1793\u178f\u17d2\u179a\u17bc\u179c\u1787\u17d2\u179a\u17be\u179f \u2013 \u179f\u17bc\u1798\u1796\u17d2\u1799\u17b6\u1799\u17b6\u1798\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1795\u17d2\u179f\u17c1\u1784\n" +
-                    "\ud83d\udfe3 \u179f\u1798\u17d2\u1797\u17b6\u179f\u1793\u17cd \u2013 \u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u17a2\u17ca\u17b8\u1798\u17c2\u179b",
+                    "ទៅកាន់ *ប្រវត្តិរូប → ពាក្យសុំរបស់ខ្ញុំ*។ អ្នកនឹងឃើញពាក្យសុំទាំងអស់ជាមួយស្ថានភាព:\n\n" +
+                    "🟡 កំពុងរង់ចាំ – កំពុងពិនិត្យ\n" +
+                    "🟢 ទទួលយក – សូមអបអរសាទរ!\n" +
+                    "🔴 មិនត្រូវជ្រើស – សូមព្យាយាមអាហារូបករណ៍ផ្សេង\n" +
+                    "🟣 សម្ភាសន៍ – ពិនិត្យអ៊ីមែល",
             },
             {
-                q: "\u178f\u17be\u1781\u17d2\u1789\u17bb\u17c6\u1792\u17d2\u179c\u17be\u1794\u1785\u17d2\u1785\u17bb\u1794\u17d2\u1794\u1793\u17d2\u1793\u1797\u17b6\u1796\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794\u178a\u17c4\u1799\u179a\u1794\u17c0\u1794\u178e\u17b6?",
+                q: "តើខ្ញុំធ្វើបច្ចុប្បន្នភាពប្រវត្តិរូបដោយរបៀបណា?",
                 a:
-                    "\u1791\u17c5\u1780\u17b6\u1793\u17cb *\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794 \u2192 \u1780\u17c2\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794*\u17d4 " +
-                    "\u17a2\u17d2\u1793\u1780\u17a2\u17b6\u1785\u1792\u17d2\u179c\u17be\u1794\u1785\u17d2\u1785\u17bb\u1794\u17d2\u1794\u1793\u17d2\u1793\u1797\u17b6\u1796\u1796\u17d0\u178f\u17cc\u1798\u17b6\u1793\u1795\u17d2\u1791\u17b6\u179b\u17cb\u1781\u17d2\u179b\u17bd\u1793 \u179a\u17bc\u1794\u1790\u178f \u1793\u17b7\u1784\u179c\u17b7\u179f\u17d0\u1799\u178a\u17c2\u179b\u1785\u17b6\u1794\u17cb\u17a2\u17b6\u179a\u1798\u17d2\u1798\u178e\u17cd\u17d4",
+                    "ទៅកាន់ *ប្រវត្តិរូប → កែប្រវត្តិរូប*។ " +
+                    "អ្នកអាចធ្វើបច្ចុប្បន្នភាពព័ត៌មានផ្ទាល់ខ្លួន រូបថត និងវិស័យដែលចាប់អារម្មណ៍។",
             },
             {
-                q: "\u178f\u17be\u1781\u17d2\u1789\u17bb\u17c6\u1782\u17bd\u179a\u1792\u17d2\u179c\u17be\u17a2\u17d2\u179c\u17b8\u1794\u17d2\u179a\u179f\u17b7\u1793\u1794\u17be\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u1798\u17b7\u1793\u178f\u17d2\u179a\u17bc\u179c\u1787\u17d2\u179a\u17be\u179f?",
+                q: "តើខ្ញុំគួរធ្វើអ្វីប្រសិនបើពាក្យសុំមិនត្រូវជ្រើស?",
                 a:
-                    "\u1780\u17bb\u17c6\u1781\u1780\u1785\u17b7\u178f\u17d2\u178f! \ud83d\udcaa\n\n" +
-                    "\u2022 \u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u1798\u17be\u179b\u178f\u1798\u17d2\u179a\u17bc\u179c\u1780\u17b6\u179a\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\n" +
-                    "\u2022 \u1780\u17c2\u179b\u1798\u17d2\u17a2\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780\n" +
-                    "\u2022 \u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1795\u17d2\u179f\u17c1\u1784\u1791\u17c0\u178f\n" +
-                    "\u2022 \u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1790\u17d2\u1798\u17b8\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u1794\u1793\u17d2\u1790\u17c2\u1798\u1787\u17b6\u1793\u17b7\u1785\u17d2\u1785!",
+                    "កុំខកចិត្ត! 💪\n\n" +
+                    "• ពិនិត្យមើលតម្រូវការអាហារូបករណ៍\n" +
+                    "• កែលម្អប្រវត្តិរូបរបស់អ្នក\n" +
+                    "• ដាក់ពាក្យអាហារូបករណ៍ផ្សេងទៀត\n" +
+                    "• អាហារូបករណ៍ថ្មីត្រូវបានបន្ថែមជានិច្ច!",
             },
         ],
         contactMsg:
-            "\ud83d\udcac *\u1791\u17b6\u1780\u17cb\u1791\u1784\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u1793\u17bd\u1799\u179a\u1794\u179f\u17cb\u1799\u17be\u1784*\n\n" +
-            "\ud83d\udce7 \u17a2\u17ca\u17b8\u1798\u17c2\u179b: choubkhunrithy@gmail.com\n" +
-            "\ud83d\udcde \u1791\u17bc\u179a\u179f\u17d0\u1796\u17d2\u1791: +855 31 228 7763\n" +
-            "\ud83d\udd50 \u1798\u17c9\u17c4\u1784: \u1785\u17d0\u1793\u17d2\u1791-\u179f\u17bb\u1780\u17d2\u179a, 8AM - 5PM\n\n" +
-            "\u17ac\u179c\u17b6\u1799\u179f\u17b6\u179a\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780\u1793\u17c5\u1791\u17b8\u1793\u17c1\u17c7 \u17a0\u17be\u1799\u1780\u17d2\u179a\u17bb\u1798\u1793\u17b9\u1784\u1786\u17d2\u179b\u17be\u1799\u178f\u1794!",
+            "💬 *ទាក់ទងក្រុមជំនួយរបស់យើង*\n\n" +
+            "📧 អ៊ីមែល: choubkhunrithy@gmail.com\n" +
+            "📞 ទូរស័ព្ទ: +855 31 228 7763\n" +
+            "🕐 ម៉ោង: ច័ន្ទ-សុក្រ, 8AM - 5PM\n\n" +
+            "ឬវាយសាររបស់អ្នកនៅទីនេះ ហើយក្រុមនឹងឆ្លើយតប!",
         agentForward:
-            "\u2705 \u179f\u17b6\u179a\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u1795\u17d2\u1789\u17be\u1791\u17c5\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u1793\u17bd\u1799\u179a\u1794\u179f\u17cb\u1799\u17be\u1784\u17a0\u17be\u1799\u17d4 " +
-            "\u1799\u17be\u1784\u1793\u17b9\u1784\u1786\u17d2\u179b\u17be\u1799\u178f\u1794\u1780\u17d2\u1793\u17bb\u1784\u179a\u1799\u17c8\u1796\u17c1\u179b 24 \u1798\u17c9\u17c4\u1784!\n\n" +
-            "\u17a2\u17ca\u17b8\u1798\u17c2\u179b\u1798\u1780 choubkhunrithy@gmail.com \u179f\u1798\u17d2\u179a\u17b6\u1794\u17cb\u179a\u17bf\u1784\u1794\u17d2\u179a\u17b6\u1794\u17cb\u17d4",
+            "✅ សាររបស់អ្នកត្រូវបានផ្ញើទៅក្រុមជំនួយរបស់យើងហើយ។ " +
+            "យើងនឹងឆ្លើយតបក្នុងរយៈពេល 24 ម៉ោង!\n\n" +
+            "អ៊ីមែលមក choubkhunrithy@gmail.com សម្រាប់រឿងប្រាប់។",
         statusNotFound:
-            "\u274c \u179a\u1780\u1798\u17b7\u1793\u1783\u17be\u1789\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u17d4 \u179f\u17bc\u1798\u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u179b\u17c1\u1781\u179f\u1798\u17d2\u1782\u17b6\u179b\u17cb\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780\u17d4\n\n" +
-            "\u179a\u1780\u179c\u17b6\u1793\u17c5: *\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794 \u2192 \u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u179a\u1794\u179f\u17cb\u1781\u17d2\u1789\u17bb\u17c6 \u2192 \u1796\u17d0\u178f\u17cc\u1798\u17b6\u1793\u179b\u1798\u17d2\u17a2\u17b7\u178f*",
+            "❌ រកមិនឃើញពាក្យសុំ។ សូមពិនិត្យលេខសម្គាល់ពាក្យសុំរបស់អ្នក។\n\n" +
+            "រកវានៅ: *ប្រវត្តិរូប → ពាក្យសុំរបស់ខ្ញុំ → ព័ត៌មានលម្អិត*",
         statusFound:
-            "\ud83d\udccb *\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6*\n\n" +
-            "\ud83c\udd94 \u179b\u17c1\u1781: `{id}`\n" +
-            "\ud83d\udcda \u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd: {scholarship}\n" +
-            "\ud83d\udcca \u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796: {status}\n" +
-            "\ud83d\udcc5 \u1790\u17d2\u1784\u17c3\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799: {date}",
+            "📋 *ស្ថានភាពពាក្យសុំ*\n\n" +
+            "🆔 លេខ: `{id}`\n" +
+            "📚 អាហារូបករណ៍: {scholarship}\n" +
+            "📊 ស្ថានភាព: {status}\n" +
+            "📅 ថ្ងៃដាក់ពាក្យ: {date}",
         noScholarships:
-            "\u1798\u17b7\u1793\u1798\u17b6\u1793\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u179f\u1780\u1798\u17d2\u1798\u1793\u17c5\u1796\u17c1\u179b\u1793\u17c1\u17c7\u17d4 \u179f\u17bc\u1798\u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u1798\u17be\u179b\u1798\u17d2\u178f\u1784\u1791\u17c0\u178f! \ud83d\udd14",
+            "មិនមានអាហារូបករណ៍សកម្មនៅពេលនេះ។ សូមពិនិត្យមើលម្តងទៀត! 🔔",
         scholarshipItem:
-            "\ud83c\udf93 *{title}*\n\ud83c\udfeb {university}\n\ud83c\udf0d {country}\n" +
-            "\ud83d\udcc5 \u1780\u17c6\u178e\u178f\u17cb\u1795\u17bb\u178f\u1780\u17c6\u178e\u178f\u17cb: {deadline}\n\ud83d\udcb0 {funding}\n",
+            "🎓 *{title}*\n🏫 {university}\n🌍 {country}\n" +
+            "📅 កំណត់ផុតកំណត់: {deadline}\n💰 {funding}\n",
         scholarshipsTitle:
-            "\ud83d\udcda *\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1790\u17d2\u1798\u17b8\u17d7*\n\n\u1793\u17c1\u17c7\u1782\u17ba\u1787\u17b6\u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd\u1790\u17d2\u1798\u17b8\u17d7:",
-        languageSwitch: "\ud83c\udf10 *\u1787\u17d2\u179a\u17be\u179f\u179a\u17be\u179f\u1797\u17b6\u179f\u17b6\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780:*",
+            "📚 *អាហារូបករណ៍ថ្មីៗ*\n\nនេះគឺជាអាហារូបករណ៍ថ្មីៗ:",
+        languageSwitch: "🌐 *ជ្រើសរើសភាសារបស់អ្នក:*",
         languageSet:
-            "\u2705 \u1797\u17b6\u179f\u17b6\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u1780\u17c6\u178e\u178f\u17cb\u1787\u17b6 *\u1797\u17b6\u179f\u17b6\u1781\u17d2\u1798\u17c2\u179a*",
+            "✅ ភាសាត្រូវបានកំណត់ជា *ភាសាខ្មែរ*",
         unknownMsg:
-            "\ud83e\udd14 \u1781\u17d2\u1789\u17bb\u17c6\u1798\u17b7\u1793\u1785\u17d2\u1794\u17b6\u179f\u17cb\u17d4 \u1793\u17c1\u17c7\u1782\u17ba\u17a2\u17d2\u179c\u17b8\u178a\u17c2\u179b\u1781\u17d2\u1789\u17bb\u17c6\u17a2\u17b6\u1785\u1787\u17bd\u1799:\n\n" +
-            "\u2022 \u179c\u17b6\u1799 /faq \u179f\u1798\u17d2\u179a\u17b6\u1794\u17cb\u179f\u17c6\u178e\u17bd\u179a\u1791\u17bc\u1791\u17c5\n" +
-            "\u2022 \u179c\u17b6\u1799 /scholarships \u178a\u17be\u1798\u17d2\u1794\u17b8\u179a\u17bb\u1780\u179a\u1780\n" +
-            "\u2022 \u179c\u17b6\u1799 /contact \u178a\u17be\u1798\u17d2\u1794\u17b8\u1791\u17b6\u1780\u17cb\u1791\u1784\u1780\u17d2\u179a\u17bb\u1798\n\n" +
-            "\u17ac\u179c\u17b6\u1799\u179f\u17c6\u178e\u17bd\u179a\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780 \u17a0\u17be\u1799\u1781\u17d2\u1789\u17bb\u17c6\u1793\u17b9\u1784\u1796\u17d2\u1799\u17b6\u1799\u17b6\u1798\u1787\u17bd\u1799!",
+            "🤔 ខ្ញុំមិនច្បាស់។ នេះគឺអ្វីដែលខ្ញុំអាចជួយ:\n\n" +
+            "• វាយ /faq សម្រាប់សំណួរទូទៅ\n" +
+            "• វាយ /scholarships ដើម្បីរុករក\n" +
+            "• វាយ /contact ដើម្បីទាក់ទងក្រុម\n\n" +
+            "ឬវាយសំណួររបស់អ្នក ហើយខ្ញុំនឹងព្យាយាមជួយ!",
         mainMenu:
-            "\ud83d\udccb *\u1798\u17ba\u1793\u17bb\u1799\u1787\u17b6\u1785\u17d2\u179a\u17be\u179f*\n\n\u178f\u17be\u17a2\u17d2\u1793\u1780\u1785\u1784\u17cb\u1792\u17d2\u179c\u17be\u17a2\u17d2\u179c\u17b8?",
-        btnFaq: "\u2753 \u179f\u17c6\u178e\u17bd\u179a\u1787\u17b6\u179a\u17bf\u1799\u17d7",
-        btnScholarships: "\ud83d\udcda \u17a2\u17b6\u17a0\u17b6\u179a\u17bc\u1794\u1780\u179a\u178e\u17cd",
+            "📋 *មឺនុយជាច្រើស*\n\nតើអ្នកចង់ធ្វើអ្វី?",
+        btnFaq: "❓ សំណួរជារឿយៗ",
+        btnScholarships: "📚 អាហារូបករណ៍",
         btnStatus:
-            "\ud83d\udcca \u1796\u17b7\u1793\u17b7\u178f\u17d2\u1799\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796",
-        btnContact: "\ud83d\udcac \u1791\u17b6\u1780\u17cb\u1791\u1784",
-        btnLanguage: "\ud83c\udf10 \u1797\u17b6\u179f\u17b6",
-        btnHelp: "\u2753 \u1787\u17c6\u1793\u17bd\u1799",
+            "📊 ពិនិត្យស្ថានភាព",
+        btnContact: "💬 ទាក់ទង",
+        btnLanguage: "🌐 ភាសា",
+        btnHelp: "❓ ជំនួយ",
         askStatusId:
-            "\u179f\u17bc\u1798\u1795\u17d2\u1789\u17be *\u179b\u17c1\u1781\u179f\u1798\u17d2\u1782\u17b6\u179b\u17cb\u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6*\u17d4\n\n" +
-            "\u179a\u1780\u179c\u17b6\u1793\u17c5: *\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794 \u2192 \u1796\u17b6\u1780\u17d2\u1799\u179f\u17bb\u17c6\u179a\u1794\u179f\u17cb\u1781\u17d2\u1789\u17bb\u17c6 \u2192 \u1796\u17d0\u178f\u17cc\u1798\u17b6\u1793\u179b\u1798\u17d2\u17a2\u17b7\u178f*",
+            "សូមផ្ញើ *លេខសម្គាល់ពាក្យសុំ*។\n\n" +
+            "រកវានៅ: *ប្រវត្តិរូប → ពាក្យសុំរបស់ខ្ញុំ → ព័ត៌មានលម្អិត*",
         writePrompt:
-            "\u270d\ufe0f \u179f\u17bc\u1798\u179c\u17b6\u1799\u179f\u17b6\u179a\u179a\u1794\u179f\u17cb\u17a2\u17d2\u1793\u1780...",
+            "✍️ សូមវាយសាររបស់អ្នក...",
         writeBtn:
-            "\u270d\ufe0f \u179f\u179a\u179f\u17c1\u179a\u179f\u17b6\u179a",
+            "✍️ សរសេរសារ",
         replyFromSupport:
-            "\ud83d\udce9 *\u1786\u17d2\u179b\u17be\u1799\u178f\u1794\u1796\u17b8\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u1793\u17bd\u1799:*",
+            "📩 *ឆ្លើយតបពីក្រុមជំនួយ:*",
     },
 };
 
 // Status emoji mapping
 const STATUS_EMOJI = {
-    pending: "\ud83d\udfe1 Pending",
-    reviewing: "\ud83d\udd35 Under Review",
-    accepted: "\ud83d\udfe2 Accepted",
-    rejected: "\ud83d\udd34 Not Selected",
-    interview: "\ud83d\udfe3 Interview",
+    pending: "🟡 Pending",
+    reviewing: "🔵 Under Review",
+    accepted: "🟢 Accepted",
+    rejected: "🔴 Not Selected",
+    interview: "🟣 Interview",
 };
 
 // =========================================================================
@@ -323,7 +323,7 @@ function faqKeyboard(lang) {
             callback_data: "faq_" + i,
         },
     ]);
-    rows.push([{ text: "\u2b05\ufe0f Back", callback_data: "main_menu" }]);
+    rows.push([{ text: "⬅️ Back", callback_data: "main_menu" }]);
     return { inline_keyboard: rows };
 }
 
@@ -331,13 +331,13 @@ function languageKeyboard() {
     return {
         inline_keyboard: [
             [
-                { text: "\ud83c\uddec\ud83c\udde7 English", callback_data: "lang_en" },
+                { text: "🇬🇧 English", callback_data: "lang_en" },
                 {
-                    text: "\ud83c\uddf0\ud83c\udded \u1797\u17b6\u179f\u17b6\u1781\u17d2\u1798\u17c2\u179a",
+                    text: "🇰🇭 ភាសាខ្មែរ",
                     callback_data: "lang_km",
                 },
             ],
-            [{ text: "\u2b05\ufe0f Back", callback_data: "main_menu" }],
+            [{ text: "⬅️ Back", callback_data: "main_menu" }],
         ],
     };
 }
@@ -347,23 +347,23 @@ function findAutoReply(text, lang) {
     const lower = text.toLowerCase();
     const rules = [
         {
-            patterns: ["how to apply", "apply", "\u178a\u17b6\u1780\u17cb\u1796\u17b6\u1780\u17d2\u1799"],
+            patterns: ["how to apply", "apply", "ដាក់ពាក្យ"],
             faqIndex: 0,
         },
         {
-            patterns: ["multiple", "many", "\u1785\u17d2\u179a\u17be\u1793"],
+            patterns: ["multiple", "many", "ច្រើន"],
             faqIndex: 1,
         },
         {
-            patterns: ["track", "status", "\u179f\u17d2\u1790\u17b6\u1793\u1797\u17b6\u1796", "\u178f\u17b6\u1798\u178a\u17b6\u1793"],
+            patterns: ["track", "status", "ស្ថានភាព", "តាមដាន"],
             faqIndex: 2,
         },
         {
-            patterns: ["profile", "update", "edit", "\u1794\u17d2\u179a\u179c\u178f\u17d2\u178f\u17b7\u179a\u17bc\u1794", "\u1780\u17c2"],
+            patterns: ["profile", "update", "edit", "ប្រវត្តិរូប", "កែ"],
             faqIndex: 3,
         },
         {
-            patterns: ["reject", "not selected", "failed", "\u1798\u17b7\u1793\u178f\u17d2\u179a\u17bc\u179c\u1787\u17d2\u179a\u17be\u179f"],
+            patterns: ["reject", "not selected", "failed", "មិនត្រូវជ្រើស"],
             faqIndex: 4,
         },
     ];
@@ -375,19 +375,19 @@ function findAutoReply(text, lang) {
     }
 
     // Greetings
-    const greetings = ["hello", "hi", "hey", "good morning", "\u179f\u17bd\u179f\u17d2\u178f\u17b8"];
+    const greetings = ["hello", "hi", "hey", "good morning", "សួស្តី"];
     if (greetings.some((g) => lower.includes(g))) {
         return lang === "km"
-            ? "\ud83d\udc4b \u179f\u17bd\u179f\u17d2\u178f\u17b8! \u178f\u17be\u1781\u17d2\u1789\u17bb\u17c6\u17a2\u17b6\u1785\u1787\u17bd\u1799\u17a2\u17d2\u179c\u17b8\u17a2\u17d2\u1793\u1780\u1793\u17c5\u1790\u17d2\u1784\u17c3\u1793\u17c1\u17c7?"
-            : "\ud83d\udc4b Hello! How can I help you today?";
+            ? "👋 សួស្តី! តើខ្ញុំអាចជួយអ្វីអ្នកនៅថ្ងៃនេះ?"
+            : "👋 Hello! How can I help you today?";
     }
 
     // Thanks
-    const thanks = ["thank", "thanks", "\u17a2\u179a\u1782\u17bb\u178e"];
+    const thanks = ["thank", "thanks", "អរគុណ"];
     if (thanks.some((t) => lower.includes(t))) {
         return lang === "km"
-            ? "\ud83d\ude0a \u17a2\u179a\u1782\u17bb\u178e! \u179f\u17bc\u1798\u179f\u17bd\u179a\u1794\u17d2\u179a\u179f\u17b7\u1793\u1794\u17be\u17a2\u17d2\u1793\u1780\u178f\u17d2\u179a\u17bc\u179c\u1780\u17b6\u179a\u17a2\u17d2\u179c\u17b8\u1795\u17d2\u179f\u17c1\u1784\u1791\u17c0\u178f\u17d4"
-            : "\ud83d\ude0a You're welcome! Feel free to ask if you need anything else.";
+            ? "😊 អរគុណ! សូមសួរប្រសិនបើអ្នកត្រូវការអ្វីផ្សេងទៀត។"
+            : "😊 You're welcome! Feel free to ask if you need anything else.";
     }
 
     return null;
@@ -434,8 +434,8 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
                         parse_mode: "Markdown",
                         reply_markup: {
                             inline_keyboard: [
-                                [{ text: "\u2b05\ufe0f Back to FAQ", callback_data: "faq" }],
-                                [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                                [{ text: "⬅️ Back to FAQ", callback_data: "faq" }],
+                                [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                             ],
                         },
                     });
@@ -447,7 +447,7 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
                     parse_mode: "Markdown",
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: "\u2b05\ufe0f Back", callback_data: "main_menu" }],
+                            [{ text: "⬅️ Back", callback_data: "main_menu" }],
                         ],
                     },
                 });
@@ -461,7 +461,7 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: m.writeBtn, callback_data: "write_message" }],
-                            [{ text: "\u2b05\ufe0f Back", callback_data: "main_menu" }],
+                            [{ text: "⬅️ Back", callback_data: "main_menu" }],
                         ],
                     },
                 });
@@ -495,7 +495,7 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
                     parse_mode: "Markdown",
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                            [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                         ],
                     },
                 });
@@ -600,7 +600,7 @@ exports.telegramWebhook = functions.https.onRequest(async (req, res) => {
                                 inline_keyboard: [
                                     [
                                         {
-                                            text: "\ud83c\udfe0 Main Menu",
+                                            text: "🏠 Main Menu",
                                             callback_data: "main_menu",
                                         },
                                     ],
@@ -640,7 +640,7 @@ async function handleScholarships(bot, chatId, lang) {
             await bot.sendMessage(chatId, m.noScholarships, {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                        [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                     ],
                 },
             });
@@ -670,8 +670,8 @@ async function handleScholarships(bot, chatId, lang) {
             parse_mode: "Markdown",
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: "\ud83d\udcf2 Open App", url: "https://scholarshipapp.com" }],
-                    [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                    [{ text: "📲 Open App", url: "https://scholarshipapp.com" }],
+                    [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                 ],
             },
         });
@@ -703,8 +703,8 @@ async function handleStatusCheck(bot, chatId, appId, lang) {
                 parse_mode: "Markdown",
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "\ud83d\udd04 Try Again", callback_data: "check_status" }],
-                        [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                        [{ text: "🔄 Try Again", callback_data: "check_status" }],
+                        [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                     ],
                 },
             });
@@ -728,8 +728,8 @@ async function handleStatusCheck(bot, chatId, appId, lang) {
             parse_mode: "Markdown",
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: "\ud83d\udd04 Check Another", callback_data: "check_status" }],
-                    [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                    [{ text: "🔄 Check Another", callback_data: "check_status" }],
+                    [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                 ],
             },
         });
@@ -765,7 +765,7 @@ async function handleSupportMessage(bot, chatId, msg, text, lang) {
             parse_mode: "Markdown",
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                    [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                 ],
             },
         });
@@ -800,7 +800,7 @@ exports.replyToTicket = functions.firestore
                         reply_markup: {
                             inline_keyboard: [
                                 [{ text: m.writeBtn, callback_data: "write_message" }],
-                                [{ text: "\ud83c\udfe0 Main Menu", callback_data: "main_menu" }],
+                                [{ text: "🏠 Main Menu", callback_data: "main_menu" }],
                             ],
                         },
                     }

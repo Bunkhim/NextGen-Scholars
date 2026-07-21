@@ -1,31 +1,29 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
+import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 import 'package:scholarship_app/services/user_data_sync_service.dart';
-import 'package:scholarship_app/services/user_firestore_service.dart';
 
 class RegisterController extends GetxController {
-  // ============ TEXT CONTROLLERS ============
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  // ============ FOCUS NODES ============
   final nameFocusNode = FocusNode();
   final emailFocusNode = FocusNode();
   final phoneFocusNode = FocusNode();
   final passwordFocusNode = FocusNode();
   final confirmPasswordFocusNode = FocusNode();
 
-  // ============ REACTIVE STATE ============
   final RxBool useEmail = true.obs;
   final RxBool obscurePassword = true.obs;
   final RxBool obscureConfirmPassword = true.obs;
@@ -34,42 +32,43 @@ class RegisterController extends GetxController {
   final RxBool isFacebookLoading = false.obs;
   final RxString selectedCountryCode = '+1'.obs;
 
-  // ============ ERROR STATE ============
   final RxString nameError = ''.obs;
   final RxString emailError = ''.obs;
   final RxString phoneError = ''.obs;
   final RxString passwordError = ''.obs;
   final RxString confirmPasswordError = ''.obs;
 
-  // ============ COUNTRY CODES ============
   final Map<String, String> countryCodes = {
-    '+1': '🇺🇸 +1',
-    '+44': '🇬🇧 +44',
-    '+91': '🇮🇳 +91',
-    '+86': '🇨🇳 +86',
-    '+81': '🇯🇵 +81',
-    '+33': '🇫🇷 +33',
-    '+49': '🇩🇪 +49',
-    '+39': '🇮🇹 +39',
-    '+34': '🇪🇸 +34',
-    '+61': '🇦🇺 +61',
-    '+55': '🇧🇷 +55',
-    '+54': '🇦🇷 +54',
-    '+52': '🇲🇽 +52',
-    '+27': '🇿🇦 +27',
-    '+234': '🇳🇬 +234',
-    '+20': '🇪🇬 +20',
-    '+60': '🇲🇾 +60',
-    '+65': '🇸🇬 +65',
-    '+82': '🇰🇷 +82',
-    '+84': '🇻🇳 +84',
-    '+62': '🇮🇩 +62',
-    '+63': '🇵🇭 +63',
-    '+855': '🇰🇭 +855',
-    '+90': '🇹🇷 +90',
-    '+966': '🇸🇦 +966',
-    '+971': '🇦🇪 +971',
+    '+1': '+1',
+    '+44': '+44',
+    '+91': '+91',
+    '+86': '+86',
+    '+81': '+81',
+    '+33': '+33',
+    '+49': '+49',
+    '+39': '+39',
+    '+34': '+34',
+    '+61': '+61',
+    '+55': '+55',
+    '+54': '+54',
+    '+52': '+52',
+    '+27': '+27',
+    '+234': '+234',
+    '+20': '+20',
+    '+60': '+60',
+    '+65': '+65',
+    '+82': '+82',
+    '+84': '+84',
+    '+62': '+62',
+    '+63': '+63',
+    '+855': '+855',
+    '+90': '+90',
+    '+966': '+966',
+    '+971': '+971',
   };
+
+  final _authApi = AuthApiService();
+  final _jwt = JwtService();
 
   bool get anyLoading =>
       isLoading.value || isGoogleLoading.value || isFacebookLoading.value;
@@ -89,7 +88,6 @@ class RegisterController extends GetxController {
     super.onClose();
   }
 
-  // ============ TOGGLE METHODS ============
   void togglePasswordVisibility() {
     obscurePassword.value = !obscurePassword.value;
   }
@@ -295,6 +293,14 @@ class RegisterController extends GetxController {
     );
   }
 
+  // ============ POST-AUTH HELPERS ============
+
+  Future<void> _postAuthActions(String uid) async {
+    await FillInfoPersistenceService().onUserLoggedIn(uid);
+    await SessionSecurityService().recordLogin();
+    await UserDataSyncService().restoreAll(uid);
+  }
+
   // ============ AUTHENTICATION ============
 
   Future<void> handleRegister(AppLocalizations t) async {
@@ -305,68 +311,43 @@ class RegisterController extends GetxController {
     try {
       final name = nameController.text.trim();
       final email = emailController.text.trim();
-      final phone = useEmail.value
-          ? null
-          : '${selectedCountryCode.value}${phoneController.text.trim()}';
       final password = passwordController.text;
 
-      // Create user with email and password
-      final credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final res = await _authApi.register(
         email: email,
         password: password,
+        name: name,
       );
 
-      final user = credential.user;
-      if (user != null) {
-        // Set display name
-        await user.updateDisplayName(name);
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final displayName = (res['displayName'] as String?) ?? name;
 
-        // Create Firestore user document
-        await UserFirestoreService().createUser(
-          uid: user.uid,
-          name: name,
-          email: email,
-          phone: phone,
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: displayName,
         );
 
-        // Send email verification
-        if (!user.emailVerified) {
-          await user.sendEmailVerification();
-        }
+        await _postAuthActions(uid);
 
-        // Initialize user services
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
+        isLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginGoogleSignInSuccess'),
+          t.translate('loginWelcomeUser').replaceAll('\$userName', name),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('registerErrorGeneric');
+        _showErrorMessage(msg);
       }
-
-      isLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginGoogleSignInSuccess'),
-        t.translate('loginWelcomeUser').replaceAll('\$userName', name),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      isLoading.value = false;
-
-      String errorMsg;
-      switch (e.code) {
-        case 'email-already-in-use':
-          errorMsg = t.translate('registerErrorEmailInUse');
-          break;
-        case 'weak-password':
-          errorMsg = t.translate('registerErrorWeakPassword');
-          break;
-        case 'invalid-email':
-          errorMsg = t.translate('registerErrorInvalidEmail');
-          break;
-        default:
-          errorMsg = e.message ?? t.translate('registerErrorGeneric');
-      }
-      _showErrorMessage(errorMsg);
     } catch (e) {
       isLoading.value = false;
       _showErrorMessage(t.translate('registerErrorGeneric'));
@@ -379,14 +360,18 @@ class RegisterController extends GetxController {
     try {
       _showLoadingDialog(t.translate('loginGoogleSigningIn'));
 
+      // serverClientId must be the "Web application" OAuth client ID from
+      // Google Cloud Console — NOT the Android/iOS client ID.  It must match
+      // the GOOGLE_CLIENT_ID configured in the backend .env, since that's
+      // the audience the backend validates against.
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: null,
+        serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
         scopes: <String>['email', 'profile'],
       );
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      Get.back(); // dismiss loading dialog
+      if (Get.isDialogOpen ?? false) Get.back();
 
       if (googleUser == null) {
         isGoogleLoading.value = false;
@@ -397,45 +382,57 @@ class RegisterController extends GetxController {
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+      final idToken = googleAuth.idToken;
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-
-      final User? user = userCredential.user;
-      final String userName = user?.displayName ?? 'User';
-
-      if (user != null) {
-        await UserFirestoreService().ensureUser(user);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
+      if (idToken == null) {
+        debugPrint(
+          'Google sign-in: idToken is null. This is usually caused by a missing '
+          'or incorrect serverClientId / GOOGLE_WEB_CLIENT_ID configuration. '
+          'Ensure the Web OAuth client ID is set in .env and matches the '
+          'backend GOOGLE_CLIENT_ID.',
+        );
+        isGoogleLoading.value = false;
+        _showErrorMessage(t.translate('loginGoogleFailed'));
+        return;
       }
 
-      isGoogleLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
-        t.translate('loginGoogleSignInSuccess'),
+      final res = await _authApi.socialAuth(
+        provider: 'google',
+        token: idToken,
       );
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      Get.back();
-      isGoogleLoading.value = false;
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final userName = (res['displayName'] as String?) ?? 'User';
 
-      String errorMessage = t.translate('loginAuthFailed');
-      if (e.code == 'account-exists-with-different-credential') {
-        errorMessage = t.translate('loginEmailExistsDifferentMethod');
-      } else if (e.code == 'invalid-credential') {
-        errorMessage = t.translate('loginInvalidCredentials');
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: userName,
+        );
+
+        await _postAuthActions(uid);
+
+        isGoogleLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
+          t.translate('loginGoogleSignInSuccess'),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isGoogleLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginGoogleFailed');
+        _showErrorMessage(msg);
       }
-      _showErrorMessage(errorMessage);
     } catch (e) {
-      Get.back();
+      debugPrint('Register Google sign-in error: $e');
+      if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;
       _showErrorMessage(t.translate('loginGoogleFailed'));
     }
@@ -451,7 +448,7 @@ class RegisterController extends GetxController {
         permissions: ['email', 'public_profile'],
       );
 
-      Get.back(); // dismiss loading dialog
+      if (Get.isDialogOpen ?? false) Get.back();
 
       if (result.status == LoginStatus.cancelled) {
         isFacebookLoading.value = false;
@@ -465,43 +462,43 @@ class RegisterController extends GetxController {
         return;
       }
 
-      final OAuthCredential facebookCredential =
-          FacebookAuthProvider.credential(result.accessToken!.tokenString);
-
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(facebookCredential);
-
-      final User? user = userCredential.user;
-      final String userName = user?.displayName ?? 'User';
-
-      if (user != null) {
-        await UserFirestoreService().ensureUser(user);
-        await FillInfoPersistenceService().onUserLoggedIn(user.uid);
-        await SessionSecurityService().recordLogin();
-        await UserDataSyncService().restoreAll(user.uid);
-      }
-
-      isFacebookLoading.value = false;
-      _showSuccessMessage(
-        t.translate('loginFacebookWelcomeUser').replaceAll('\$userName', userName),
-        t.translate('loginFacebookSignInSuccess'),
+      final res = await _authApi.socialAuth(
+        provider: 'facebook',
+        token: result.accessToken!.tokenString,
       );
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.offAllNamed(AppRoutes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      Get.back();
-      isFacebookLoading.value = false;
+      if (res.containsKey('token')) {
+        final uid = res['uid'] as String;
+        final token = res['token'] as String;
+        final userName = (res['displayName'] as String?) ?? 'User';
 
-      String errorMessage = t.translate('loginAuthFailed');
-      if (e.code == 'account-exists-with-different-credential') {
-        errorMessage = t.translate('loginEmailExistsDifferentMethod');
-      } else if (e.code == 'invalid-credential') {
-        errorMessage = t.translate('loginInvalidCredentials');
+        await _jwt.saveUserSession(
+          uid: uid,
+          token: token,
+          email: res['email'] as String?,
+          displayName: userName,
+        );
+
+        await _postAuthActions(uid);
+
+        isFacebookLoading.value = false;
+        _showSuccessMessage(
+          t.translate('loginFacebookWelcomeUser').replaceAll('\$userName', userName),
+          t.translate('loginFacebookSignInSuccess'),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else {
+        isFacebookLoading.value = false;
+        final msg = res['detail'] as String? ??
+            res['message'] as String? ??
+            t.translate('loginFacebookFailed');
+        _showErrorMessage(msg);
       }
-      _showErrorMessage(errorMessage);
     } catch (e) {
-      Get.back();
+      debugPrint('Register Facebook sign-in error: $e');
+      if (Get.isDialogOpen ?? false) Get.back();
       isFacebookLoading.value = false;
       _showErrorMessage(t.translate('loginFacebookFailed'));
     }

@@ -7,15 +7,26 @@ import 'package:scholarship_app/services/application_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 
-class ApplicationStatusScreen extends StatelessWidget {
+class ApplicationStatusScreen extends StatefulWidget {
   final ScholarshipApplication application;
 
-  ApplicationStatusScreen({super.key, required this.application});
+  const ApplicationStatusScreen({super.key, required this.application});
 
-  late final ApplicationStatusController controller = Get.put(
-    ApplicationStatusController(application),
-    tag: application.id,
-  );
+  @override
+  State<ApplicationStatusScreen> createState() => _ApplicationStatusScreenState();
+}
+
+class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
+  late final ApplicationStatusController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(
+      ApplicationStatusController(widget.application),
+      tag: widget.application.id,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

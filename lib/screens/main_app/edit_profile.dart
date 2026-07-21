@@ -157,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     Overlay.of(context).insert(overlayEntry);
     Future.delayed(const Duration(seconds: 2), () {
-      overlayEntry.remove();
+      if (mounted) overlayEntry.remove();
     });
   }
 
@@ -412,12 +412,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 : Expanded(
                     child: Transform.translate(
                       offset: const Offset(0, -20),
-                      child: Builder(builder: (context) {
-                        final ws = WallpaperService();
-                        final themed = ws.hasTheme;
-                        return Container(
-                          decoration: themed
-                              ? ws.glassSection(radius: 28)
+                      child: Container(
+                          decoration: WallpaperService().hasTheme
+                              ? WallpaperService().glassSection(radius: 28)
                               : BoxDecoration(
                                   color: colorScheme.surfaceContainerHighest,
                                   borderRadius: const BorderRadius.vertical(
@@ -541,10 +538,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ],
                             ),
                           ),
-                        );
-                      }),
+                        ),
+                      ),
                     ),
-                  ),
           ],
         ),
       ),
@@ -1085,6 +1081,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Widget? suffixIcon,
     bool readOnly = false,
     VoidCallback? onTap,
+    TextInputAction? textInputAction,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final hasError = errorText != null && errorText.isNotEmpty;
@@ -1098,6 +1097,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         TextField(
           controller: controller,
+          focusNode: focusNode,
+          textInputAction: textInputAction ??
+              (nextFocusNode != null ? TextInputAction.next : TextInputAction.done),
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           onChanged: onChanged,

@@ -7,12 +7,24 @@ import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late final NotificationController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(NotificationController());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(NotificationController());
     final colorScheme = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     final isKm = Localizations.localeOf(context).languageCode == 'km';

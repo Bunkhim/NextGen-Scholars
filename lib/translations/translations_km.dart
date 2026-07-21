@@ -498,6 +498,7 @@ const Map<String, String> translationsKm = {
   'savedCount': 'បានរក្សាទុក',
   'savedAdded': 'អាហារូបករណ៍ត្រូវបានរក្សាទុក',
   'savedRemoved': 'អាហារូបករណ៍ត្រូវបានលុបចេញពីការរក្សាទុក',
+  'savedError': 'បរាជ័យក្នុងការរក្សាទុក។ សូមព្យាយាមម្តងទៀត។',
   'savedUndo': 'មិនធ្វើវិញ',
   'savedDeadline': 'កាលកំណត់:',
   'savedDaysLeft': 'ថ្ងៃនៅសល់',
@@ -1165,9 +1166,15 @@ const Map<String, String> translationsKm = {
   'filterCountryJapan': 'ជប៉ុន',
   'filterCountryAustralia': 'អូស្ត្រាលី',
   'filterCountrySingapore': 'សិង្ហបុរី',
+  'filterCountrySouthKorea': 'កូរ៉េខាងត្បូង',
+  'filterCountryCanada': 'កាណាដា',
+  'filterCountryGermany': 'អាល្លឺម៉ង់',
+  'filterCountryFrance': 'បារាំង',
+  'filterCountryChina': 'ចិន',
   'filterTypeFullScholarship': 'អាហារូបករណ៍ពេញ',
   'filterTypePartialScholarship': 'អាហារូបករណ៍ផ្នែកខ្លះ',
   'filterTypeTuitionOnly': 'តែថ្លៃសិក្សាប៉ុណ្ណោះ',
+  'filterTypeStipend': 'ប្រាក់ឧបត្ថម្ភ',
 
   // notification_screen.dart
   'notifTitleDeadlineApproaching': 'កាលបរិច្ឆេទផុតកំណត់ជិតមកដល់',
