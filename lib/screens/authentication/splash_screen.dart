@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
@@ -97,26 +98,28 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNext() async {
-    final hasToken = await JwtService().hasToken();
-    final pref = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = pref.getBool("isLogin") ?? false;
+    try {
+      final hasToken = await JwtService().hasToken();
+      final pref = await SharedPreferences.getInstance();
+      final hasSeenOnboarding = pref.getBool("isLogin") ?? false;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (hasToken) {
-      final sessionValid = await SessionSecurityService().isSessionValid();
-      if (!sessionValid) {
-        await SessionSecurityService().forceLogout();
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
-        return;
+      if (hasToken) {
+        final sessionValid =
+            await SessionSecurityService().isSessionValid();
+        if (!sessionValid) {
+          await SessionSecurityService().forceLogout();
+          Get.offAllNamed(AppRoutes.loginScreen);
+          return;
+        }
+        Get.offAllNamed(AppRoutes.homeScreen);
+      } else if (hasSeenOnboarding) {
+        Get.offAllNamed(AppRoutes.loginScreen);
+      } else {
+        Get.offAllNamed(AppRoutes.onboardingScreen);
       }
-      Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
-    } else if (hasSeenOnboarding) {
-      Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
-    } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.onboardingScreen);
-    }
+    } catch (_) {}
   }
 
   @override
