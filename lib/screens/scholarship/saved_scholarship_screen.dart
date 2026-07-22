@@ -53,14 +53,7 @@ class _SavedScholarshipScreenState extends State<SavedScholarshipScreen> {
           surfaceTintColor: WallpaperService().hasTheme
               ? Colors.transparent
               : colorScheme.surface,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios,
-                color: WallpaperService().hasTheme
-                    ? WallpaperService().onThemeColor
-                    : colorScheme.onSurface,
-                size: 20),
-            onPressed: controller.goToHomeTab,
-          ),
+          // No leading back button needed since this is a root navigation tab.
           title: Text(
             t.translate('savedTitle'),
             style: TextStyle(

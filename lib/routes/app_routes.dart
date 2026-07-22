@@ -26,6 +26,7 @@ import 'package:scholarship_app/screens/main_app/settings_screen.dart';
 import 'package:scholarship_app/screens/scholarship/my_applications_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
 import 'package:scholarship_app/screens/scholarship/scholarship_detail_screen.dart';
+import 'package:scholarship_app/screens/main_app/chat_ai_screen.dart';
 
 class AppRoutes {
   // Authentication Routes
@@ -50,6 +51,7 @@ class AppRoutes {
   static const String filterResultScreen = '/filter_result_screen';
   static const String searchResultScreen = '/search_result_screen';
   static const String settingsScreen = '/settings_screen';
+  static const String chatAIScreen = '/chat_ai_screen';
 
   // Scholarship Routes
   static const String scholarshipDetailScreen = '/scholarship_detail_screen';
@@ -113,6 +115,7 @@ class AppRoutes {
     GetPage(name: notificationScreen, page: () => NotificationsScreen()),
     GetPage(name: settingScreen, page: () => SettingsScreen()),
     GetPage(name: settingsScreen, page: () => SettingsScreen()),
+    GetPage(name: chatAIScreen, page: () => const ChatAIScreen()),
     GetPage(name: searchFilterScreen, page: () => SearchFilterScreen()),
     GetPage(name: filterResultScreen, page: () => FilterResultScreen()),
     GetPage(
