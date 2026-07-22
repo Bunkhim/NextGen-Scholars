@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+﻿// ignore_for_file: deprecated_member_use
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +8,6 @@ import 'package:scholarship_app/constants/app_colors.dart';
 import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
-import 'package:scholarship_app/screens/main_app/main_navigation_screen.dart';
 import 'package:scholarship_app/screens/main_app/wallpaper_screen.dart';
 import 'package:scholarship_app/services/notification_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
@@ -1124,7 +1123,7 @@ class _FeatureShowcaseSectionState extends State<_FeatureShowcaseSection> {
         title: t.translate('homeFeatureTitle2'),
         desc: t.translate('homeFeatureDesc2'),
         buttonLabel: t.translate('homeFeatureButton2'),
-        onTap: () => MainNavigationScreen.tabNotifier.value = 2,
+        onTap: () => Get.toNamed(AppRoutes.chatAIScreen),
       ),
       _FeatureTile(
         imageUrl:
