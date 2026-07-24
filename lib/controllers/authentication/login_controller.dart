@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
@@ -23,6 +25,19 @@ class LoginController extends GetxController {
   final RxBool isFacebookLoading = false.obs;
   bool _isDisposed = false;
 
+  // Per-method rate limit cooldown state
+  final RxBool isEmailRateLimited = false.obs;
+  final RxInt emailRateLimitCountdown = 0.obs;
+  Timer? _emailRateLimitTimer;
+
+  final RxBool isGoogleRateLimited = false.obs;
+  final RxInt googleRateLimitCountdown = 0.obs;
+  Timer? _googleRateLimitTimer;
+
+  final RxBool isFacebookRateLimited = false.obs;
+  final RxInt facebookRateLimitCountdown = 0.obs;
+  Timer? _facebookRateLimitTimer;
+
   final _authApi = AuthApiService();
   final _jwt = JwtService();
 
@@ -32,11 +47,68 @@ class LoginController extends GetxController {
   @override
   void onClose() {
     _isDisposed = true;
+    _emailRateLimitTimer?.cancel();
+    _googleRateLimitTimer?.cancel();
+    _facebookRateLimitTimer?.cancel();
     emailController.dispose();
     passwordController.dispose();
     emailFocusNode.dispose();
     passwordFocusNode.dispose();
     super.onClose();
+  }
+
+  void _startEmailRateLimitCooldown() {
+    isEmailRateLimited.value = true;
+    emailRateLimitCountdown.value = 60;
+    _emailRateLimitTimer?.cancel();
+    _emailRateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      emailRateLimitCountdown.value--;
+      if (emailRateLimitCountdown.value <= 0) {
+        timer.cancel();
+        isEmailRateLimited.value = false;
+        emailRateLimitCountdown.value = 0;
+      }
+    });
+  }
+
+  void _startGoogleRateLimitCooldown() {
+    isGoogleRateLimited.value = true;
+    googleRateLimitCountdown.value = 60;
+    _googleRateLimitTimer?.cancel();
+    _googleRateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      googleRateLimitCountdown.value--;
+      if (googleRateLimitCountdown.value <= 0) {
+        timer.cancel();
+        isGoogleRateLimited.value = false;
+        googleRateLimitCountdown.value = 0;
+      }
+    });
+  }
+
+  void _startFacebookRateLimitCooldown() {
+    isFacebookRateLimited.value = true;
+    facebookRateLimitCountdown.value = 60;
+    _facebookRateLimitTimer?.cancel();
+    _facebookRateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      facebookRateLimitCountdown.value--;
+      if (facebookRateLimitCountdown.value <= 0) {
+        timer.cancel();
+        isFacebookRateLimited.value = false;
+        facebookRateLimitCountdown.value = 0;
+      }
+    });
   }
 
   void togglePasswordVisibility() {
@@ -147,6 +219,7 @@ class LoginController extends GetxController {
 
   Future<void> handleLogin(AppLocalizations t, {required bool formValid}) async {
     if (!formValid) return;
+    if (isEmailRateLimited.value) return;
 
     isLoading.value = true;
 
@@ -157,6 +230,16 @@ class LoginController extends GetxController {
       );
 
       if (_isDisposed) return;
+
+      // Check for rate limit (429)
+      if (res['statusCode'] == 429 || 
+          (res['message'] as String?)?.contains('429') == true ||
+          (res['message'] as String?)?.toLowerCase().contains('too many') == true) {
+        isLoading.value = false;
+        _startEmailRateLimitCooldown();
+        _showErrorMessage(t.translate('loginErrorTooManyRequests'));
+        return;
+      }
 
       if (res.containsKey('token')) {
         final uid = res['uid'] as String;
@@ -199,6 +282,7 @@ class LoginController extends GetxController {
 
   Future<void> handleGoogleSignIn(AppLocalizations t) async {
     debugPrint('[LoginController] handleGoogleSignIn START');
+    if (isGoogleRateLimited.value) return;
     isGoogleLoading.value = true;
 
     try {
@@ -267,6 +351,16 @@ class LoginController extends GetxController {
 
       if (_isDisposed) return;
 
+      // Check for rate limit (429)
+      if (res['statusCode'] == 429 || 
+          (res['message'] as String?)?.contains('429') == true ||
+          (res['message'] as String?)?.toLowerCase().contains('too many') == true) {
+        isGoogleLoading.value = false;
+        _startGoogleRateLimitCooldown();
+        _showErrorMessage(t.translate('loginErrorTooManyRequests'));
+        return;
+      }
+
       if (res.containsKey('token')) {
         final uid = res['uid'] as String;
         final token = res['token'] as String;
@@ -310,6 +404,7 @@ class LoginController extends GetxController {
 
   Future<void> handleFacebookSignIn(AppLocalizations t) async {
     debugPrint('[LoginController] handleFacebookSignIn START');
+    if (isFacebookRateLimited.value) return;
     isFacebookLoading.value = true;
 
     try {
@@ -348,6 +443,16 @@ class LoginController extends GetxController {
       debugPrint('[LoginController] Facebook socialAuth response: $res');
 
       if (_isDisposed) return;
+
+      // Check for rate limit (429)
+      if (res['statusCode'] == 429 || 
+          (res['message'] as String?)?.contains('429') == true ||
+          (res['message'] as String?)?.toLowerCase().contains('too many') == true) {
+        isFacebookLoading.value = false;
+        _startFacebookRateLimitCooldown();
+        _showErrorMessage(t.translate('loginErrorTooManyRequests'));
+        return;
+      }
 
       if (res.containsKey('token')) {
         final uid = res['uid'] as String;

@@ -339,7 +339,7 @@ class _LoginScreenState extends State<LoginScreen>
                               width: double.infinity,
                               height: 52,
                               child: ElevatedButton(
-                                onPressed: controller.anyLoading
+                                onPressed: controller.anyLoading || controller.isEmailRateLimited.value
                                     ? null
                                     : () => _submitLogin(t),
                                 style: ElevatedButton.styleFrom(
@@ -363,14 +363,23 @@ class _LoginScreenState extends State<LoginScreen>
                                                   Colors.white),
                                         ),
                                       )
-                                    : Text(
-                                        t.translate('loginButton'),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
+                                    : controller.isEmailRateLimited.value
+                                        ? Text(
+                                            '${t.translate('loginErrorTooManyRequests')} (${controller.emailRateLimitCountdown.value}s)',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          )
+                                        : Text(
+                                            t.translate('loginButton'),
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
                               ),
                             ),
                           ),
@@ -440,13 +449,16 @@ class _LoginScreenState extends State<LoginScreen>
                       Expanded(
                         child: Obx(
                           () => _SocialButton(
-                            onPressed: controller.isFacebookLoading.value
+                            onPressed: (controller.isFacebookLoading.value || controller.isFacebookRateLimited.value)
                                 ? null
                                 : () {
-                                    debugPrint('[LoginScreen] Facebook button tapped (isFacebookLoading=${controller.isFacebookLoading.value})');
+                                    debugPrint('[LoginScreen] Facebook button tapped');
                                     controller.handleFacebookSignIn(t);
                                   },
                             isLoading: controller.isFacebookLoading.value,
+                            cooldownText: controller.isFacebookRateLimited.value
+                                ? '${controller.facebookRateLimitCountdown.value}s'
+                                : null,
                             child: Image.asset(
                               "assets/icons/facebook_icon.png",
                               width: 22,
@@ -460,13 +472,16 @@ class _LoginScreenState extends State<LoginScreen>
                       Expanded(
                         child: Obx(
                           () => _SocialButton(
-                            onPressed: controller.isGoogleLoading.value
+                            onPressed: (controller.isGoogleLoading.value || controller.isGoogleRateLimited.value)
                                 ? null
                                 : () {
-                                    debugPrint('[LoginScreen] Google button tapped (isGoogleLoading=${controller.isGoogleLoading.value})');
+                                    debugPrint('[LoginScreen] Google button tapped');
                                     controller.handleGoogleSignIn(t);
                                   },
                             isLoading: controller.isGoogleLoading.value,
+                            cooldownText: controller.isGoogleRateLimited.value
+                                ? '${controller.googleRateLimitCountdown.value}s'
+                                : null,
                             child: Image.asset(
                               "assets/icons/google_icon.png",
                               width: 22,
@@ -531,11 +546,13 @@ class _SocialButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Widget child;
   final bool isLoading;
+  final String? cooldownText;
 
   const _SocialButton({
     required this.onPressed,
     required this.child,
     this.isLoading = false,
+    this.cooldownText,
   });
 
   @override
@@ -568,7 +585,16 @@ class _SocialButton extends StatelessWidget {
                           AlwaysStoppedAnimation<Color>(colorScheme.primary),
                     ),
                   )
-                : child,
+                : cooldownText != null
+                    ? Text(
+                        cooldownText!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.error,
+                        ),
+                      )
+                    : child,
           ),
         ),
       ),
