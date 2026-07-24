@@ -41,6 +41,15 @@ class BaseApiService {
       if (e.response?.statusCode == 422) {
         debugPrint('BaseApiService 422 detail: ${e.response?.data}');
       }
+      // Return status code for rate limit detection
+      if (e.response?.statusCode == 429) {
+        return {
+          'result': false,
+          'message': _extractMessage(e),
+          'data': null,
+          'statusCode': 429,
+        };
+      }
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }
   }
