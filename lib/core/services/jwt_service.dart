@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:scholarship_app/core/api/api_config.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/core/services/websocket_service.dart';
@@ -10,6 +10,7 @@ class JwtService {
   JwtService._internal();
 
   final AuthApiService _authApi = AuthApiService();
+  static const _storage = FlutterSecureStorage();
 
   static const _uidKey = 'jwt_user_uid';
   static const _emailKey = 'jwt_user_email';
@@ -22,10 +23,9 @@ class JwtService {
 
   Future<void> _ensureInit() async {
     if (_initialised) return;
-    final prefs = await SharedPreferences.getInstance();
-    _cachedUid = prefs.getString(_uidKey);
-    _cachedEmail = prefs.getString(_emailKey);
-    _cachedName = prefs.getString(_nameKey);
+    _cachedUid = await _storage.read(key: _uidKey);
+    _cachedEmail = await _storage.read(key: _emailKey);
+    _cachedName = await _storage.read(key: _nameKey);
     _initialised = true;
   }
 
@@ -76,10 +76,9 @@ class JwtService {
     String? email,
     String? displayName,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_uidKey, uid);
-    await prefs.setString(_emailKey, email ?? '');
-    await prefs.setString(_nameKey, displayName ?? '');
+    await _storage.write(key: _uidKey, value: uid);
+    await _storage.write(key: _emailKey, value: email ?? '');
+    await _storage.write(key: _nameKey, value: displayName ?? '');
     await ApiConfig.saveToken(token);
     _cachedUid = uid;
     _cachedEmail = email ?? '';
@@ -88,10 +87,9 @@ class JwtService {
   }
 
   Future<void> clearUserSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_uidKey);
-    await prefs.remove(_emailKey);
-    await prefs.remove(_nameKey);
+    await _storage.delete(key: _uidKey);
+    await _storage.delete(key: _emailKey);
+    await _storage.delete(key: _nameKey);
     await ApiConfig.clearToken();
     _cachedUid = null;
     _cachedEmail = null;
@@ -104,7 +102,7 @@ class JwtService {
   String? get emailSync => _cachedEmail;
   String? get displayNameSync => _cachedName;
 
-  // Async getters (load from SharedPreferences if needed)
+  // Async getters (load from secure storage if needed)
   Future<String?> get currentUid async {
     await _ensureInit();
     return _cachedUid;

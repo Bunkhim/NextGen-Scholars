@@ -228,6 +228,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                                   return _OTPBox(
                                     controller: controller.codeControllers[i],
                                     focusNode: controller.focusNodes[i],
+                                    keyboardFocusNode: controller.keyboardFocusNodes[i],
                                     hasValue: hasValue,
                                     isError: isError,
                                     colorScheme: cs,
@@ -390,6 +391,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 class _OTPBox extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
+  final FocusNode keyboardFocusNode;
   final bool hasValue;
   final bool isError;
   final ColorScheme colorScheme;
@@ -399,6 +401,7 @@ class _OTPBox extends StatelessWidget {
   const _OTPBox({
     required this.controller,
     required this.focusNode,
+    required this.keyboardFocusNode,
     required this.hasValue,
     required this.isError,
     required this.colorScheme,
@@ -423,7 +426,7 @@ class _OTPBox extends StatelessWidget {
             : cs.surfaceContainerHighest.withOpacity(0.4);
 
     return KeyboardListener(
-      focusNode: focusNode,
+      focusNode: keyboardFocusNode,
       onKeyEvent: onKeyDown,
       child: SizedBox(
         width: 44,

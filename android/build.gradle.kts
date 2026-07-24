@@ -1,19 +1,5 @@
 //File: android/build.gradle.kts
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    
-    dependencies {
-        // Android Gradle Plugin
-        classpath("com.android.tools.build:gradle:8.1.0")
-        // បន្ថែម Google Services plugin សម្រាប់ Firebase
-        classpath("com.google.gms:google-services:4.4.0")
-    }
-}
-
 allprojects {
     repositories {
         google()
@@ -34,6 +20,24 @@ subprojects {
 
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+subprojects {
+    pluginManager.withPlugin("com.android.library") {
+        extensions.configure<com.android.build.gradle.LibraryExtension> {
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+        }
+    }
+    pluginManager.withPlugin("org.jetbrains.kotlin.android") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension> {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
