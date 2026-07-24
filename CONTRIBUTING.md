@@ -276,14 +276,6 @@ flutter run
 flutter analyze
 ```
 
-### Running the OTP Server / ដំណើរការ OTP Server
-
-```bash
-cd email-otp-server
-npm install
-npm start
-```
-
 ### Deploying Cloud Functions / Deploy Cloud Functions
 
 ```bash

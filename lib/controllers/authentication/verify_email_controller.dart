@@ -20,6 +20,7 @@ class VerifyEmailController extends GetxController {
   final List<TextEditingController> codeControllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> focusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> keyboardFocusNodes = List.generate(6, (_) => FocusNode());
 
   final PhoneOTPService _phoneOtpService = PhoneOTPService();
   final EmailOTPService _emailOtpService = EmailOTPService();
@@ -43,6 +44,9 @@ class VerifyEmailController extends GetxController {
       c.dispose();
     }
     for (var f in focusNodes) {
+      f.dispose();
+    }
+    for (var f in keyboardFocusNodes) {
       f.dispose();
     }
     super.onClose();

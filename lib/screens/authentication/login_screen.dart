@@ -245,6 +245,7 @@ class _LoginScreenState extends State<LoginScreen>
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             validator: (v) => controller.validateEmail(v, t),
+                            onChanged: (_) => controller.clearCredentialError(),
                             onFieldSubmitted: (_) =>
                                 controller.passwordFocusNode.requestFocus(),
                             cursorHeight: 20,
@@ -281,6 +282,7 @@ class _LoginScreenState extends State<LoginScreen>
                               textInputAction: TextInputAction.done,
                               validator: (v) =>
                                   controller.validatePassword(v, t),
+                              onChanged: (_) => controller.clearCredentialError(),
                               onFieldSubmitted: (_) => _submitLogin(t),
                               cursorHeight: 20,
                               cursorColor: Colors.blue,
@@ -309,27 +311,58 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 12),
 
-                          // Forgot password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => Get.toNamed(
-                                  AppRoutes.forgetPasswordScreen),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                t.translate('loginForgotPassword'),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.primary,
+                          // Inline error + Forgot password row
+                          Obx(() {
+                            final showRateLimit = controller.isEmailRateLimited.value;
+                            final showCredential = controller.credentialError.value.isNotEmpty;
+                            final hasInlineMessage = showRateLimit || showCredential;
+
+                            return Row(
+                              children: [
+                                if (hasInlineMessage)
+                                  Expanded(
+                                    child: showRateLimit
+                                        ? Text(
+                                            'Too many failed attempts.\nTry again in ${controller.emailRateLimitCountdown.value}s.',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: colorScheme.error,
+                                            ),
+                                          )
+                                        : Text(
+                                            controller.credentialError.value,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: colorScheme.error,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                  )
+                                else
+                                  const Spacer(),
+                                TextButton(
+                                  onPressed: () => Get.toNamed(
+                                      AppRoutes.forgetPasswordScreen),
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 0),
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    t.translate('loginForgotPassword'),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
+                              ],
+                            );
+                          }),
 
                           const SizedBox(height: 24),
 
@@ -363,23 +396,14 @@ class _LoginScreenState extends State<LoginScreen>
                                                   Colors.white),
                                         ),
                                       )
-                                    : controller.isEmailRateLimited.value
-                                        ? Text(
-                                            '${t.translate('loginErrorTooManyRequests')} (${controller.emailRateLimitCountdown.value}s)',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.3,
-                                            ),
-                                          )
-                                        : Text(
-                                            t.translate('loginButton'),
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.3,
-                                            ),
-                                          ),
+                                    : Text(
+                                        t.translate('loginButton'),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
                               ),
                             ),
                           ),

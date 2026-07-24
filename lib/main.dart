@@ -15,6 +15,7 @@ import 'package:scholarship_app/services/language_service.dart';
 import 'package:scholarship_app/services/theme_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/widgets/theme_background_overlay.dart';
+import 'package:scholarship_app/controllers/main_app/notification_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,7 @@ void main() async {
   // Initialize per-user Fill Info: cleanup stale data (>30 days),
   // then restore Fill Info for the currently signed-in user (if any).
   await FillInfoPersistenceService().initialize();
+  Get.put(NotificationController(), permanent: true);
   runApp(const ScholarshipApp());
 }
 

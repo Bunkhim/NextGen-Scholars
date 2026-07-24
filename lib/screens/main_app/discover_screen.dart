@@ -7,8 +7,8 @@ import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/screens/scholarship/saved_scholarship_screen.dart';
-import 'package:scholarship_app/services/notification_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
+import 'package:scholarship_app/controllers/main_app/notification_controller.dart';
 import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
 
@@ -182,58 +182,55 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             GestureDetector(
               onTap: () =>
                   Navigator.pushNamed(context, AppRoutes.notificationScreen),
-              child: FutureBuilder<int>(
-                future: NotificationService().fetchUnreadCount(),
-                builder: (context, snap) {
-                  final notificationCount = snap.data ?? 0;
-                  final ws = WallpaperService();
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
+              child: Obx(() {
+                final notificationCount = Get.find<NotificationController>().unreadCount.value;
+                final ws = WallpaperService();
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: ws.hasTheme
+                            ? Colors.white.withOpacity(0.15)
+                            : colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(13),
+                        border: Border.all(
                           color: ws.hasTheme
-                              ? Colors.white.withOpacity(0.15)
-                              : colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(13),
-                          border: Border.all(
-                            color: ws.hasTheme
-                                ? Colors.white.withOpacity(0.2)
-                                : colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.notifications_outlined,
-                          color: ws.hasTheme
-                              ? ws.onThemeColor
-                              : colorScheme.onSurface,
-                          size: 20,
+                              ? Colors.white.withOpacity(0.2)
+                              : colorScheme.outlineVariant,
+                          width: 1,
                         ),
                       ),
-                      if (notificationCount > 0)
-                        Positioned(
-                          top: -3,
-                          right: -3,
-                          child: Container(
-                            width: 11,
-                            height: 11,
-                            decoration: BoxDecoration(
-                              color: colorScheme.error,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: colorScheme.surface,
-                                width: 1.8,
-                              ),
+                      child: Icon(
+                        Icons.notifications_outlined,
+                        color: ws.hasTheme
+                            ? ws.onThemeColor
+                            : colorScheme.onSurface,
+                        size: 20,
+                      ),
+                    ),
+                    if (notificationCount > 0)
+                      Positioned(
+                        top: -3,
+                        right: -3,
+                        child: Container(
+                          width: 11,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: colorScheme.error,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colorScheme.surface,
+                              width: 1.8,
                             ),
                           ),
                         ),
-                    ],
-                  );
-                },
-              ),
+                      ),
+                  ],
+                );
+              }),
             ),
             const SizedBox(width: 20),
           ],

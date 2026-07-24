@@ -23,6 +23,7 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isGoogleLoading = false.obs;
   final RxBool isFacebookLoading = false.obs;
+  final RxString credentialError = ''.obs;
   bool _isDisposed = false;
 
   // Per-method rate limit cooldown state
@@ -113,6 +114,10 @@ class LoginController extends GetxController {
 
   void togglePasswordVisibility() {
     obscurePassword.value = !obscurePassword.value;
+  }
+
+  void clearCredentialError() {
+    if (credentialError.value.isNotEmpty) credentialError.value = '';
   }
 
   // ============ VALIDATION ============
@@ -221,6 +226,7 @@ class LoginController extends GetxController {
     if (!formValid) return;
     if (isEmailRateLimited.value) return;
 
+    credentialError.value = '';
     isLoading.value = true;
 
     try {
@@ -231,13 +237,12 @@ class LoginController extends GetxController {
 
       if (_isDisposed) return;
 
-      // Check for rate limit (429)
+      // Check for rate limit (429) — button displays countdown, no banner
       if (res['statusCode'] == 429 || 
           (res['message'] as String?)?.contains('429') == true ||
           (res['message'] as String?)?.toLowerCase().contains('too many') == true) {
         isLoading.value = false;
         _startEmailRateLimitCooldown();
-        _showErrorMessage(t.translate('loginErrorTooManyRequests'));
         return;
       }
 
@@ -271,7 +276,7 @@ class LoginController extends GetxController {
         final msg = res['detail'] as String? ??
             res['message'] as String? ??
             t.translate('loginFailed');
-        _showErrorMessage(msg);
+        credentialError.value = msg;
       }
     } catch (e) {
       if (_isDisposed) return;
