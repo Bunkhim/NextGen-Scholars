@@ -9,7 +9,7 @@ import 'package:scholarship_app/services/scholarship_service.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/screens/main_app/wallpaper_screen.dart';
-import 'package:scholarship_app/services/notification_service.dart';
+import 'package:scholarship_app/controllers/main_app/notification_controller.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
 import 'package:scholarship_app/widgets/scholarship_card.dart';
 import 'package:scholarship_app/controllers/main_app/home_controller.dart';
@@ -198,51 +198,48 @@ class _HomeScreenState extends State<HomeScreen> {
                     GestureDetector(
                       onTap: () =>
                           Get.toNamed(AppRoutes.notificationScreen),
-                      child: FutureBuilder<int>(
-                        future: NotificationService().fetchUnreadCount(),
-                        builder: (context, snap) {
-                          final unread = snap.data ?? 0;
-                          return Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(13),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.notifications_outlined,
-                                  color: AppColors.white,
-                                  size: 20,
+                      child: Obx(() {
+                        final unread = Get.find<NotificationController>().unreadCount.value;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(13),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                  width: 1,
                                 ),
                               ),
-                              if (unread > 0)
-                                Positioned(
-                                  top: -3,
-                                  right: -3,
-                                  child: Container(
-                                    width: 11,
-                                    height: 11,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.red,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.primaryDark,
-                                        width: 1.8,
-                                      ),
+                              child: const Icon(
+                                Icons.notifications_outlined,
+                                color: AppColors.white,
+                                size: 20,
+                              ),
+                            ),
+                            if (unread > 0)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  width: 11,
+                                  height: 11,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.red,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.primaryDark,
+                                      width: 1.8,
                                     ),
                                   ),
                                 ),
-                            ],
-                          );
-                        },
-                      ),
+                              ),
+                          ],
+                        );
+                      }),
                     ),
                   ],
                 ),

@@ -245,6 +245,7 @@ class _LoginScreenState extends State<LoginScreen>
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             validator: (v) => controller.validateEmail(v, t),
+                            onChanged: (_) => controller.clearCredentialError(),
                             onFieldSubmitted: (_) =>
                                 controller.passwordFocusNode.requestFocus(),
                             cursorHeight: 20,
@@ -281,6 +282,7 @@ class _LoginScreenState extends State<LoginScreen>
                               textInputAction: TextInputAction.done,
                               validator: (v) =>
                                   controller.validatePassword(v, t),
+                              onChanged: (_) => controller.clearCredentialError(),
                               onFieldSubmitted: (_) => _submitLogin(t),
                               cursorHeight: 20,
                               cursorColor: Colors.blue,
@@ -309,27 +311,58 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 12),
 
-                          // Forgot password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => Get.toNamed(
-                                  AppRoutes.forgetPasswordScreen),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                t.translate('loginForgotPassword'),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.primary,
+                          // Inline error + Forgot password row
+                          Obx(() {
+                            final showRateLimit = controller.isEmailRateLimited.value;
+                            final showCredential = controller.credentialError.value.isNotEmpty;
+                            final hasInlineMessage = showRateLimit || showCredential;
+
+                            return Row(
+                              children: [
+                                if (hasInlineMessage)
+                                  Expanded(
+                                    child: showRateLimit
+                                        ? Text(
+                                            'Too many failed attempts.\nTry again in ${controller.emailRateLimitCountdown.value}s.',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: colorScheme.error,
+                                            ),
+                                          )
+                                        : Text(
+                                            controller.credentialError.value,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: colorScheme.error,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                  )
+                                else
+                                  const Spacer(),
+                                TextButton(
+                                  onPressed: () => Get.toNamed(
+                                      AppRoutes.forgetPasswordScreen),
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 0),
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    t.translate('loginForgotPassword'),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
+                              ],
+                            );
+                          }),
 
                           const SizedBox(height: 24),
 
@@ -339,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen>
                               width: double.infinity,
                               height: 52,
                               child: ElevatedButton(
-                                onPressed: controller.anyLoading
+                                onPressed: controller.anyLoading || controller.isEmailRateLimited.value
                                     ? null
                                     : () => _submitLogin(t),
                                 style: ElevatedButton.styleFrom(
@@ -440,13 +473,16 @@ class _LoginScreenState extends State<LoginScreen>
                       Expanded(
                         child: Obx(
                           () => _SocialButton(
-                            onPressed: controller.isFacebookLoading.value
+                            onPressed: (controller.isFacebookLoading.value || controller.isFacebookRateLimited.value)
                                 ? null
                                 : () {
-                                    debugPrint('[LoginScreen] Facebook button tapped (isFacebookLoading=${controller.isFacebookLoading.value})');
+                                    debugPrint('[LoginScreen] Facebook button tapped');
                                     controller.handleFacebookSignIn(t);
                                   },
                             isLoading: controller.isFacebookLoading.value,
+                            cooldownText: controller.isFacebookRateLimited.value
+                                ? '${controller.facebookRateLimitCountdown.value}s'
+                                : null,
                             child: Image.asset(
                               "assets/icons/facebook_icon.png",
                               width: 22,
@@ -460,13 +496,16 @@ class _LoginScreenState extends State<LoginScreen>
                       Expanded(
                         child: Obx(
                           () => _SocialButton(
-                            onPressed: controller.isGoogleLoading.value
+                            onPressed: (controller.isGoogleLoading.value || controller.isGoogleRateLimited.value)
                                 ? null
                                 : () {
-                                    debugPrint('[LoginScreen] Google button tapped (isGoogleLoading=${controller.isGoogleLoading.value})');
+                                    debugPrint('[LoginScreen] Google button tapped');
                                     controller.handleGoogleSignIn(t);
                                   },
                             isLoading: controller.isGoogleLoading.value,
+                            cooldownText: controller.isGoogleRateLimited.value
+                                ? '${controller.googleRateLimitCountdown.value}s'
+                                : null,
                             child: Image.asset(
                               "assets/icons/google_icon.png",
                               width: 22,
@@ -531,11 +570,13 @@ class _SocialButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Widget child;
   final bool isLoading;
+  final String? cooldownText;
 
   const _SocialButton({
     required this.onPressed,
     required this.child,
     this.isLoading = false,
+    this.cooldownText,
   });
 
   @override
@@ -568,7 +609,16 @@ class _SocialButton extends StatelessWidget {
                           AlwaysStoppedAnimation<Color>(colorScheme.primary),
                     ),
                   )
-                : child,
+                : cooldownText != null
+                    ? Text(
+                        cooldownText!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.error,
+                        ),
+                      )
+                    : child,
           ),
         ),
       ),
