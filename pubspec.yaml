@@ -63,5 +63,5 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/
-    - .env
+
   uses-material-design: true

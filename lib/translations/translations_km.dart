@@ -556,6 +556,8 @@ const Map<String, String> translationsKm = {
       'ពាក្យសុំរបស់អ្នកត្រូវបានដាក់ជោគជ័យ។ អ្នកអាចតាមដានវឌ្ឍនភាពក្នុង ពាក្យសុំរបស់ខ្ញុំ។',
   'applyViewApplications': 'មើលពាក្យសុំរបស់ខ្ញុំ',
   'applyFailed': 'មិនអាចដាក់ពាក្យបានទេ។ សូមព្យាយាមម្ដងទៀត។',
+  'applyScholarshipUnavailable': 'អាហារូបករណ៍នេះមិនមានទៀតទេ។',
+  'applyDeadlinePassed': 'កាលបរិច្ឆេទផុតកំណត់នៃអាហារូបករណ៍នេះបានកន្លងផុតទៅហើយ និងមិនទទួលពាក្យសុំទៀតទេ។',
 
   // ── My Applications screen ─────────────────────────────
   'myApplicationsTitle': 'ពាក្យសុំរបស់ខ្ញុំ',
@@ -675,7 +677,7 @@ const Map<String, String> translationsKm = {
   'personalInfoLastNameHint': 'ឧ: ឃុនឫទ្ធី',
   'personalInfoSelectHint': 'ជ្រើសរើស',
   'personalInfoPhoneHint': '0312287763',
-  'personalInfoEmailHint': 'choubkhunrithy@gmail.com',
+  'personalInfoEmailHint': 'support@nextgenscholars.app',
   'personalInfoDobHint': 'ជ្រើសរើសថ្ងៃខែឆ្នាំកំណើត',
   'personalInfoNextButton': 'បន្ទាប់',
   'personalInfoGalleryButton': 'ទៅវិចិត្រសាល',

@@ -128,9 +128,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   icon: Icons.email_outlined,
                   color: cs.primary,
                   title: t.translate('helpEmail'),
-                  subtitle: 'choubkhunrithy@gmail.com',
+                  subtitle: 'support@nextgenscholars.app',
                   onTap: () =>
-                      controller.openUrl('mailto:choubkhunrithy@gmail.com'),
+                      controller.openUrl('mailto:support@nextgenscholars.app'),
                 ),
                 _ContactItem(
                   icon: Icons.phone_outlined,

@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:scholarship_app/core/app_config.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
@@ -298,7 +298,7 @@ class LoginController extends GetxController {
       // Google Cloud Console — NOT the Android/iOS client ID.  It must match
       // the GOOGLE_CLIENT_ID configured in the backend .env, since that's
       // the audience the backend validates against.
-      final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+      final serverClientId = AppConfig.googleWebClientId;
       debugPrint('[LoginController] GOOGLE_WEB_CLIENT_ID is ${serverClientId == null ? "NULL — signIn will likely fail" : "set (${serverClientId.length} chars)"}');
 
       final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -313,7 +313,7 @@ class LoginController extends GetxController {
         return null;
       });
 
-      debugPrint('[LoginController] signIn() returned: ${googleUser?.email ?? "null"}');
+      debugPrint('[LoginController] signIn() returned: ${googleUser == null ? "null" : "success"}');
 
       if (_isDisposed) return;
       if (Get.isDialogOpen ?? false) {
@@ -333,7 +333,7 @@ class LoginController extends GetxController {
           await googleUser.authentication;
 
       final idToken = googleAuth.idToken;
-      debugPrint('[LoginController] idToken is ${idToken == null ? "NULL" : "present (${idToken.length} chars)"}');
+      debugPrint('[LoginController] idToken is ${idToken == null ? "NULL" : "present"}');
 
       if (idToken == null) {
         debugPrint(
@@ -352,7 +352,7 @@ class LoginController extends GetxController {
         provider: 'google',
         token: idToken,
       );
-      debugPrint('[LoginController] socialAuth response: $res');
+      debugPrint('[LoginController] socialAuth response received: ${res.containsKey("token") ? "success" : "failed"}');
 
       if (_isDisposed) return;
 
@@ -395,11 +395,11 @@ class LoginController extends GetxController {
         final msg = res['detail'] as String? ??
             res['message'] as String? ??
             t.translate('loginGoogleFailed');
-        debugPrint('[LoginController] socialAuth failed: $msg');
+        debugPrint('[LoginController] socialAuth failed');
         _showErrorMessage(msg);
       }
     } catch (e) {
-      debugPrint('[LoginController] handleGoogleSignIn EXCEPTION: $e');
+      debugPrint('[LoginController] handleGoogleSignIn EXCEPTION');
       if (_isDisposed) return;
       if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;
@@ -445,7 +445,7 @@ class LoginController extends GetxController {
         provider: 'facebook',
         token: result.accessToken!.tokenString,
       );
-      debugPrint('[LoginController] Facebook socialAuth response: $res');
+      debugPrint('[LoginController] Facebook socialAuth response received: ${res.containsKey("token") ? "success" : "failed"}');
 
       if (_isDisposed) return;
 
@@ -488,11 +488,11 @@ class LoginController extends GetxController {
         final msg = res['detail'] as String? ??
             res['message'] as String? ??
             t.translate('loginFacebookFailed');
-        debugPrint('[LoginController] Facebook socialAuth failed: $msg');
+        debugPrint('[LoginController] Facebook socialAuth failed');
         _showErrorMessage(msg);
       }
     } catch (e) {
-      debugPrint('[LoginController] handleFacebookSignIn EXCEPTION: $e');
+      debugPrint('[LoginController] handleFacebookSignIn EXCEPTION');
       if (_isDisposed) return;
       if (Get.isDialogOpen ?? false) Get.back();
       isFacebookLoading.value = false;

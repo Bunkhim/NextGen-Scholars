@@ -29,7 +29,7 @@ class FillInfoPersistenceService {
     final uid = JwtService().uidSync;
     if (uid != null) {
       await _appData.setActiveUser(uid);
-      debugPrint('📋 Fill Info loaded for user: $uid');
+      debugPrint('📋 Fill Info loaded for user');
     } else {
       _appData.clearAll();
     }
@@ -44,7 +44,7 @@ class FillInfoPersistenceService {
   /// restored automatically.
   Future<void> onUserLoggedIn(String uid) async {
     await _appData.setActiveUser(uid);
-    debugPrint('📋 Fill Info restored for user: $uid');
+    debugPrint('📋 Fill Info restored for user');
   }
 
   // ──────────────────────────────────────────────────────
@@ -67,6 +67,6 @@ class FillInfoPersistenceService {
   Future<void> onAccountDeleted(String uid) async {
     await ApplicationData.deleteUserData(uid);
     _appData.clearAll();
-    debugPrint('🗑️ Fill Info permanently deleted for user: $uid');
+    debugPrint('🗑️ Fill Info permanently deleted for user');
   }
 }
