@@ -194,6 +194,15 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         );
         break;
 
+      case ApplyOutcome.deadlinePassed:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.translate('applyDeadlinePassed')),
+            backgroundColor: colorScheme.error,
+          ),
+        );
+        break;
+
       case ApplyOutcome.success:
         showDialog(
           context: context,
@@ -780,9 +789,9 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
           ),
           _buildInfoColumn(
             label: '${t.translate('discoverDeadline')}:',
-            value: scholarship.formattedDeadline,
+            value: _deadlineDisplay(scholarship),
             icon: Icons.calendar_today,
-            color: colorScheme.primary,
+            color: _deadlineColor(scholarship, colorScheme),
             colorScheme: colorScheme,
           ),
         ],
@@ -832,6 +841,20 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         ],
       ),
     );
+  }
+
+  String _deadlineDisplay(FirestoreScholarship s) {
+    final days = s.daysRemaining;
+    if (days < 0) return 'Expired';
+    if (days == 0) return 'Expires today';
+    return '$days days left';
+  }
+
+  Color _deadlineColor(FirestoreScholarship s, ColorScheme colorScheme) {
+    final days = s.daysRemaining;
+    if (days < 0) return colorScheme.error;
+    if (days <= 7) return const Color(0xFFFF6D00);
+    return colorScheme.primary;
   }
 
   // ── Action Buttons (Consult, Q&As, Share) ──────────────────────────────────

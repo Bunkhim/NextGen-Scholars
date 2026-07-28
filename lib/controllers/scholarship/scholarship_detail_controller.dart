@@ -15,6 +15,7 @@ enum ApplyOutcome {
   profileIncomplete,
   alreadyApplied,
   scholarshipUnavailable,
+  deadlinePassed,
   success,
   failed,
 }
@@ -113,6 +114,9 @@ class ScholarshipDetailController extends GetxController {
     final fresh = await _scholarshipService.getScholarshipById(current.id);
     if (fresh == null || !fresh.isActive) {
       return const ApplyResult(ApplyOutcome.scholarshipUnavailable);
+    }
+    if (fresh.deadline.isBefore(DateTime.now())) {
+      return const ApplyResult(ApplyOutcome.deadlinePassed);
     }
 
     // 4. Submit

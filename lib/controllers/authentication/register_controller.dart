@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:scholarship_app/core/app_config.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
@@ -365,7 +365,7 @@ class RegisterController extends GetxController {
       // the GOOGLE_CLIENT_ID configured in the backend .env, since that's
       // the audience the backend validates against.
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
+        serverClientId: AppConfig.googleWebClientId,
         scopes: <String>['email', 'profile'],
       );
 

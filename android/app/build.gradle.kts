@@ -2,9 +2,7 @@
 
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android plugin.
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
 }
 
 kotlin {
@@ -30,32 +28,37 @@ android {
         applicationId = "com.example.scholarship_app"   // នេះហើយជា package name
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion  // ត្រូវការសម្រាប់ Google Sign-In
+        minSdk = 29
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("upload-keystore.jks")
+            storePassword = "nextgen123"
+            keyAlias = "upload"
+            keyPassword = "nextgen123"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
-    
-    // Firebase BoM (Bill of Materials) - manages Firebase versions
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-    
-    // Firebase Analytics (optional but recommended)
-    implementation("com.google.firebase:firebase-analytics")
-    
-    // Firebase Authentication (optional - if you want to use Firebase Auth)
-    implementation("com.google.firebase:firebase-auth")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
 
 flutter {

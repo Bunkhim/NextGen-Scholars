@@ -529,7 +529,7 @@ class AppStrings {
 // personalInfoLastNameHint:            'Ex: Khunrithy'
 // personalInfoSelectHint:              'Select'
 // personalInfoPhoneHint:               '0312287763'
-// personalInfoEmailHint:               'choubkhunrithy@gmail.com'
+// personalInfoEmailHint:               'support@nextgenscholars.app'
 // personalInfoDobHint:                 'Select Date of Birth'
 //
 // Buttons
