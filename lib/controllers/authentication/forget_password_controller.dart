@@ -111,14 +111,6 @@ class ForgetPasswordController extends GetxController {
     final cleanPhone = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
     final fullPhoneNumber = '${selectedCountryCode.value}$cleanPhone';
 
-    try {
-      await _authApi.lookupUser(email: fullPhoneNumber);
-    } catch (_) {
-      isLoading.value = false;
-      error.value = t.translate('forgotPasswordAccountNotFound');
-      return;
-    }
-
     final errorMsg = await _phoneOtpService.sendOTP(phoneNumber: fullPhoneNumber);
 
     if (errorMsg == null) {

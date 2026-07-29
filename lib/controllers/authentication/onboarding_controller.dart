@@ -13,7 +13,7 @@ class OnboardingController extends GetxController {
   /// Used by both the "Skip" button and the final "Get Started" button.
   Future<void> completeOnboarding() async {
     final pref = await SharedPreferences.getInstance();
-    await pref.setBool('isLogin', true);
+    await pref.setBool('onboardingCompleted', true);
     Get.offAllNamed(AppRoutes.loginScreen);
   }
 }

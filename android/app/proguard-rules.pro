@@ -1,5 +1,6 @@
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.**  { *; }
+-keep class io.flutter.plugins.** { *; }
 -keep class io.flutter.util.**  { *; }
 -keep class io.flutter.view.**  { *; }
 -keep class io.flutter.embedding.** { *; }
@@ -7,6 +8,10 @@
 
 -keep class com.google.** { *; }
 -keep class com.facebook.** { *; }
+-keep class com.it_nomads.** { *; }
+-keep class com.tekartik.** { *; }
+-keep class app.meedu.** { *; }
+-keep class com.github.dart_lang.** { *; }
 
 -keep class * implements java.io.Serializable { *; }
 -keepclassmembers class * implements java.io.Serializable {

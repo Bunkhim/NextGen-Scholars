@@ -347,7 +347,7 @@ class ScholarshipCard extends StatelessWidget {
     final days = s.daysRemaining;
     if (days < 0) return 'Expired';
     if (days == 0) return 'Expires today';
-    return '$days days left';
+    return s.formattedDeadline;
   }
 
   Color _deadlineColor(FirestoreScholarship s, ColorScheme colorScheme) {

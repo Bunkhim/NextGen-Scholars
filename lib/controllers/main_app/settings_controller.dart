@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/language_service.dart';
+import 'package:scholarship_app/services/notification_preferences_service.dart';
 import 'package:scholarship_app/services/theme_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -32,6 +34,7 @@ class SettingsController extends GetxController {
     selectedLanguage.value =
         currentLocale.languageCode == 'km' ? 'ខ្មែរ' : 'English';
     _loadSettings();
+    _syncFromBackend();
   }
 
   Future<void> _loadSettings() async {
@@ -43,16 +46,52 @@ class SettingsController extends GetxController {
     notificationSound.value = prefs.getString(_kSound) ?? 'Default';
   }
 
+  Future<void> _syncFromBackend() async {
+    final uid = JwtService().uidSync;
+    if (uid == null) return;
+    final prefs = await NotificationPreferencesService().fetch();
+    if (prefs == null) return;
+    final sp = await SharedPreferences.getInstance();
+    if (pushNotifications.value != prefs.pushEnabled) {
+      pushNotifications.value = prefs.pushEnabled;
+      await sp.setBool(_kPush, prefs.pushEnabled);
+    }
+    if (emailNotifications.value != prefs.emailEnabled) {
+      emailNotifications.value = prefs.emailEnabled;
+      await sp.setBool(_kEmail, prefs.emailEnabled);
+    }
+    if (deadlineReminders.value != prefs.deadlineReminders) {
+      deadlineReminders.value = prefs.deadlineReminders;
+      await sp.setBool(_kDeadline, prefs.deadlineReminders);
+    }
+    if (newScholarships.value != prefs.newScholarships) {
+      newScholarships.value = prefs.newScholarships;
+      await sp.setBool(_kNewScholarships, prefs.newScholarships);
+    }
+  }
+
   Future<void> saveBool(String key, bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(key, value);
-    
+
     // Update local reactive variables
     switch (key) {
-      case _kPush: pushNotifications.value = value; break;
-      case _kEmail: emailNotifications.value = value; break;
-      case _kDeadline: deadlineReminders.value = value; break;
-      case _kNewScholarships: newScholarships.value = value; break;
+      case _kPush:
+        pushNotifications.value = value;
+        NotificationPreferencesService().update('pushEnabled', value);
+        break;
+      case _kEmail:
+        emailNotifications.value = value;
+        NotificationPreferencesService().update('emailEnabled', value);
+        break;
+      case _kDeadline:
+        deadlineReminders.value = value;
+        NotificationPreferencesService().update('deadlineReminders', value);
+        break;
+      case _kNewScholarships:
+        newScholarships.value = value;
+        NotificationPreferencesService().update('newScholarships', value);
+        break;
     }
   }
 

@@ -52,6 +52,7 @@ class SessionSecurityService {
     } catch (_) {}
 
     await JwtService().clearUserSession();
+    await clearLoginTimestamp();
     debugPrint('🔐 Forced logout due to expired session');
   }
 

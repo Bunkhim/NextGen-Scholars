@@ -14,17 +14,25 @@ class SavedScholarshipService {
   }
 
   Future<Set<String>> getSavedIds() async {
-    final items = await _api.getSavedScholarships();
-    return items
-        .whereType<Map<String, dynamic>>()
-        .map((item) => (item['id'] ?? '').toString())
-        .where((id) => id.isNotEmpty)
-        .toSet();
+    try {
+      final items = await _api.getSavedScholarships();
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map((item) => (item['id'] ?? '').toString())
+          .where((id) => id.isNotEmpty)
+          .toSet();
+    } catch (_) {
+      return {};
+    }
   }
 
   Future<int> getSavedCount() async {
-    final items = await _api.getSavedScholarships();
-    return items.length;
+    try {
+      final items = await _api.getSavedScholarships();
+      return items.length;
+    } catch (_) {
+      return 0;
+    }
   }
 
   Future<void> saveScholarship(String id) async {

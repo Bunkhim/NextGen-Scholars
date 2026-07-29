@@ -85,6 +85,9 @@ class ScholarshipDetailController extends GetxController {
       DiscoverScreen.refreshNotifier.value++;
 
       return !wasSaved;
+    } catch (_) {
+      isSaved.value = wasSaved;
+      return wasSaved;
     } finally {
       isSaving.value = false;
     }

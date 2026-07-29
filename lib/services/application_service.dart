@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:scholarship_app/core/api/services/applications_api_service.dart';
 
 /// Represents a user's scholarship application.
@@ -100,7 +101,8 @@ class ApplicationService {
         return ScholarshipApplication.fromJson(res);
       }
       return null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('ApplicationService.apply error: $e');
       return null;
     }
   }
@@ -110,7 +112,8 @@ class ApplicationService {
     try {
       final res = await _api.checkApplication(scholarshipId: scholarshipId);
       return res['applied'] == true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('ApplicationService.hasApplied error: $e');
       return false;
     }
   }
@@ -124,7 +127,8 @@ class ApplicationService {
           .toList();
       applications.sort((a, b) => b.appliedAt.compareTo(a.appliedAt));
       return applications;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('ApplicationService.fetchMyApplications error: $e');
       return [];
     }
   }
@@ -137,7 +141,8 @@ class ApplicationService {
         return ScholarshipApplication.fromJson(res);
       }
       return null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('ApplicationService.getApplication error: $e');
       return null;
     }
   }

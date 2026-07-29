@@ -1,8 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:scholarship_app/core/api/services/scholarships_api_service.dart';
 
-/// Scholarship data model for the mobile app.
-/// Originally mapped from Firestore; now mapped from FastAPI backend JSON.
+/// Scholarship data model mapped from FastAPI backend JSON.
 class FirestoreScholarship {
   final String id;
   final String titleEn;
@@ -135,20 +135,25 @@ class ScholarshipService {
     int skip = 0,
     int limit = 100,
   }) async {
-    final res = await _api.listScholarships(
-      active: true,
-      search: search,
-      country: country,
-      degree: degree,
-      funding: funding,
-      skip: skip,
-      limit: limit,
-    );
-    final items = res['items'] as List<dynamic>? ?? [];
-    final scholarships =
-        items.map((json) => FirestoreScholarship.fromJson(json)).toList();
-    scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return scholarships;
+    try {
+      final res = await _api.listScholarships(
+        active: true,
+        search: search,
+        country: country,
+        degree: degree,
+        funding: funding,
+        skip: skip,
+        limit: limit,
+      );
+      final items = res['items'] as List<dynamic>? ?? [];
+      final scholarships =
+          items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+      scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return scholarships;
+    } catch (e) {
+      debugPrint('ScholarshipService.fetchActiveScholarships failed: $e');
+      return [];
+    }
   }
 
   /// Fetch all scholarships (including inactive) from backend.
@@ -156,39 +161,59 @@ class ScholarshipService {
     int skip = 0,
     int limit = 100,
   }) async {
-    final res = await _api.listScholarships(
-      active: false,
-      skip: skip,
-      limit: limit,
-    );
-    final items = res['items'] as List<dynamic>? ?? [];
-    final scholarships =
-        items.map((json) => FirestoreScholarship.fromJson(json)).toList();
-    scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return scholarships;
+    try {
+      final res = await _api.listScholarships(
+        active: false,
+        skip: skip,
+        limit: limit,
+      );
+      final items = res['items'] as List<dynamic>? ?? [];
+      final scholarships =
+          items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+      scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return scholarships;
+    } catch (e) {
+      debugPrint('ScholarshipService.fetchAllScholarships failed: $e');
+      return [];
+    }
   }
 
   /// Get a single scholarship by ID.
   Future<FirestoreScholarship?> getScholarshipById(String id) async {
-    final res = await _api.getScholarship(id);
-    if (res.isEmpty) return null;
-    return FirestoreScholarship.fromJson(res);
+    try {
+      final res = await _api.getScholarship(id);
+      if (res.isEmpty) return null;
+      return FirestoreScholarship.fromJson(res);
+    } catch (e) {
+      debugPrint('ScholarshipService.getScholarshipById failed: $e');
+      return null;
+    }
   }
 
   /// Search scholarships by keyword via backend.
   Future<List<FirestoreScholarship>> searchScholarships(String query) async {
-    final res = await _api.listScholarships(
-      active: true,
-      search: query,
-      limit: 100,
-    );
-    final items = res['items'] as List<dynamic>? ?? [];
-    return items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    try {
+      final res = await _api.listScholarships(
+        active: true,
+        search: query,
+        limit: 100,
+      );
+      final items = res['items'] as List<dynamic>? ?? [];
+      return items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('ScholarshipService.searchScholarships failed: $e');
+      return [];
+    }
   }
 
   /// Get available filter options from backend.
   Future<Map<String, dynamic>> getFilterOptions() async {
-    return await _api.getFilters();
+    try {
+      return await _api.getFilters();
+    } catch (e) {
+      debugPrint('ScholarshipService.getFilterOptions failed: $e');
+      return {};
+    }
   }
 
   /// Match scholarships against user preferences via backend.
@@ -198,13 +223,18 @@ class ScholarshipService {
     String preferredMajor = '',
     String preferredUniversity = '',
   }) async {
-    final res = await _api.match(
-      destinationCountry: destinationCountry,
-      preferredDegree: preferredDegree,
-      preferredMajor: preferredMajor,
-      preferredUniversity: preferredUniversity,
-    );
-    final items = res['items'] as List<dynamic>? ?? [];
-    return items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    try {
+      final res = await _api.match(
+        destinationCountry: destinationCountry,
+        preferredDegree: preferredDegree,
+        preferredMajor: preferredMajor,
+        preferredUniversity: preferredUniversity,
+      );
+      final items = res['items'] as List<dynamic>? ?? [];
+      return items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('ScholarshipService.matchScholarships failed: $e');
+      return [];
+    }
   }
 }

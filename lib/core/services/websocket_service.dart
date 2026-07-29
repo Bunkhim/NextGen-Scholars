@@ -36,9 +36,9 @@ class WebSocketService {
     final token = await ApiConfig.token;
     if (token == null || token.isEmpty) return;
 
-    final baseUrl = AppConfig.backendApiUrl;
-
-    final wsUrl = baseUrl.replaceFirst('http', 'ws');
+    final wsUrl = Uri.parse(AppConfig.backendApiUrl)
+        .replace(scheme: AppConfig.backendApiUrl.startsWith('https') ? 'wss' : 'ws')
+        .toString();
 
     try {
       _channel = WebSocketChannel.connect(

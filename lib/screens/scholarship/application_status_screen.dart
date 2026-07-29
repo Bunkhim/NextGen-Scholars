@@ -49,7 +49,10 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               color: hasTheme ? ws.onThemeColor : cs.onSurface, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Get.delete<ApplicationStatusController>(tag: widget.application.id);
+            if (context.mounted) Navigator.pop(context);
+          },
         ),
         title: Text(
           t.translate('trackTitle'),
@@ -63,7 +66,7 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
       ),
       body: Obx(() {
         // Single reactive read: controller.application.value updates live
-        // whenever Firestore pushes a new snapshot for this application.
+        // whenever the backend pushes a new status via WebSocket or polling.
         final app = controller.application.value;
         final error = controller.errorMessage.value;
 

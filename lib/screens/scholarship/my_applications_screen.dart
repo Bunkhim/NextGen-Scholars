@@ -46,7 +46,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                         ? WallpaperService().onThemeColor
                         : Colors.white,
                     size: 20),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (context.mounted) Navigator.pop(context);
+                },
               )
             : null,
         titleSpacing: Navigator.canPop(context) ? 0 : 20,
@@ -509,6 +511,7 @@ class _ActionButton extends StatelessWidget {
     }
 
     void navigate() {
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(

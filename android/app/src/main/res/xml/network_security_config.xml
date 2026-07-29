@@ -1,15 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false">
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">nextgen-api-cf38.onrender.com</domain>
+        <pin-set expiration="2027-12-31">
+            <pin digest="SHA-256">fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=</pin>
+        </pin-set>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
-    </base-config>
+    </domain-config>
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">nextgen-api-cf38.onrender.com</domain>
         <domain includeSubdomains="true">api.cloudinary.com</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </domain-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>

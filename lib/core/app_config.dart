@@ -1,9 +1,18 @@
 class AppConfig {
   AppConfig._();
 
-  static const String backendApiUrl =
-      'https://nextgen-api-cf38.onrender.com';
+  static String get backendApiUrl =>
+      const String.fromEnvironment(
+        'BACKEND_API_URL',
+        defaultValue: 'https://nextgen-api-cf38.onrender.com',
+      );
 
-  static const String googleWebClientId =
-      '1043004620020-f5cuppbqdlqbfvah6cl4nq7fg709sv6i.apps.googleusercontent.com';
+  static String get googleWebClientId =>
+      const String.fromEnvironment(
+        'GOOGLE_WEB_CLIENT_ID',
+        defaultValue: '1043004620020-f5cuppbqdlqbfvah6cl4nq7fg709sv6i.apps.googleusercontent.com',
+      );
+
+  static const String pinnedCertHash =
+      'BB7Exp9mdxl7TvHAZ0IRZPSyadon8vUwKSyruwUfwbE=';
 }
