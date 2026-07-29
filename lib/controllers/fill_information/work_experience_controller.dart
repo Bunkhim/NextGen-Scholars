@@ -89,7 +89,7 @@ class WorkExperienceController extends GetxController {
   }
 
   /// Returns true if the whole form is valid.
-  bool submitForm(AppLocalizations t) {
+  Future<bool> submitForm(AppLocalizations t) async {
     hasAttemptedSubmit.value = true;
 
     workExperienceError.value = selectedWorkExperience.value == null
@@ -107,7 +107,7 @@ class WorkExperienceController extends GetxController {
 
     if (isValid) {
       _saveData();
-      ApplicationData().saveToPrefs();
+      await ApplicationData().saveToPrefs();
     }
 
     return isValid;

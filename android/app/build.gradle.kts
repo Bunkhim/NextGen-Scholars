@@ -3,6 +3,7 @@
 plugins {
     id("com.android.application")
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
 
 kotlin {
@@ -17,6 +18,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -57,6 +59,7 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

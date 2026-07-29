@@ -60,11 +60,21 @@ class ScholarshipMatchController extends GetxController {
   Future<void> toggleFavorite(FirestoreScholarship scholarship, BuildContext context, String savedAddedMsg, String savedRemovedMsg) async {
     final isFav = favoriteIds.contains(scholarship.id);
     if (isFav) {
-      await _savedScholarshipService.unsaveScholarship(scholarship.id);
       favoriteIds.remove(scholarship.id);
+      try {
+        await _savedScholarshipService.unsaveScholarship(scholarship.id);
+      } catch (_) {
+        favoriteIds.add(scholarship.id);
+        return;
+      }
     } else {
-      await _savedScholarshipService.saveScholarship(scholarship.id);
       favoriteIds.add(scholarship.id);
+      try {
+        await _savedScholarshipService.saveScholarship(scholarship.id);
+      } catch (_) {
+        favoriteIds.remove(scholarship.id);
+        return;
+      }
     }
 
     SavedScholarshipScreen.refreshNotifier.value++;

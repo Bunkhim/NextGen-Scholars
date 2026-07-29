@@ -101,7 +101,7 @@ class LanguagesController extends GetxController {
   }
 
   /// Returns true if the whole form is valid.
-  bool submitForm(AppLocalizations t) {
+  Future<bool> submitForm(AppLocalizations t) async {
     hasAttemptedSubmit.value = true;
 
     spokenLanguageError.value = selectedSpokenLanguage.value == null
@@ -120,7 +120,7 @@ class LanguagesController extends GetxController {
 
     if (isValid) {
       _saveData();
-      ApplicationData().saveToPrefs();
+      await ApplicationData().saveToPrefs();
     }
 
     return isValid;

@@ -26,7 +26,7 @@ class FillInfoPersistenceService {
   Future<void> initialize() async {
     await ApplicationData.cleanupStaleData();
 
-    final uid = JwtService().uidSync;
+    final uid = await JwtService().currentUid;
     if (uid != null) {
       await _appData.setActiveUser(uid);
       debugPrint('📋 Fill Info loaded for user');

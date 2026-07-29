@@ -88,23 +88,33 @@ class UsersApiService {
   Future<List<dynamic>> getSavedScholarships() async {
     final res = await _base.get(endpoint: '/api/v1/users/me/saved-scholarships');
     if (res is List) return res;
-    return [];
+    throw Exception('Failed to load saved scholarships');
   }
 
-  Future<Map<String, dynamic>> saveScholarship(String scholarshipId) async {
+  Future<void> saveScholarship(String scholarshipId) async {
     final res = await _base.post(
       endpoint: '/api/v1/users/me/saved-scholarships/$scholarshipId',
     );
-    if (res is Map<String, dynamic>) return res;
-    return {'result': false, 'message': 'Invalid response'};
+    if (res is Map<String, dynamic>) {
+      if (res['result'] == false) {
+        throw Exception(res['message'] ?? 'Failed to save scholarship');
+      }
+      return;
+    }
+    throw Exception('Invalid response from server');
   }
 
-  Future<Map<String, dynamic>> unsaveScholarship(String scholarshipId) async {
+  Future<void> unsaveScholarship(String scholarshipId) async {
     final res = await _base.delete(
       endpoint: '/api/v1/users/me/saved-scholarships/$scholarshipId',
     );
-    if (res is Map<String, dynamic>) return res;
-    return {'result': false, 'message': 'Invalid response'};
+    if (res is Map<String, dynamic>) {
+      if (res['result'] == false) {
+        throw Exception(res['message'] ?? 'Failed to unsave scholarship');
+      }
+      return;
+    }
+    throw Exception('Invalid response from server');
   }
 
   // ── Viewed Scholarships ────────────────────────────────────
@@ -134,7 +144,7 @@ class UsersApiService {
   }) async {
     final res = await _base.post(
       endpoint: '/api/v1/users/me/search-history',
-      queryParameters: {'query': query, 'category': category},
+      data: {'query': query, 'category': category},
     );
     if (res is Map<String, dynamic>) return res;
     return {'result': false, 'message': 'Invalid response'};

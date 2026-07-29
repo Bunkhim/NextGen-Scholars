@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' as getx;
 import 'package:scholarship_app/core/app_config.dart';
@@ -14,8 +19,11 @@ class ApiConfig {
       baseUrl: AppConfig.backendApiUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},
     ));
+
+    _setupSslPinning();
 
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -36,6 +44,31 @@ class ApiConfig {
         handler.next(error);
       },
     ));
+  }
+
+  void _setupSslPinning() {
+    try {
+      (dio.httpClientAdapter as dynamic).createHttpClient = () {
+        final client = HttpClient();
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+          if (!kReleaseMode) return true;
+          final pem = cert.pem
+              .replaceAll('-----BEGIN CERTIFICATE-----', '')
+              .replaceAll('-----END CERTIFICATE-----', '')
+              .replaceAll('\r', '')
+              .replaceAll('\n', '');
+          final der = base64.decode(pem);
+          final hash =
+              base64Encode(sha256.convert(der).bytes);
+          if (host.contains('render.com')) {
+            return hash == AppConfig.pinnedCertHash;
+          }
+          return false;
+        };
+        return client;
+      };
+    } catch (_) {}
   }
 
   static Future<bool> get hasToken async {

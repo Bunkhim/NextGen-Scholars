@@ -155,7 +155,7 @@ class AwardAchievementController extends GetxController {
   }
 
   /// Returns true if the whole form is valid.
-  bool submitForm(AppLocalizations t) {
+  Future<bool> submitForm(AppLocalizations t) async {
     hasAttemptedSubmit.value = true;
 
     awardAchievementError.value = selectedAwardAchievement.value == null
@@ -181,7 +181,7 @@ class AwardAchievementController extends GetxController {
 
     if (isValid) {
       _saveData();
-      ApplicationData().saveToPrefs();
+      await ApplicationData().saveToPrefs();
     }
 
     return isValid;

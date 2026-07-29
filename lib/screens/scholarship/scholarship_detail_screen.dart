@@ -261,7 +261,10 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
       );
     }
 
-    final controller = _controller!;
+    final controller = _controller;
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
 
     final title = locale == 'km' && scholarship.titleKm.isNotEmpty
         ? scholarship.titleKm
@@ -847,7 +850,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     final days = s.daysRemaining;
     if (days < 0) return 'Expired';
     if (days == 0) return 'Expires today';
-    return '$days days left';
+    return s.formattedDeadline;
   }
 
   Color _deadlineColor(FirestoreScholarship s, ColorScheme colorScheme) {

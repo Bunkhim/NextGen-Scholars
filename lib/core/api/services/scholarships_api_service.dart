@@ -23,7 +23,7 @@ class ScholarshipsApiService {
     if (search != null) params['search'] = search;
 
     final res = await _base.get(
-      endpoint: '/api/v1/scholarships/',
+      endpoint: '/api/v1/scholarships',
       queryParameters: params,
     );
     if (res is Map<String, dynamic>) return res;

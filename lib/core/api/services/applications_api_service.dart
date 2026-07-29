@@ -5,7 +5,8 @@ class ApplicationsApiService {
 
   Future<Map<String, dynamic>> apply({required String scholarshipId}) async {
     final res = await _base.post(
-      endpoint: '/api/v1/applications/?scholarship_id=$scholarshipId',
+      endpoint: '/api/v1/applications/',
+      queryParameters: {'scholarship_id': scholarshipId},
     );
     if (res is Map<String, dynamic>) return res;
     return {'result': false, 'message': 'Invalid response'};

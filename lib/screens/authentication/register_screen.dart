@@ -208,7 +208,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                             color: Colors.white,
                             size: 22,
                           ),
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            if (context.mounted) Navigator.pop(context);
+                          },
                         ),
                       ),
                       Container(
@@ -762,8 +764,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                         ),
                       ),
                       TextButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, AppRoutes.loginScreen),
+                        onPressed: () {
+                          if (context.mounted) {
+                            Navigator.pushNamed(context, AppRoutes.loginScreen);
+                          }
+                        },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.only(left: 4),
                           minimumSize: const Size(0, 0),
@@ -842,7 +847,7 @@ class _PhoneInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     String newText = newValue.text;
-    if (newText.isNotEmpty && newText.startsWith('0')) {
+    if (newText.length > 1 && newText.startsWith('0')) {
       newText = newText.substring(1);
     }
     return newValue.copyWith(

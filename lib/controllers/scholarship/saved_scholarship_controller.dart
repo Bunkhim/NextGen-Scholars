@@ -89,7 +89,10 @@ class SavedScholarshipController extends GetxController {
     scholarships[index].isVisible = false;
     scholarships.refresh();
 
-    savedScholarshipService.unsaveScholarship(removed.scholarship.id);
+    unawaited(
+      savedScholarshipService.unsaveScholarship(removed.scholarship.id)
+          .catchError((_) {}),
+    );
     ProfileScreen.refreshNotifier.value++;
     DiscoverScreen.refreshNotifier.value++;
 
@@ -100,7 +103,10 @@ class SavedScholarshipController extends GetxController {
         onPressed: () {
           scholarships[index].isVisible = true;
           scholarships.refresh();
-          savedScholarshipService.saveScholarship(removed.scholarship.id);
+          unawaited(
+            savedScholarshipService.saveScholarship(removed.scholarship.id)
+                .catchError((_) {}),
+          );
           ProfileScreen.refreshNotifier.value++;
           DiscoverScreen.refreshNotifier.value++;
           Get.closeCurrentSnackbar();

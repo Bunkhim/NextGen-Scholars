@@ -51,21 +51,22 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
             Navigator.maybePop(context);
           },
           onNext: () {
-            if (controller.submitForm(t)) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(t.translate('referenceSubmitSuccess')),
-                  backgroundColor: const Color(0xFF4CAF50),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            controller.submitForm(t).then((isValid) {
+              if (!isValid) return;
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(t.translate('referenceSubmitSuccess')),
+                    backgroundColor: const Color(0xFF4CAF50),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-              );
-              if (mounted) {
-                Navigator.of(context).pop(true);
+                );
               }
-            }
+              Get.offAllNamed(AppRoutes.homeScreen);
+            });
           },
           onSave: () => controller.onSave(t),
           isLastStep: true,

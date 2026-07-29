@@ -85,10 +85,20 @@ class SearchResultController extends GetxController {
     final isFav = favoriteIds.contains(scholarship.id);
     if (isFav) {
       favoriteIds.remove(scholarship.id);
-      await _savedScholarshipService.unsaveScholarship(scholarship.id);
+      try {
+        await _savedScholarshipService.unsaveScholarship(scholarship.id);
+      } catch (_) {
+        favoriteIds.add(scholarship.id);
+        return;
+      }
     } else {
       favoriteIds.add(scholarship.id);
-      await _savedScholarshipService.saveScholarship(scholarship.id);
+      try {
+        await _savedScholarshipService.saveScholarship(scholarship.id);
+      } catch (_) {
+        favoriteIds.remove(scholarship.id);
+        return;
+      }
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;

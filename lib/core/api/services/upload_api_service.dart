@@ -18,9 +18,6 @@ class UploadApiService {
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
-          headers: {
-            'Authorization': 'Bearer ${await ApiConfig.token}',
-          },
         ),
       );
 

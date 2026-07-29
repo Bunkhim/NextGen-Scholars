@@ -26,10 +26,11 @@ class _ScholarshipPreferenceScreenState
   void _submitForm() {
     FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
-    final isValid = controller.submitForm(t);
-    if (isValid) {
-      Get.toNamed(AppRoutes.referenceScreen);
-    }
+    controller.submitForm(t).then((isValid) {
+      if (isValid) {
+        Get.toNamed(AppRoutes.referenceScreen);
+      }
+    });
   }
 
   @override

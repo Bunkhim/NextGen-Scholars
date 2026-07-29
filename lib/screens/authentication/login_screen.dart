@@ -114,9 +114,10 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _submitLogin(AppLocalizations t) async {
     debugPrint('[LoginScreen] Email login tapped');
     FocusScope.of(context).unfocus();
-    final isValid = _formKey.currentState!.validate();
+    final isValid = _formKey.currentState?.validate() ?? false;
     debugPrint('[LoginScreen] Form valid: $isValid');
     await controller.handleLogin(t, formValid: isValid);
+    if (!mounted) return;
   }
 
   // ============ BUILD ============

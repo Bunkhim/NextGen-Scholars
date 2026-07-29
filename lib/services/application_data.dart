@@ -65,7 +65,7 @@ class ApplicationData {
   Future<void> recordActivity() async => _recordLastActivity();
 
   /// Remove ALL stored Fill Info data for a specific user (account deletion).
-  /// Deletes from both local SharedPreferences and Firestore cloud backup.
+  /// Deletes from both local SharedPreferences and backend cloud backup.
   static Future<void> deleteUserData(String uid) async {
     final prefs = await SharedPreferences.getInstance();
     final userPrefix = 'fill_${uid}_';
@@ -74,7 +74,7 @@ class ApplicationData {
     for (final k in keys) {
       await prefs.remove(k);
     }
-    // Also remove Firestore cloud backup
+    // Also remove backend cloud backup
     await deleteUserCloudData(uid);
   }
 
@@ -397,12 +397,12 @@ class ApplicationData {
     // Record activity whenever data is saved
     await _recordLastActivity();
 
-    // Sync to Firestore cloud backup (fire-and-forget)
+    // Sync to backend cloud backup (fire-and-forget)
     _syncToBackend();
   }
 
-  /// Save to SharedPreferences only (no Firestore sync).
-  /// Used internally when restoring from Firestore to avoid a loop.
+  /// Save to SharedPreferences only (no backend sync).
+  /// Used internally when restoring from backend to avoid a loop.
   Future<void> _saveToLocal() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -525,7 +525,7 @@ class ApplicationData {
     referencePhone = s('referencePhone');
     referenceEmail = s('referenceEmail');
 
-    // If local storage is empty (e.g. app was reinstalled), try Firestore
+    // If local storage is empty (e.g. app was reinstalled), try backend
     if (!_hasAnyData && _activeUid != null) {
       await _restoreFromBackend();
     }
