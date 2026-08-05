@@ -14,5 +14,5 @@ class AppConfig {
       );
 
   static const String pinnedCertHash =
-      'BB7Exp9mdxl7TvHAZ0IRZPSyadon8vUwKSyruwUfwbE=';
+      'fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=';
 }
