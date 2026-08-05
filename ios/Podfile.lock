@@ -13,14 +13,11 @@ PODS:
     - Flutter
   - flutter_local_notifications (0.0.1):
     - Flutter
-  - flutter_secure_storage (6.0.0):
-    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_facebook_auth (from `.symlinks/plugins/flutter_facebook_auth/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
-  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
 
 SPEC REPOS:
   trunk:
@@ -36,8 +33,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_facebook_auth/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
-  flutter_secure_storage:
-    :path: ".symlinks/plugins/flutter_secure_storage/ios"
 
 SPEC CHECKSUMS:
   FBAEMKit: 56a4f5a9607957b547b6458b17a98c5bb2736367
@@ -47,7 +42,6 @@ SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_facebook_auth: fa3b69b1df0831d2178fe87a05ee2d7d0156db70
   flutter_local_notifications: 395056b3175ba4f08480a7c5de30cd36d69827e4
-  flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
 
 PODFILE CHECKSUM: 10a0c35f709cf90d7150e13f6b8cb48810c9c555
 

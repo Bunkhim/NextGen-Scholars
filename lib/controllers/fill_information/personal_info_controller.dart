@@ -235,7 +235,7 @@ class PersonalInfoController extends GetxController {
       if (image != null) {
         final file = File(image.path);
         try {
-          final uploadResult = await UploadApiService().uploadImage(file);
+          final uploadResult = await UploadApiService().uploadImage(file, deleteAfterUpload: true);
           final uploadedUrl = uploadResult['url'] as String?;
           if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
             profileImage.value = uploadedUrl;
