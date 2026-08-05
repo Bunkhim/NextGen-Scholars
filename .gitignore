@@ -51,3 +51,6 @@ windows/flutter/ephemeral/
 
 # Android signing credentials (never commit the real keystore.properties)
 android/keystore.properties
+
+# Release build symbols (defeats obfuscation if leaked)
+release-symbols/
