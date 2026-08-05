@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "39014406908",
+    "project_id": "nextgen-scholars",
+    "storage_bucket": "nextgen-scholars.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:39014406908:android:b47ec9da0d45ffcf2e1579",
+        "android_client_info": {
+          "package_name": "com.example.scholarship_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "39014406908-j24p96rdelp15snjgipuppsi1193lhsq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBggSg46AxGP7P5G2UvgUt1IoufUAYQpPQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "39014406908-j24p96rdelp15snjgipuppsi1193lhsq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:39014406908:android:2c7c783da3ef767d2e1579",
+        "android_client_info": {
+          "package_name": "com.nextgen_scholars"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "39014406908-1p12ulnreeh7pjv22icg88gl5gr8b2i3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nextgen_scholars",
+            "certificate_hash": "c29605045478fd1c3f06d5b477d95d2ebb2e9ba0"
+          }
+        },
+        {
+          "client_id": "39014406908-j24p96rdelp15snjgipuppsi1193lhsq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBggSg46AxGP7P5G2UvgUt1IoufUAYQpPQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "39014406908-j24p96rdelp15snjgipuppsi1193lhsq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
