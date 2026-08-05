@@ -61,7 +61,7 @@ class ApiConfig {
           final hash =
               base64Encode(sha256.convert(der).bytes);
           if (host.contains('render.com')) {
-            return hash == AppConfig.pinnedCertHash;
+            return AppConfig.pinnedCertHashes.contains(hash);
           }
           return false;
         };

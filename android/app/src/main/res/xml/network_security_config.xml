@@ -4,10 +4,9 @@
         <domain includeSubdomains="true">nextgen-api-cf38.onrender.com</domain>
         <pin-set expiration="2027-12-31">
             <pin digest="SHA-256">fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=</pin>
+            <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
+            <pin digest="SHA-256">mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=</pin>
         </pin-set>
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
     </domain-config>
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">api.cloudinary.com</domain>
