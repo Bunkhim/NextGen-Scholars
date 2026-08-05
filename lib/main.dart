@@ -29,27 +29,29 @@ void main() async {
   }
 
   FlutterError.onError = (details) {
-    stderr.writeln('FlutterError: ${details.exception}');
-    stderr.writeln('Stack: ${details.stack}');
+    if (kDebugMode) {
+      stderr.writeln('FlutterError: ${details.exception}');
+      stderr.writeln('Stack: ${details.stack}');
+    }
   };
 
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (e, s) {
-    stderr.writeln('Firebase init failed: $e\n$s');
+    if (kDebugMode) stderr.writeln('Firebase init failed: $e\n$s');
   }
 
   try {
     await FcmService().initialize();
   } catch (e, s) {
-    stderr.writeln('FCM init failed: $e\n$s');
+    if (kDebugMode) stderr.writeln('FCM init failed: $e\n$s');
   }
 
   try {
     await DatabaseHelper().database;
     await DatabaseSeeder().seedIfEmpty();
   } catch (e, s) {
-    stderr.writeln('Database init failed: $e\n$s');
+    if (kDebugMode) stderr.writeln('Database init failed: $e\n$s');
   }
 
   try {
@@ -59,13 +61,13 @@ void main() async {
     await WallpaperService().loadSettings();
     await FillInfoPersistenceService().initialize();
   } catch (e, s) {
-    stderr.writeln('Settings init failed: $e\n$s');
+    if (kDebugMode) stderr.writeln('Settings init failed: $e\n$s');
   }
 
   try {
     Get.put(NotificationController(), permanent: true);
   } catch (e, s) {
-    stderr.writeln('NotificationController init failed: $e\n$s');
+    if (kDebugMode) stderr.writeln('NotificationController init failed: $e\n$s');
   }
 
   runApp(const ScholarshipApp());
