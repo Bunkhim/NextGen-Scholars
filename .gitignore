@@ -49,8 +49,5 @@ windows/flutter/ephemeral/
 # Environment variables (API keys)
 .env
 
-# Firebase config (contains project identifiers — not secrets, but prevents accidental commits)
-android/app/google-services.json
-
 # Android signing credentials (never commit the real keystore.properties)
 android/keystore.properties
