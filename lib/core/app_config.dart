@@ -13,6 +13,9 @@ class AppConfig {
         defaultValue: '1043004620020-f5cuppbqdlqbfvah6cl4nq7fg709sv6i.apps.googleusercontent.com',
       );
 
-  static const String pinnedCertHash =
-      'fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=';
+  static const List<String> pinnedCertHashes = [
+    'fizfE9JVlzlRplEx7epXfqW9enrbLvwF/LU26XTPEG4=',
+    'kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=',
+    'mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=',
+  ];
 }
