@@ -61,8 +61,10 @@ class ApiConfig {
           final der = base64.decode(pem);
           final hash =
               base64Encode(sha256.convert(der).bytes);
-          if (host.contains('render.com')) {
-            return hash == AppConfig.pinnedCertHash;
+          if (host.contains('render.com') ||
+              host.endsWith('.nextgenscholars.click') ||
+              host == 'nextgenscholars.click') {
+            return AppConfig.pinnedCertHashes.contains(hash);
           }
           return false;
         };
