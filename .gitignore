@@ -51,3 +51,9 @@ windows/flutter/ephemeral/
 
 # Environment variables (API keys)
 .env
+
+# Android signing credentials (never commit the real keystore.properties)
+android/keystore.properties
+
+# Release build symbols (defeats obfuscation if leaked)
+release-symbols/

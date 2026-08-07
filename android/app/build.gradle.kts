@@ -1,7 +1,13 @@
 // File: android/app/build.gradle.kts
 
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
+
+plugins {
+    id("com.android.application")
+    id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
+}
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -9,10 +15,11 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-plugins {
-    id("com.android.application")
-    id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
+fun keystoreValue(key: String): String? {
+    val fromFile = keystoreProperties.getProperty(key)
+    if (!fromFile.isNullOrBlank()) return fromFile
+    val envKey = "KEYSTORE_" + key.replace(Regex("([a-z])([A-Z])"), "$1_$2").uppercase()
+    return System.getenv(envKey)
 }
 
 kotlin {
@@ -46,13 +53,24 @@ android {
     }
 
     signingConfigs {
-        if (keystorePropertiesFile.exists()) {
-            create("release") {
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
+        create("release") {
+            val storeFilePath = keystoreValue("storeFile")
+            val storePasswordValue = keystoreValue("storePassword")
+            val keyAliasValue = keystoreValue("keyAlias")
+            val keyPasswordValue = keystoreValue("keyPassword")
+
+            require(!storeFilePath.isNullOrBlank()) {
+                "Release signing: keystore.properties missing or storeFile unset. " +
+                    "Copy android/keystore.properties.example to android/keystore.properties or set KEYSTORE_* env vars."
             }
+            require(!storePasswordValue.isNullOrBlank() && !keyAliasValue.isNullOrBlank() && !keyPasswordValue.isNullOrBlank()) {
+                "Release signing: keystore credentials missing. Populate android/keystore.properties or set KEYSTORE_* env vars."
+            }
+
+            storeFile = file(storeFilePath)
+            storePassword = storePasswordValue
+            keyAlias = keyAliasValue
+            keyPassword = keyPasswordValue
         }
     }
 
