@@ -17,6 +17,17 @@
         </pin-set>
     </domain-config>
     <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.nextgenscholars.click</domain>
+        <pin-set expiration="2027-12-31">
+            <pin digest="SHA-256">v7HrufZF+O/OjynmX+P8k9NhlGgDBlgyzSe54yUxDtU=</pin>
+            <pin digest="SHA-256">s/tdAOmUzd8syaTuqfgGvFcn6DzA5Cmb+Vby1ST+U3Y=</pin>
+            <pin digest="SHA-256">sCkq5UWXjg+7mKu9lMhhYF5bGLsy7VI/UNW3tccdR7w=</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">api.cloudinary.com</domain>
         <trust-anchors>
             <certificates src="system" />
