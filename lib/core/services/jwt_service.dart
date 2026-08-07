@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:scholarship_app/core/api/api_config.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
+import 'package:scholarship_app/core/services/app_secure_storage.dart';
 import 'package:scholarship_app/core/services/websocket_service.dart';
 
 class JwtService {
@@ -10,7 +10,7 @@ class JwtService {
   JwtService._internal();
 
   final AuthApiService _authApi = AuthApiService();
-  static const _storage = FlutterSecureStorage();
+  static const _storage = appSecureStorage;
 
   static const _uidKey = 'jwt_user_uid';
   static const _emailKey = 'jwt_user_email';

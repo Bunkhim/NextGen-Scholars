@@ -1,18 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' as getx;
 import 'package:scholarship_app/core/app_config.dart';
+import 'package:scholarship_app/core/services/app_secure_storage.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 
 class ApiConfig {
   late final Dio dio;
   static const _tokenKey = 'jwt_token';
-  static const _storage = FlutterSecureStorage();
+  static const _storage = appSecureStorage;
 
   ApiConfig() {
     dio = Dio(BaseOptions(
