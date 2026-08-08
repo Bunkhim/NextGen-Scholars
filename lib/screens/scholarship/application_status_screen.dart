@@ -160,6 +160,7 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -210,7 +211,7 @@ class _InfoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${application.university}, ${application.country}',
+                      '${application.university}, ${t.translate(application.countryLabelKey)}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontSize: 13,
@@ -527,7 +528,7 @@ class _DetailsCard extends StatelessWidget {
           _DetailRow(
             icon: Icons.location_on_outlined,
             label: t.translate('trackUniversity'),
-            value: '${application.university}, ${application.country}',
+            value: '${application.university}, ${t.translate(application.countryLabelKey)}',
           ),
           const SizedBox(height: 14),
           _DetailRow(

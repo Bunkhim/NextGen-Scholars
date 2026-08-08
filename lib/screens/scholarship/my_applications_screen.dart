@@ -256,7 +256,7 @@ class _ApplicationCard extends StatelessWidget {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${application.university}, ${application.country}',
+                  '${application.university}, ${t.translate(application.countryLabelKey)}',
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
