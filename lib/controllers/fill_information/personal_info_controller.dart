@@ -235,7 +235,7 @@ class PersonalInfoController extends GetxController {
       if (image != null) {
         final file = File(image.path);
         try {
-          final uploadResult = await UploadApiService().uploadImage(file);
+          final uploadResult = await UploadApiService().uploadImage(file, deleteAfterUpload: true);
           final uploadedUrl = uploadResult['url'] as String?;
           if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
             profileImage.value = uploadedUrl;
@@ -316,7 +316,7 @@ class PersonalInfoController extends GetxController {
   }
 
   /// Returns true if the whole form is valid.
-  bool submitForm(AppLocalizations t) {
+  Future<bool> submitForm(AppLocalizations t) async {
     hasAttemptedSubmit.value = true;
 
     firstNameError.value = validateName(firstNameController.text, t);
@@ -346,7 +346,7 @@ class PersonalInfoController extends GetxController {
 
     if (isValid) {
       _saveData();
-      ApplicationData().saveToPrefs();
+      await ApplicationData().saveToPrefs();
     }
 
     return isValid;

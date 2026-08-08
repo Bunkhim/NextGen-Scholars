@@ -357,10 +357,11 @@ class _AwardAchievementScreenState extends State<AwardAchievementScreen> {
   void _submitForm() {
     FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
-    final isValid = controller.submitForm(t);
-    if (isValid) {
-      Get.toNamed(AppRoutes.scholarshipPreferenceScreen);
-    }
+    controller.submitForm(t).then((isValid) {
+      if (isValid) {
+        Get.toNamed(AppRoutes.scholarshipPreferenceScreen);
+      }
+    });
   }
 
   @override

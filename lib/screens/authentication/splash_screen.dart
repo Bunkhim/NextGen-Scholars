@@ -101,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       final hasToken = await JwtService().hasToken();
       final pref = await SharedPreferences.getInstance();
-      final hasSeenOnboarding = pref.getBool("isLogin") ?? false;
+      final hasSeenOnboarding = pref.getBool("onboardingCompleted") ?? false;
 
       if (!mounted) return;
 
@@ -119,7 +119,10 @@ class _SplashScreenState extends State<SplashScreen>
       } else {
         Get.offAllNamed(AppRoutes.onboardingScreen);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('SplashScreen._navigateToNext error: $e');
+      if (mounted) Get.offAllNamed(AppRoutes.loginScreen);
+    }
   }
 
   @override

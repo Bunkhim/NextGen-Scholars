@@ -8,16 +8,19 @@ class BaseApiService {
   Future<dynamic> get({
     required String endpoint,
     Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _apiConfig.dio.get(
         endpoint,
         queryParameters: queryParameters,
+        cancelToken: cancelToken,
       );
       return response.data;
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
       debugPrint('BaseApiService GET error [$endpoint]: ${e.response?.statusCode} $e');
-      return {'result': false, 'message': _extractMessage(e), 'data': null};
+      return null;
     }
   }
 
@@ -40,8 +43,11 @@ class BaseApiService {
       debugPrint('BaseApiService POST error [${e.requestOptions.uri}]: ${e.response?.statusCode}');
       if (e.response?.statusCode == 422) {
         debugPrint('BaseApiService 422 detail: ${e.response?.data}');
+        final detail = e.response?.data;
+        if (detail is Map && detail['detail'] is List) {
+          return {'result': false, 'message': _extractMessage(e), 'data': null, 'detail': detail['detail']};
+        }
       }
-      // Return status code for rate limit detection
       if (e.response?.statusCode == 429) {
         return {
           'result': false,
@@ -58,15 +64,18 @@ class BaseApiService {
     required String endpoint,
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _apiConfig.dio.put(
         endpoint,
         data: data,
         queryParameters: queryParameters,
+        cancelToken: cancelToken,
       );
       return response.data;
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
       debugPrint('BaseApiService PUT error: $e');
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }
@@ -76,15 +85,18 @@ class BaseApiService {
     required String endpoint,
     Map<String, dynamic>? data,
     Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _apiConfig.dio.patch(
         endpoint,
         data: data,
         queryParameters: queryParameters,
+        cancelToken: cancelToken,
       );
       return response.data;
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
       debugPrint('BaseApiService PATCH error: $e');
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }
@@ -92,11 +104,13 @@ class BaseApiService {
 
   Future<dynamic> delete({
     required String endpoint,
+    CancelToken? cancelToken,
   }) async {
     try {
-      final response = await _apiConfig.dio.delete(endpoint);
+      final response = await _apiConfig.dio.delete(endpoint, cancelToken: cancelToken);
       return response.data;
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
       debugPrint('BaseApiService DELETE error [$endpoint]: ${e.response?.statusCode} $e');
       return {'result': false, 'message': _extractMessage(e), 'data': null};
     }

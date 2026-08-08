@@ -402,10 +402,11 @@ class _EducationBackgroundScreenState extends State<EducationBackgroundScreen> {
   void _submitForm() {
     FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
-    final isValid = controller.submitForm(t);
-    if (isValid) {
-      Get.toNamed(AppRoutes.languagesScreen);
-    }
+    controller.submitForm(t).then((isValid) {
+      if (isValid) {
+        Get.toNamed(AppRoutes.languagesScreen);
+      }
+    });
   }
 
   @override

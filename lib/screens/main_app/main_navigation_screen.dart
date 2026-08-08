@@ -25,6 +25,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final MainNavigationController controller =
       Get.put(MainNavigationController());
 
+  @override
+  void initState() {
+    super.initState();
+    MainNavigationScreen.tabNotifier.addListener(_onTabNotifierChanged);
+  }
+
+  @override
+  void dispose() {
+    MainNavigationScreen.tabNotifier.removeListener(_onTabNotifierChanged);
+    super.dispose();
+  }
+
+  void _onTabNotifierChanged() {
+    controller.currentIndex.value = MainNavigationScreen.tabNotifier.value;
+  }
+
   final List<Widget> _pages = const [
     HomeScreen(),
     DiscoverScreen(),

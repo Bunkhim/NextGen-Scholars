@@ -60,6 +60,7 @@ class VerifyEmailController extends GetxController {
 
   void _tick() {
     Future.delayed(const Duration(seconds: 1), () {
+      if (isClosed) return;
       remainingSeconds.value--;
       if (remainingSeconds.value <= 0) {
         canResend.value = true;
@@ -126,6 +127,7 @@ class VerifyEmailController extends GetxController {
     }
 
     if (errorMsg == null) {
+      if (isClosed) return;
       isLoading.value = false;
       Get.snackbar(
         '',

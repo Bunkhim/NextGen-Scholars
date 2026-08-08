@@ -8,7 +8,7 @@ class NotificationsApiService {
     if (since != null) params['since'] = since;
 
     final res = await _base.get(
-      endpoint: '/api/v1/notifications/',
+      endpoint: '/api/v1/notifications',
       queryParameters: params,
     );
     if (res is List) return res;

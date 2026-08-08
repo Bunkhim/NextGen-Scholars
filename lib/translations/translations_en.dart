@@ -566,6 +566,8 @@ const Map<String, String> translationsEn = {
       'Your application has been submitted successfully. You can track its progress in My Applications.',
   'applyViewApplications': 'View My Applications',
   'applyFailed': 'Failed to submit application. Please try again.',
+  'applyScholarshipUnavailable': 'This scholarship is no longer available.',
+  'applyDeadlinePassed': 'This scholarship\'s deadline has passed and is no longer accepting applications.',
 
   // ── My Applications screen ─────────────────────────────
   'myApplicationsTitle': 'My Applications',
@@ -686,7 +688,7 @@ const Map<String, String> translationsEn = {
   'personalInfoLastNameHint': 'Ex: Khunrithy',
   'personalInfoSelectHint': 'Select',
   'personalInfoPhoneHint': '0312287763',
-  'personalInfoEmailHint': 'choubkhunrithy@gmail.com',
+  'personalInfoEmailHint': 'support@nextgenscholars.app',
   'personalInfoDobHint': 'Select Date of Birth',
   'personalInfoNextButton': 'Next',
   'personalInfoGalleryButton': 'Go to Gallery',

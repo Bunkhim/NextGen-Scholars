@@ -1,15 +1,20 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:scholarship_app/database/database_helper.dart';
 import 'package:scholarship_app/database/seeds/database_seeder.dart';
+import 'package:scholarship_app/firebase_options.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/services/display_settings_service.dart';
+import 'package:scholarship_app/services/fcm_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/language_service.dart';
 import 'package:scholarship_app/services/theme_service.dart';
@@ -19,18 +24,52 @@ import 'package:scholarship_app/controllers/main_app/notification_controller.dar
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
-  // Initialize SQLite database and seed default data.
-  await DatabaseHelper().database;
-  await DatabaseSeeder().seedIfEmpty();
-  await ThemeService().loadSettings();
-  await LanguageService().loadSavedLanguage();
-  await DisplaySettingsService().loadSettings();
-  await WallpaperService().loadSettings();
-  // Initialize per-user Fill Info: cleanup stale data (>30 days),
-  // then restore Fill Info for the currently signed-in user (if any).
-  await FillInfoPersistenceService().initialize();
-  Get.put(NotificationController(), permanent: true);
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
+  FlutterError.onError = (details) {
+    if (kDebugMode) {
+      stderr.writeln('FlutterError: ${details.exception}');
+      stderr.writeln('Stack: ${details.stack}');
+    }
+  };
+
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e, s) {
+    if (kDebugMode) stderr.writeln('Firebase init failed: $e\n$s');
+  }
+
+  try {
+    await FcmService().initialize();
+  } catch (e, s) {
+    if (kDebugMode) stderr.writeln('FCM init failed: $e\n$s');
+  }
+
+  try {
+    await DatabaseHelper().database;
+    await DatabaseSeeder().seedIfEmpty();
+  } catch (e, s) {
+    if (kDebugMode) stderr.writeln('Database init failed: $e\n$s');
+  }
+
+  try {
+    await ThemeService().loadSettings();
+    await LanguageService().loadSavedLanguage();
+    await DisplaySettingsService().loadSettings();
+    await WallpaperService().loadSettings();
+    await FillInfoPersistenceService().initialize();
+  } catch (e, s) {
+    if (kDebugMode) stderr.writeln('Settings init failed: $e\n$s');
+  }
+
+  try {
+    Get.put(NotificationController(), permanent: true);
+  } catch (e, s) {
+    if (kDebugMode) stderr.writeln('NotificationController init failed: $e\n$s');
+  }
+
   runApp(const ScholarshipApp());
 }
 

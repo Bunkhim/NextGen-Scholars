@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:scholarship_app/controllers/chat_ai_controller.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
@@ -396,14 +397,78 @@ class _ChatAIScreenState extends State<ChatAIScreen>
                   ),
                 ],
               ),
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isUser ? cs.onPrimary : cs.onSurface,
-                  height: 1.45,
-                ),
-              ),
+              child: isUser
+                  ? Text(
+                      message.text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onPrimary,
+                        height: 1.45,
+                      ),
+                    )
+                  : MarkdownBody(
+                      data: message.text,
+                      selectable: true,
+                      styleSheet: MarkdownStyleSheet(
+                        p: TextStyle(
+                          fontSize: 14,
+                          color: cs.onSurface,
+                          height: 1.45,
+                        ),
+                        h1: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                          height: 1.4,
+                        ),
+                        h2: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                          height: 1.4,
+                        ),
+                        h3: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                          height: 1.4,
+                        ),
+                        strong: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                        ),
+                        em: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: cs.onSurface,
+                        ),
+                        a: TextStyle(
+                          color: cs.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                        code: TextStyle(
+                          fontSize: 13,
+                          color: cs.primary,
+                          backgroundColor: cs.surfaceContainerHighest,
+                        ),
+                        codeblockDecoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        listBullet: TextStyle(
+                          color: cs.onSurface,
+                        ),
+                        blockquoteDecoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(
+                              color: cs.primary.withOpacity(0.5),
+                              width: 3,
+                            ),
+                          ),
+                          color: cs.surfaceContainerHighest.withOpacity(0.5),
+                        ),
+                      ),
+                    ),
             ),
           ),
           if (isUser) const SizedBox(width: 8),
@@ -482,6 +547,7 @@ class _ChatAIScreenState extends State<ChatAIScreen>
       ),
     );
   }
+
 
   Widget _buildInputArea(ColorScheme cs, AppLocalizations t, bool isDark) {
     final ws = WallpaperService();

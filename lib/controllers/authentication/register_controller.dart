@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:scholarship_app/core/app_config.dart';
 import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
-import 'package:scholarship_app/services/user_data_sync_service.dart';
+
 
 class RegisterController extends GetxController {
   final nameController = TextEditingController();
@@ -70,11 +70,14 @@ class RegisterController extends GetxController {
   final _authApi = AuthApiService();
   final _jwt = JwtService();
 
+  bool _isDisposed = false;
+
   bool get anyLoading =>
       isLoading.value || isGoogleLoading.value || isFacebookLoading.value;
 
   @override
   void onClose() {
+    _isDisposed = true;
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
@@ -298,7 +301,6 @@ class RegisterController extends GetxController {
   Future<void> _postAuthActions(String uid) async {
     await FillInfoPersistenceService().onUserLoggedIn(uid);
     await SessionSecurityService().recordLogin();
-    await UserDataSyncService().restoreAll(uid);
   }
 
   // ============ AUTHENTICATION ============
@@ -365,7 +367,7 @@ class RegisterController extends GetxController {
       // the GOOGLE_CLIENT_ID configured in the backend .env, since that's
       // the audience the backend validates against.
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
+        serverClientId: AppConfig.googleWebClientId,
         scopes: <String>['email', 'profile'],
       );
 
@@ -416,12 +418,14 @@ class RegisterController extends GetxController {
         await _postAuthActions(uid);
 
         isGoogleLoading.value = false;
+        if (_isDisposed) return;
         _showSuccessMessage(
           t.translate('loginGoogleWelcomeUser').replaceAll('\$userName', userName),
           t.translate('loginGoogleSignInSuccess'),
         );
 
         await Future.delayed(const Duration(milliseconds: 500));
+        if (_isDisposed) return;
         Get.offAllNamed(AppRoutes.homeScreen);
       } else {
         isGoogleLoading.value = false;
@@ -432,7 +436,7 @@ class RegisterController extends GetxController {
       }
     } catch (e) {
       debugPrint('Register Google sign-in error: $e');
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (!_isDisposed && (Get.isDialogOpen ?? false)) Get.back();
       isGoogleLoading.value = false;
       _showErrorMessage(t.translate('loginGoogleFailed'));
     }
@@ -482,12 +486,14 @@ class RegisterController extends GetxController {
         await _postAuthActions(uid);
 
         isFacebookLoading.value = false;
+        if (_isDisposed) return;
         _showSuccessMessage(
           t.translate('loginFacebookWelcomeUser').replaceAll('\$userName', userName),
           t.translate('loginFacebookSignInSuccess'),
         );
 
         await Future.delayed(const Duration(milliseconds: 500));
+        if (_isDisposed) return;
         Get.offAllNamed(AppRoutes.homeScreen);
       } else {
         isFacebookLoading.value = false;
@@ -498,7 +504,7 @@ class RegisterController extends GetxController {
       }
     } catch (e) {
       debugPrint('Register Facebook sign-in error: $e');
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (!_isDisposed && (Get.isDialogOpen ?? false)) Get.back();
       isFacebookLoading.value = false;
       _showErrorMessage(t.translate('loginFacebookFailed'));
     }

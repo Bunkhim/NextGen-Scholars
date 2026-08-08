@@ -145,13 +145,22 @@ class HomeController extends GetxController {
 
   Future<void> toggleFavorite(FirestoreScholarship scholarship) async {
     final isFav = favoriteIds.contains(scholarship.id);
-
     if (isFav) {
       favoriteIds.remove(scholarship.id);
-      await savedScholarshipService.unsaveScholarship(scholarship.id);
+      try {
+        await savedScholarshipService.unsaveScholarship(scholarship.id);
+      } catch (_) {
+        favoriteIds.add(scholarship.id);
+        return;
+      }
     } else {
       favoriteIds.add(scholarship.id);
-      await savedScholarshipService.saveScholarship(scholarship.id);
+      try {
+        await savedScholarshipService.saveScholarship(scholarship.id);
+      } catch (_) {
+        favoriteIds.remove(scholarship.id);
+        return;
+      }
     }
     SavedScholarshipScreen.refreshNotifier.value++;
     ProfileScreen.refreshNotifier.value++;

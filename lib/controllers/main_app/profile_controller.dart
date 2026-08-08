@@ -92,10 +92,6 @@ class ProfileController extends GetxController {
       await _authApi.logout();
     } catch (_) {}
 
-    try {
-      await UserDataSyncService().backupAll();
-    } catch (_) {}
-
     await FillInfoPersistenceService().onUserLoggedOut();
     await SessionSecurityService().clearLoginTimestamp();
 
@@ -119,8 +115,7 @@ class ProfileController extends GetxController {
 
       await _usersApi.deleteAccount();
       await FillInfoPersistenceService().onAccountDeleted(uid);
-      await UserDataSyncService.deleteAllCloudData(uid);
-      await UserDataSyncService.deleteAllLocalData(uid);
+      await UserDataSyncService().deleteAllLocalData();
       await SessionSecurityService().clearLoginTimestamp();
 
       try {

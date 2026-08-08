@@ -1,8 +1,18 @@
 {
     "functions": [
         {
+            "source": "backend/telegram-bot",
+            "codebase": "telegram-bot",
+            "ignore": [
+                "node_modules",
+                ".git",
+                "firebase-debug.log",
+                "firebase-debug.*.log"
+            ]
+        },
+        {
             "source": "functions",
-            "codebase": "default",
+            "codebase": "notifications",
             "ignore": [
                 "node_modules",
                 ".git",

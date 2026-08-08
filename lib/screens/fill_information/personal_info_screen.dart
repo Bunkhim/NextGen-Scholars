@@ -98,10 +98,11 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void _submitForm() {
     FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
-    final isValid = controller.submitForm(t);
-    if (isValid) {
-      Get.toNamed(AppRoutes.educationBackgroundScreen);
-    }
+    controller.submitForm(t).then((isValid) {
+      if (isValid) {
+        Get.toNamed(AppRoutes.educationBackgroundScreen);
+      }
+    });
   }
 
   @override

@@ -247,10 +247,11 @@ class _WorkExperienceScreenState extends State<WorkExperienceScreen> {
   void _submitForm() {
     FocusManager.instance.primaryFocus?.unfocus();
     final t = AppLocalizations.of(context);
-    final isValid = controller.submitForm(t);
-    if (isValid) {
-      Get.toNamed(AppRoutes.researchExperienceScreen);
-    }
+    controller.submitForm(t).then((isValid) {
+      if (isValid) {
+        Get.toNamed(AppRoutes.researchExperienceScreen);
+      }
+    });
   }
 
   @override

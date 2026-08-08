@@ -171,7 +171,7 @@ class ReferenceController extends GetxController {
 		);
 	}
 
-	bool submitForm(AppLocalizations t) {
+	Future<bool> submitForm(AppLocalizations t) async {
 		hasAttemptedSubmit.value = true;
 
 		fullNameError.value = validateName(fullNameController.text, t);
@@ -195,7 +195,7 @@ class ReferenceController extends GetxController {
 		}
 
 		_saveData();
-		ApplicationData().saveToPrefs();
+		await ApplicationData().saveToPrefs();
 		return true;
 	}
 

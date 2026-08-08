@@ -21,6 +21,9 @@
 # ios/Flutter/Generated.xcconfig
 # ios/Flutter/flutter_export_environment.sh
 
+# Release build artifacts (obfuscation symbols go under build/)
+release-symbols/
+
 # # ចំណាំ៖ ប្រសិនបើអ្នកមាន Secret keys (ដូចជា .env) ត្រូវដាក់វានៅទីនេះដែរ
 # .env
 
@@ -48,3 +51,9 @@ windows/flutter/ephemeral/
 
 # Environment variables (API keys)
 .env
+
+# Android signing credentials (never commit the real keystore.properties)
+android/keystore.properties
+
+# Release build symbols (defeats obfuscation if leaked)
+release-symbols/

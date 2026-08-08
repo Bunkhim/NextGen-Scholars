@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:scholarship_app/core/api/api_config.dart';
+import 'package:scholarship_app/core/app_config.dart';
 
 typedef WsMessageHandler = void Function(String type, Map<String, dynamic> data);
 
@@ -36,10 +36,9 @@ class WebSocketService {
     final token = await ApiConfig.token;
     if (token == null || token.isEmpty) return;
 
-    final baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
-    if (baseUrl.isEmpty) return;
-
-    final wsUrl = baseUrl.replaceFirst('http', 'ws');
+    final wsUrl = Uri.parse(AppConfig.backendApiUrl)
+        .replace(scheme: AppConfig.backendApiUrl.startsWith('https') ? 'wss' : 'ws')
+        .toString();
 
     try {
       _channel = WebSocketChannel.connect(

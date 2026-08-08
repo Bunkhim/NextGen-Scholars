@@ -335,11 +335,26 @@ class ScholarshipCard extends StatelessWidget {
             context,
             icon: Icons.access_time_outlined,
             label: t.translate('discoverDeadline'),
-            value: scholarship.formattedDeadline,
+            value: _deadlineDisplay(scholarship),
+            valueColor: _deadlineColor(scholarship, colorScheme),
           ),
         ],
       ),
     );
+  }
+
+  String _deadlineDisplay(FirestoreScholarship s) {
+    final days = s.daysRemaining;
+    if (days < 0) return 'Expired';
+    if (days == 0) return 'Expires today';
+    return s.formattedDeadline;
+  }
+
+  Color _deadlineColor(FirestoreScholarship s, ColorScheme colorScheme) {
+    final days = s.daysRemaining;
+    if (days < 0) return colorScheme.error;
+    if (days <= 7) return const Color(0xFFFF6D00);
+    return colorScheme.onSurface;
   }
 
   Widget _buildInfoRow(
@@ -347,6 +362,7 @@ class ScholarshipCard extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    Color? valueColor,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final ws = WallpaperService();
@@ -372,7 +388,7 @@ class ScholarshipCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
+              color: valueColor ?? colorScheme.onSurface,
             ),
             textAlign: TextAlign.right,
             overflow: TextOverflow.ellipsis,
