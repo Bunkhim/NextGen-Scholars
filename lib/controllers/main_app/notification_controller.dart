@@ -43,6 +43,8 @@ class NotificationController extends GetxController {
         prefs.getBool('settings_new_scholarships') ?? false;
     settingsLoaded.value = true;
 
+    if (!await JwtService().hasToken()) return;
+
     await _fetchNotifications();
 
     _ws.addListener(this, (type, data) {
@@ -61,6 +63,7 @@ class NotificationController extends GetxController {
   }
 
   Future<void> _fetchNotifications() async {
+    if (!await JwtService().hasToken()) return;
     final raw = await _notificationService.fetchMyNotifications();
     notifications.value = _applySettingsFilter(raw);
     unreadCount.value = await _notificationService.fetchUnreadCount();
