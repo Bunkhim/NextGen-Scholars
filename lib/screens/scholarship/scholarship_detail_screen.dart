@@ -771,21 +771,21 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         children: [
           _buildInfoColumn(
             label: '${t.translate('discoverStudyAt')}:',
-            value: scholarship.country,
+            value: t.translate(scholarship.countryLabelKey),
             icon: Icons.location_on,
             color: colorScheme.primary,
             colorScheme: colorScheme,
           ),
           _buildInfoColumn(
             label: '${t.translate('discoverType')}:',
-            value: scholarship.fundingType,
+            value: t.translate(scholarship.fundingTypeLabelKey),
             icon: Icons.attach_money,
             color: colorScheme.primary,
             colorScheme: colorScheme,
           ),
           _buildInfoColumn(
             label: '${t.translate('detailDegreeLabel')}:',
-            value: scholarship.degree,
+            value: t.translate(scholarship.degreeLabelKey),
             icon: Icons.school_outlined,
             color: colorScheme.primary,
             colorScheme: colorScheme,

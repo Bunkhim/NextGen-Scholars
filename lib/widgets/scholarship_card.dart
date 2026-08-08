@@ -105,6 +105,7 @@ class ScholarshipCard extends StatelessWidget {
       BuildContext context, ColorScheme colorScheme, bool isDark) {
     final ws = WallpaperService();
     final themed = ws.hasTheme;
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 10, 10),
       decoration: BoxDecoration(
@@ -146,7 +147,7 @@ class ScholarshipCard extends StatelessWidget {
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
-                        scholarship.country,
+                        t.translate(scholarship.countryLabelKey),
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant,
@@ -295,7 +296,7 @@ class ScholarshipCard extends StatelessWidget {
             context,
             icon: Icons.info_outline,
             label: t.translate('discoverType'),
-            value: scholarship.fundingType,
+            value: t.translate(scholarship.fundingTypeLabelKey),
           ),
           const SizedBox(height: 8),
 
@@ -315,7 +316,7 @@ class ScholarshipCard extends StatelessWidget {
             context,
             icon: Icons.location_on_outlined,
             label: t.translate('discoverStudyAt'),
-            value: scholarship.country,
+            value: t.translate(scholarship.countryLabelKey),
           ),
           const SizedBox(height: 8),
 

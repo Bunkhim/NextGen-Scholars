@@ -116,8 +116,78 @@ class FirestoreScholarship {
         return 'educationLevelPhD';
       case 'Postdoc':
         return 'educationLevelPostdoc';
+      case 'Diploma':
+        return 'educationLevelDiploma';
       default:
         return degree;
+    }
+  }
+
+  /// Map country to localization key
+  String get countryLabelKey {
+    switch (country) {
+      case 'USA':
+      case 'United States':
+        return 'filterCountryUnitedStates';
+      case 'UK':
+      case 'United Kingdom':
+        return 'filterCountryUnitedKingdom';
+      case 'Japan':
+        return 'filterCountryJapan';
+      case 'Australia':
+        return 'filterCountryAustralia';
+      case 'Singapore':
+        return 'filterCountrySingapore';
+      case 'South Korea':
+        return 'filterCountrySouthKorea';
+      case 'Canada':
+        return 'filterCountryCanada';
+      case 'Germany':
+        return 'filterCountryGermany';
+      case 'France':
+        return 'filterCountryFrance';
+      case 'China':
+        return 'filterCountryChina';
+      case 'Belgium':
+        return 'filterCountryBelgium';
+      case 'European Union':
+        return 'filterCountryEuropeanUnion';
+      case 'Italy':
+        return 'filterCountryItaly';
+      case 'Malaysia':
+        return 'filterCountryMalaysia';
+      case 'Multiple Countries':
+        return 'filterCountryMultipleCountries';
+      case 'Netherlands':
+        return 'filterCountryNetherlands';
+      case 'New Zealand':
+        return 'filterCountryNewZealand';
+      case 'Spain':
+        return 'filterCountrySpain';
+      case 'Sweden':
+        return 'filterCountrySweden';
+      case 'Switzerland':
+        return 'filterCountrySwitzerland';
+      default:
+        return country;
+    }
+  }
+
+  /// Map funding type to localization key
+  String get fundingTypeLabelKey {
+    switch (fundingType) {
+      case 'Full':
+        return 'filterTypeFullScholarship';
+      case 'Partial':
+        return 'filterTypePartialScholarship';
+      case 'Tuition Only':
+      case 'Tuition-only':
+        return 'filterTypeTuitionOnly';
+      case 'Living Stipend Only':
+      case 'Stipend':
+        return 'filterTypeStipend';
+      default:
+        return fundingType;
     }
   }
 }
