@@ -12,6 +12,7 @@ class ApiConfig {
   late final Dio dio;
   static const _tokenKey = 'jwt_token';
   static const _storage = appSecureStorage;
+  static bool _loggingOut = false;
 
   ApiConfig() {
     dio = Dio(BaseOptions(
@@ -35,9 +36,13 @@ class ApiConfig {
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
           final existingToken = await _storage.read(key: _tokenKey);
-          if (existingToken != null && existingToken.isNotEmpty) {
+          if (existingToken != null &&
+              existingToken.isNotEmpty &&
+              !_loggingOut) {
+            _loggingOut = true;
             await _storage.delete(key: _tokenKey);
             getx.Get.offAllNamed(AppRoutes.loginScreen);
+            _loggingOut = false;
           }
         }
         handler.next(error);
