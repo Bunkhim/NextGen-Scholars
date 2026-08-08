@@ -58,25 +58,24 @@ android {
             val storePasswordValue = keystoreValue("storePassword")
             val keyAliasValue = keystoreValue("keyAlias")
             val keyPasswordValue = keystoreValue("keyPassword")
-
-            require(!storeFilePath.isNullOrBlank()) {
-                "Release signing: keystore.properties missing or storeFile unset. " +
-                    "Copy android/keystore.properties.example to android/keystore.properties or set KEYSTORE_* env vars."
+            if (!storeFilePath.isNullOrBlank() &&
+                !storePasswordValue.isNullOrBlank() &&
+                !keyAliasValue.isNullOrBlank() &&
+                !keyPasswordValue.isNullOrBlank()
+            ) {
+                storeFile = file(storeFilePath)
+                storePassword = storePasswordValue
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
             }
-            require(!storePasswordValue.isNullOrBlank() && !keyAliasValue.isNullOrBlank() && !keyPasswordValue.isNullOrBlank()) {
-                "Release signing: keystore credentials missing. Populate android/keystore.properties or set KEYSTORE_* env vars."
-            }
-
-            storeFile = file(storeFilePath)
-            storePassword = storePasswordValue
-            keyAlias = keyAliasValue
-            keyPassword = keyPasswordValue
         }
     }
 
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
+            val hasKeystoreCredentials = keystorePropertiesFile.exists() ||
+                !System.getenv("KEYSTORE_STORE_FILE").isNullOrBlank()
+            if (hasKeystoreCredentials) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = true
