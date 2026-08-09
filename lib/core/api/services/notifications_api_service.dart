@@ -44,4 +44,27 @@ class NotificationsApiService {
     }
     return 0;
   }
+
+  Future<Map<String, dynamic>?> getPreferences() async {
+    final res = await _base.get(endpoint: '/api/v1/notifications/preferences');
+    if (res is Map<String, dynamic>) return res;
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> updatePreferences(
+      Map<String, dynamic> data) async {
+    final res =
+        await _base.put(endpoint: '/api/v1/notifications/preferences', data: data);
+    if (res is Map<String, dynamic>) return res;
+    return null;
+  }
+
+  Future<bool> registerDeviceToken(
+      String token, String platform) async {
+    final res = await _base.post(
+      endpoint: '/api/v1/notifications/device-token',
+      data: {'token': token, 'platform': platform},
+    );
+    return res is Map<String, dynamic> && (res['success'] ?? false) == true;
+  }
 }

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:scholarship_app/core/api/services/notifications_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 
@@ -70,12 +70,10 @@ class FcmService {
     final uid = JwtService().uidSync;
     if (uid == null) return;
     try {
-      await FirebaseFunctions.instance
-          .httpsCallable('registerDeviceToken')
-          .call({
-        'token': token,
-        'platform': Platform.isIOS ? 'ios' : 'android',
-      });
+      await NotificationsApiService().registerDeviceToken(
+        token,
+        Platform.isIOS ? 'ios' : 'android',
+      );
     } catch (e) {
       if (kDebugMode) debugPrint('FCM token upload failed: $e');
     }
