@@ -48,7 +48,7 @@ class FcmService {
       );
     }
 
-    await _registerToken();
+    await registerToken();
     _fcm.onTokenRefresh.listen(_uploadToken);
 
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
@@ -61,7 +61,7 @@ class FcmService {
     _initialized = true;
   }
 
-  Future<void> _registerToken() async {
+  Future<void> registerToken() async {
     final token = await _fcm.getToken();
     if (token != null) await _uploadToken(token);
   }

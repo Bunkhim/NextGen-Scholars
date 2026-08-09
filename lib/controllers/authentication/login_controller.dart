@@ -10,6 +10,7 @@ import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
+import 'package:scholarship_app/services/fcm_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
 
 class LoginController extends GetxController {
@@ -216,6 +217,7 @@ class LoginController extends GetxController {
   Future<void> _postAuthActions(String uid) async {
     await FillInfoPersistenceService().onUserLoggedIn(uid);
     await SessionSecurityService().recordLogin();
+    await FcmService().registerToken();
   }
 
   // ============ AUTHENTICATION ============
