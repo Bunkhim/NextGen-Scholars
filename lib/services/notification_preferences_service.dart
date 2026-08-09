@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:scholarship_app/core/api/services/notifications_api_service.dart';
 
 class NotificationPreferences {
   final bool pushEnabled;
@@ -32,13 +32,13 @@ class NotificationPreferencesService {
   factory NotificationPreferencesService() => _instance;
   NotificationPreferencesService._();
 
+  final NotificationsApiService _api = NotificationsApiService();
+
   Future<NotificationPreferences?> fetch() async {
     try {
-      final result = await FirebaseFunctions.instance
-          .httpsCallable('getNotificationPreferences')
-          .call();
-      return NotificationPreferences.fromMap(
-          result.data as Map<String, dynamic>);
+      final result = await _api.getPreferences();
+      if (result == null) return null;
+      return NotificationPreferences.fromMap(result);
     } catch (_) {
       return null;
     }
@@ -46,10 +46,8 @@ class NotificationPreferencesService {
 
   Future<bool> update(String key, dynamic value) async {
     try {
-      await FirebaseFunctions.instance
-          .httpsCallable('updateNotificationPreferences')
-          .call({key: value});
-      return true;
+      final result = await _api.updatePreferences({key: value});
+      return result != null;
     } catch (_) {
       return false;
     }
@@ -72,10 +70,8 @@ class NotificationPreferencesService {
       if (newScholarships != null) map['newScholarships'] = newScholarships;
       if (email != null) map['email'] = email;
       if (map.isEmpty) return true;
-      await FirebaseFunctions.instance
-          .httpsCallable('updateNotificationPreferences')
-          .call(map);
-      return true;
+      final result = await _api.updatePreferences(map);
+      return result != null;
     } catch (_) {
       return false;
     }
