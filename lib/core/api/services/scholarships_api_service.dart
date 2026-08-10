@@ -27,7 +27,7 @@ class ScholarshipsApiService {
       queryParameters: params,
     );
     if (res is Map<String, dynamic>) return res;
-    return {'items': [], 'total': 0};
+    throw Exception('Failed to load scholarships from server.');
   }
 
   Future<Map<String, dynamic>> getScholarship(String id) async {

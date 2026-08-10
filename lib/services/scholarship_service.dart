@@ -205,25 +205,20 @@ class ScholarshipService {
     int skip = 0,
     int limit = 100,
   }) async {
-    try {
-      final res = await _api.listScholarships(
-        active: true,
-        search: search,
-        country: country,
-        degree: degree,
-        funding: funding,
-        skip: skip,
-        limit: limit,
-      );
-      final items = res['items'] as List<dynamic>? ?? [];
-      final scholarships =
-          items.map((json) => FirestoreScholarship.fromJson(json)).toList();
-      scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return scholarships;
-    } catch (e) {
-      debugPrint('ScholarshipService.fetchActiveScholarships failed: $e');
-      return [];
-    }
+    final res = await _api.listScholarships(
+      active: true,
+      search: search,
+      country: country,
+      degree: degree,
+      funding: funding,
+      skip: skip,
+      limit: limit,
+    );
+    final items = res['items'] as List<dynamic>? ?? [];
+    final scholarships =
+        items.map((json) => FirestoreScholarship.fromJson(json)).toList();
+    scholarships.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return scholarships;
   }
 
   /// Fetch all scholarships (including inactive) from backend.

@@ -270,6 +270,19 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       color: colorScheme.outline,
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: controller.refreshScholarships,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: Text(t.translate('savedRetry')),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(color: colorScheme.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -319,9 +332,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               matchesCategory;
         }).toList();
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
+        return RefreshIndicator(
+          onRefresh: controller.refreshScholarships,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
               // Search Bar
               _buildSearchBar(context, colorScheme, t),
 
@@ -453,7 +469,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     );
                   },
                 ),
-            ],
+              ],
+            ),
           ),
         );
       }),
