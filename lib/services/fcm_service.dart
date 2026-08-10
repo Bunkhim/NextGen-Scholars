@@ -46,6 +46,11 @@ class FcmService {
         badge: true,
         sound: true,
       );
+    } else {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
     }
 
     await registerToken();
