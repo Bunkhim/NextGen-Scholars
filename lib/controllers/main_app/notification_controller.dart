@@ -43,6 +43,19 @@ class NotificationController extends GetxController {
         prefs.getBool('settings_new_scholarships') ?? false;
     settingsLoaded.value = true;
 
+    await _syncRealtime();
+
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _syncRealtime(),
+    );
+  }
+
+  /// Fetch notifications and (re)subscribe to the websocket whenever a session
+  /// exists. Safe to call repeatedly — while logged out it no-ops until a
+  /// token appears, so a controller created before login (main.dart creates it
+  /// permanently at startup) still populates after the user signs in.
+  Future<void> _syncRealtime() async {
     if (!await JwtService().hasToken()) return;
 
     await _fetchNotifications();
@@ -55,12 +68,11 @@ class NotificationController extends GetxController {
         if (id != null) _applyReadLocally(id);
       }
     });
-
-    _pollTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _fetchNotifications(),
-    );
+    _ws.connect();
   }
+
+  /// Force an immediate refresh (used when the notifications screen opens).
+  Future<void> refreshNotifications() => _syncRealtime();
 
   Future<void> _fetchNotifications() async {
     if (!await JwtService().hasToken()) return;

@@ -21,6 +21,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     controller = Get.put(NotificationController());
+    controller.refreshNotifications();
   }
 
   @override
