@@ -1390,5 +1390,89 @@ const Map<String, String> translationsEn = {
       'Please agree to the Terms of Service and Privacy Policy to continue.',
   'settingsRateAppThanks':
       'Thank you for using NextGen Scholars! Rating will be available on the App Store & Google Play soon.',
+  // Legal Documents (in-app Privacy Policy & Terms of Service)
+  'legalLastUpdated': 'Last updated: August 10, 2026',
+  'legalPrivacyS1Title': '1. Introduction',
+  'legalPrivacyS1P1':
+      'NextGen Scholarship ("we", "us", or "our") operates the mobile application and related services designed to help students discover scholarships and manage their applications. This Privacy Policy explains how we collect, use, disclose, and protect your information when you use our app.',
+  'legalPrivacyS2Title': '2. Information We Collect',
+  'legalPrivacyS2P1':
+      'Account information: your name, email address, phone number, and password when you register or sign in.',
+  'legalPrivacyS2P2':
+      'Profile information: details you provide such as education level, grade, and preferences.',
+  'legalPrivacyS2P3':
+      'Application content: the scholarship applications, documents, and files you upload or submit through the app.',
+  'legalPrivacyS2P4':
+      'Device and usage information: device type, operating system, app version, and how you interact with the app, collected to improve our service.',
+  'legalPrivacyS2P5':
+      'Notification preferences: your choices regarding push, email, and deadline notifications.',
+  'legalPrivacyS3Title': '3. How We Use Your Information',
+  'legalPrivacyS3P1': 'To provide, operate, and maintain the app and its features.',
+  'legalPrivacyS3P2':
+      'To send you notifications about scholarships, application deadlines, and account updates that you have opted into.',
+  'legalPrivacyS3P3': 'To improve, personalise, and troubleshoot the service.',
+  'legalPrivacyS3P4': 'To detect, prevent, and address technical or security issues.',
+  'legalPrivacyS4Title': '4. How We Share Your Information',
+  'legalPrivacyS4P1': 'We do not sell your personal information.',
+  'legalPrivacyS4P2':
+      'We may share data with trusted service providers (such as hosting and notification providers) who process it on our behalf under strict confidentiality obligations.',
+  'legalPrivacyS4P3':
+      'We may disclose information when required by law, legal process, or to protect the rights and safety of our users and others.',
+  'legalPrivacyS5Title': '5. Data Security',
+  'legalPrivacyS5P1':
+      'We use reasonable technical and organisational measures, including encryption in transit, to protect your information. However, no method of transmission or storage is completely secure, and we cannot guarantee absolute security.',
+  'legalPrivacyS6Title': '6. Data Retention',
+  'legalPrivacyS6P1':
+      'We retain your information only for as long as necessary to provide the service, comply with legal obligations, or resolve disputes. When no longer needed, we delete or anonymise it.',
+  'legalPrivacyS7Title': '7. Your Rights',
+  'legalPrivacyS7P1':
+      'Depending on applicable law, you may have the right to access, correct, update, or delete the personal information we hold about you. You can contact us using the details below to exercise these rights, and we will respond within a reasonable time.',
+  'legalPrivacyS8Title': "8. Children's Privacy",
+  'legalPrivacyS8P1':
+      'The app is not intended for children under the age of 16. We do not knowingly collect personal information from children under this age. If you believe a child has provided us with personal information, please contact us and we will delete it.',
+  'legalPrivacyS9Title': '9. Changes to This Policy',
+  'legalPrivacyS9P1':
+      'We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the updated policy within the app. Your continued use of the app after changes take effect constitutes acceptance of the revised policy.',
+  'legalPrivacyS10Title': '10. Contact Us',
+  'legalPrivacyS10P1':
+      'If you have questions about this Privacy Policy or your data, contact us at support@nextgenscholars.app.',
+  'legalTermsS1Title': '1. Acceptance of Terms',
+  'legalTermsS1P1':
+      'By downloading, accessing, or using the NextGen Scholarship app, you agree to be bound by these Terms of Service. If you do not agree, please do not use the app.',
+  'legalTermsS2Title': '2. Eligibility',
+  'legalTermsS2P1':
+      'You must be at least 16 years old and have the legal capacity to accept these Terms to use the app. By using the app, you confirm that you meet these requirements.',
+  'legalTermsS3Title': '3. Accounts',
+  'legalTermsS3P1':
+      'You are responsible for providing accurate account information and for maintaining the confidentiality of your credentials. You are responsible for all activity that occurs under your account. Notify us promptly of any unauthorised use.',
+  'legalTermsS4Title': '4. Acceptable Use',
+  'legalTermsS4P1':
+      "You agree not to misuse the app, including by: violating any applicable law; attempting to access other users' accounts; interfering with the service or its servers; uploading harmful content; or using the app to send spam, scams, or misleading information.",
+  'legalTermsS5Title': '5. User Content',
+  'legalTermsS5P1':
+      'You retain ownership of the content you submit or upload. You grant us a limited licence to store, process, and transmit your content solely to operate and provide the app. You are solely responsible for the content you submit and warrant that you have the right to submit it.',
+  'legalTermsS6Title': '6. Intellectual Property',
+  'legalTermsS6P1':
+      'The app, including its design, code, trademarks, and all non-user content, is owned by or licensed to us and is protected by intellectual property laws. You may not copy, modify, distribute, or create derivative works without our written permission.',
+  'legalTermsS7Title': '7. Third-Party Scholarships',
+  'legalTermsS7P1':
+      'The scholarships listed in the app are provided and administered by third parties. We do not control, and are not responsible for, their decisions, eligibility criteria, or application outcomes. Applying for any scholarship is at your own discretion.',
+  'legalTermsS8Title': '8. Disclaimer of Warranties',
+  'legalTermsS8P1':
+      'The app is provided "as is" and "as available" without warranties of any kind, whether express or implied, including merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that the app will be uninterrupted, error-free, or free of harmful components.',
+  'legalTermsS9Title': '9. Limitation of Liability',
+  'legalTermsS9P1':
+      'To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or data, arising from your use of or inability to use the app.',
+  'legalTermsS10Title': '10. Termination',
+  'legalTermsS10P1':
+      'We may suspend or terminate your access to the app at any time, with or without notice, if you violate these Terms or for operational reasons. You may stop using the app at any time.',
+  'legalTermsS11Title': '11. Governing Law',
+  'legalTermsS11P1':
+      'These Terms are governed by the laws of the Kingdom of Cambodia, without regard to conflict-of-law principles.',
+  'legalTermsS12Title': '12. Changes to These Terms',
+  'legalTermsS12P1':
+      'We may update these Terms from time to time. Material changes will be posted within the app. Your continued use of the app after changes take effect constitutes acceptance of the revised Terms.',
+  'legalTermsS13Title': '13. Contact Us',
+  'legalTermsS13P1': 'For questions about these Terms, contact us at support@nextgenscholars.app.',
   'ok': 'OK',
 };
