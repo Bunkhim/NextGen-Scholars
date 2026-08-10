@@ -10,6 +10,36 @@ import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+@pragma('vm:entry-point')
+Future<void> fcmBackgroundHandler(RemoteMessage message) async {
+  final plugin = FlutterLocalNotificationsPlugin();
+  const settings = InitializationSettings(
+    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    iOS: DarwinInitializationSettings(),
+  );
+  await plugin.initialize(settings);
+
+  final prefs = await SharedPreferences.getInstance();
+  final sound =
+      prefs.getString('settings_notification_sound') ?? 'default';
+
+  final data = message.data;
+  final title = message.notification?.title ?? data['title'] ?? '';
+  final body = message.notification?.body ?? data['body'] ?? '';
+  if (title.isEmpty && body.isEmpty && data.isEmpty) return;
+
+  await plugin.show(
+    FcmService.notificationIdFor(data),
+    title,
+    body,
+    NotificationDetails(
+      android: FcmService.buildAndroidDetails(sound),
+      iOS: const DarwinNotificationDetails(),
+    ),
+    payload: jsonEncode(data),
+  );
+}
+
 class FcmService {
   static final FcmService _instance = FcmService._();
   factory FcmService() => _instance;
@@ -88,13 +118,10 @@ class FcmService {
   void _onForegroundMessage(RemoteMessage message) {
     final notification = message.notification;
     final data = message.data;
-    if (notification != null) {
-      _showLocalNotification(
-        notification.title ?? '',
-        notification.body ?? '',
-        data,
-      );
-    }
+    final title = notification?.title ?? data['title'] ?? '';
+    final body = notification?.body ?? data['body'] ?? '';
+    if (title.isEmpty && body.isEmpty && data.isEmpty) return;
+    _showLocalNotification(title, body, data);
   }
 
   Future<void> _showLocalNotification(
@@ -108,10 +135,24 @@ class FcmService {
     final sound =
         prefs.getString('settings_notification_sound') ?? 'default';
 
-    final AndroidNotificationDetails androidDetails;
+    final details = NotificationDetails(
+      android: buildAndroidDetails(sound),
+      iOS: const DarwinNotificationDetails(),
+    );
+
+    await _localNotifications.show(
+      notificationIdFor(data),
+      title,
+      body,
+      details,
+      payload: jsonEncode(data),
+    );
+  }
+
+  static AndroidNotificationDetails buildAndroidDetails(String sound) {
     switch (sound) {
       case 'silent':
-        androidDetails = const AndroidNotificationDetails(
+        return const AndroidNotificationDetails(
           'nextgen_silent',
           'NextGen Notifications',
           channelDescription: 'Notifications from NextGen Scholars',
@@ -120,7 +161,7 @@ class FcmService {
           playSound: false,
         );
       case 'vibrate':
-        androidDetails = const AndroidNotificationDetails(
+        return const AndroidNotificationDetails(
           'nextgen_vibrate',
           'NextGen Notifications',
           channelDescription: 'Notifications from NextGen Scholars',
@@ -130,7 +171,7 @@ class FcmService {
           enableVibration: true,
         );
       case 'chime':
-        androidDetails = const AndroidNotificationDetails(
+        return const AndroidNotificationDetails(
           'nextgen_chime',
           'NextGen Notifications',
           channelDescription: 'Notifications from NextGen Scholars',
@@ -139,7 +180,7 @@ class FcmService {
           sound: RawResourceAndroidNotificationSound('nextgen_chime'),
         );
       default:
-        androidDetails = const AndroidNotificationDetails(
+        return const AndroidNotificationDetails(
           'nextgen_channel',
           'NextGen Notifications',
           channelDescription: 'Notifications from NextGen Scholars',
@@ -147,22 +188,12 @@ class FcmService {
           priority: Priority.high,
         );
     }
-    const iosDetails = DarwinNotificationDetails();
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+  }
 
-    final rawId =
-        data['referenceId']?.hashCode ?? DateTime.now().millisecondsSinceEpoch;
-    final id = rawId & 0x7fffffff;
-    await _localNotifications.show(
-      id,
-      title,
-      body,
-      details,
-      payload: jsonEncode(data),
-    );
+  static int notificationIdFor(Map<String, dynamic> data) {
+    final rawId = data['referenceId']?.hashCode ??
+        DateTime.now().millisecondsSinceEpoch;
+    return rawId & 0x7fffffff;
   }
 
   void _onNotificationTap(NotificationResponse response) {
