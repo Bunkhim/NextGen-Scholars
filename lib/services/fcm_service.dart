@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:scholarship_app/core/api/services/notifications_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FcmService {
   static final FcmService _instance = FcmService._();
@@ -101,13 +102,51 @@ class FcmService {
     String body,
     Map<String, dynamic> data,
   ) async {
-    final androidDetails = AndroidNotificationDetails(
-      'nextgen_channel',
-      'NextGen Notifications',
-      channelDescription: 'Notifications from NextGen Scholars',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    // A distinct channel per sound choice so Android 8+ recreates the channel
+    // with the right audio attributes when the setting changes.
+    final prefs = await SharedPreferences.getInstance();
+    final sound =
+        prefs.getString('settings_notification_sound') ?? 'default';
+
+    final AndroidNotificationDetails androidDetails;
+    switch (sound) {
+      case 'silent':
+        androidDetails = const AndroidNotificationDetails(
+          'nextgen_silent',
+          'NextGen Notifications',
+          channelDescription: 'Notifications from NextGen Scholars',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: false,
+        );
+      case 'vibrate':
+        androidDetails = const AndroidNotificationDetails(
+          'nextgen_vibrate',
+          'NextGen Notifications',
+          channelDescription: 'Notifications from NextGen Scholars',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: false,
+          enableVibration: true,
+        );
+      case 'chime':
+        androidDetails = const AndroidNotificationDetails(
+          'nextgen_chime',
+          'NextGen Notifications',
+          channelDescription: 'Notifications from NextGen Scholars',
+          importance: Importance.high,
+          priority: Priority.high,
+          sound: RawResourceAndroidNotificationSound('nextgen_chime'),
+        );
+      default:
+        androidDetails = const AndroidNotificationDetails(
+          'nextgen_channel',
+          'NextGen Notifications',
+          channelDescription: 'Notifications from NextGen Scholars',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
+    }
     const iosDetails = DarwinNotificationDetails();
     final details = NotificationDetails(
       android: androidDetails,
