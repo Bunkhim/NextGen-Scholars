@@ -14,6 +14,12 @@ class SettingsController extends GetxController {
   static const _kNewScholarships = 'settings_new_scholarships';
   static const _kSound = 'settings_notification_sound';
 
+  // Canonical notification-sound values (stored, not localized display text)
+  static const soundDefault = 'default';
+  static const soundSilent = 'silent';
+  static const soundVibrate = 'vibrate';
+  static const soundChime = 'chime';
+
   // Notification toggles
   final RxBool pushNotifications = true.obs;
   final RxBool emailNotifications = true.obs;
@@ -43,7 +49,31 @@ class SettingsController extends GetxController {
     emailNotifications.value = prefs.getBool(_kEmail) ?? true;
     deadlineReminders.value = prefs.getBool(_kDeadline) ?? true;
     newScholarships.value = prefs.getBool(_kNewScholarships) ?? false;
-    notificationSound.value = prefs.getString(_kSound) ?? 'Default';
+    notificationSound.value = normalizeSound(prefs.getString(_kSound));
+  }
+
+  static String normalizeSound(String? value) {
+    switch (value?.trim()) {
+      case soundDefault:
+      case soundSilent:
+      case soundVibrate:
+      case soundChime:
+        return value!.trim();
+      case 'Default':
+      case 'លំនាំដើម':
+        return soundDefault;
+      case 'Silent':
+      case 'ស្ងាត់':
+        return soundSilent;
+      case 'Vibrate only':
+      case 'រំញ័រប៉ុណ្ណោះ':
+        return soundVibrate;
+      case 'Chime':
+      case 'សម្លេងរោទ៍':
+        return soundChime;
+      default:
+        return soundDefault;
+    }
   }
 
   Future<void> _syncFromBackend() async {

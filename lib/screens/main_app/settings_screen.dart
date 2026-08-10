@@ -33,7 +33,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => Obx(() => _PickerSheet(
             title: AppLocalizations.of(context).translate('settingsLanguage'),
-            items: const ['English', 'ខ្មែរ'],
+            items: const [
+              (label: 'English', value: 'English'),
+              (label: 'ខ្មែរ', value: 'ខ្មែរ'),
+            ],
             selected: controller.selectedLanguage.value,
             onSelect: (val) {
               controller.setLanguage(val);
@@ -50,10 +53,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (_) => Obx(() => _PickerSheet(
             title: t.translate('settingsNotificationSound'),
             items: [
-              t.translate('settingsSoundDefault'),
-              t.translate('settingsSoundSilent'),
-              t.translate('settingsSoundVibrateOnly'),
-              t.translate('settingsSoundChime'),
+              (label: t.translate('settingsSoundDefault'), value: SettingsController.soundDefault),
+              (label: t.translate('settingsSoundSilent'), value: SettingsController.soundSilent),
+              (label: t.translate('settingsSoundVibrateOnly'), value: SettingsController.soundVibrate),
+              (label: t.translate('settingsSoundChime'), value: SettingsController.soundChime),
             ],
             selected: controller.notificationSound.value,
             onSelect: (val) {
@@ -61,6 +64,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           )),
     );
+  }
+
+  String _soundLabel(AppLocalizations t, String value) {
+    switch (value) {
+      case SettingsController.soundSilent:
+        return t.translate('settingsSoundSilent');
+      case SettingsController.soundVibrate:
+        return t.translate('settingsSoundVibrateOnly');
+      case SettingsController.soundChime:
+        return t.translate('settingsSoundChime');
+      default:
+        return t.translate('settingsSoundDefault');
+    }
   }
 
   Future<void> _openLink(BuildContext context, SettingsController controller, String page) async {
@@ -202,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.notifications_active_outlined,
                           iconColor: colorScheme.primary,
                           label: t.translate('settingsNotificationSound'),
-                          trailing: _controller.notificationSound.value,
+                          trailing: _soundLabel(t, _controller.notificationSound.value),
                           onTap: () => _showSoundPicker(context, _controller),
                         )),
                     _Divider(),
@@ -477,7 +493,7 @@ class _Divider extends StatelessWidget {
 
 class _PickerSheet extends StatelessWidget {
   final String title;
-  final List<String> items;
+  final List<({String label, String value})> items;
   final String selected;
   final ValueChanged<String> onSelect;
 
@@ -521,12 +537,12 @@ class _PickerSheet extends StatelessWidget {
           ),
           Divider(height: 1, color: colorScheme.outlineVariant),
           ...items.map((item) {
-            final isSelected = item == selected;
+            final isSelected = item.value == selected;
             return Column(
               children: [
                 InkWell(
                   onTap: () {
-                    onSelect(item);
+                    onSelect(item.value);
                     Navigator.pop(context);
                   },
                   child: Padding(
@@ -536,7 +552,7 @@ class _PickerSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            item,
+                            item.label,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: isSelected
