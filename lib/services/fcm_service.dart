@@ -153,7 +153,9 @@ class FcmService {
       iOS: iosDetails,
     );
 
-    final id = data['referenceId']?.hashCode ?? DateTime.now().millisecondsSinceEpoch;
+    final rawId =
+        data['referenceId']?.hashCode ?? DateTime.now().millisecondsSinceEpoch;
+    final id = rawId & 0x7fffffff;
     await _localNotifications.show(
       id,
       title,
