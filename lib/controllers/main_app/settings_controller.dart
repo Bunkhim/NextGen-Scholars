@@ -146,8 +146,6 @@ class SettingsController extends GetxController {
 
   Future<bool> openLink(String page) async {
     final urls = <String, String>{
-      'Privacy Policy': 'https://nextgenscholars.app/privacy-policy',
-      'Terms of Service': 'https://nextgenscholars.app/terms-of-service',
       'Help & Support': 'mailto:support@nextgenscholars.app?subject=Help%20%26%20Support',
     };
 

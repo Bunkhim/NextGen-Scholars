@@ -5,6 +5,7 @@ import 'package:scholarship_app/translations/app_localizations.dart';
 import 'package:scholarship_app/screens/main_app/display_size_screen.dart';
 import 'package:scholarship_app/screens/main_app/font_picker_screen.dart';
 import 'package:scholarship_app/screens/main_app/font_size_screen.dart';
+import 'package:scholarship_app/screens/main_app/legal_screen.dart';
 import 'package:scholarship_app/screens/main_app/wallpaper_screen.dart';
 import 'package:scholarship_app/services/display_settings_service.dart';
 import 'package:scholarship_app/services/wallpaper_service.dart';
@@ -295,7 +296,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.privacy_tip_outlined,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsPrivacyPolicy'),
-                      onTap: () => _openLink(context, _controller, 'Privacy Policy'),
+                      onTap: () async {
+                        await Get.to(() => const PrivacyPolicyScreen());
+                        if (mounted) setState(() {});
+                      },
                     ),
                     _Divider(),
 
@@ -303,7 +307,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.description_outlined,
                       iconColor: colorScheme.onSurfaceVariant,
                       label: t.translate('settingsTermsOfService'),
-                      onTap: () => _openLink(context, _controller, 'Terms of Service'),
+                      onTap: () async {
+                        await Get.to(() => const TermsOfServiceScreen());
+                        if (mounted) setState(() {});
+                      },
                     ),
                     _Divider(),
 
