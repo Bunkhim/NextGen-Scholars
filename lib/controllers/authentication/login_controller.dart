@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+// import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/core/app_config.dart';
@@ -412,92 +412,92 @@ class LoginController extends GetxController {
     if (isFacebookRateLimited.value) return;
     isFacebookLoading.value = true;
 
-    try {
-      _showLoadingDialog(t.translate('loginFacebookSigningIn'));
-      debugPrint('[LoginController] Facebook loading dialog shown');
+    // try {
+    //   _showLoadingDialog(t.translate('loginFacebookSigningIn'));
+    //   debugPrint('[LoginController] Facebook loading dialog shown');
 
-      final LoginResult result = await FacebookAuth.instance.login(
-        permissions: ['email', 'public_profile'],
-      );
-      debugPrint('[LoginController] Facebook login result: status=${result.status}');
+    //   final LoginResult result = await FacebookAuth.instance.login(
+    //     permissions: ['email', 'public_profile'],
+    //   );
+    //   debugPrint('[LoginController] Facebook login result: status=${result.status}');
 
-      if (_isDisposed) return;
-      if (Get.isDialogOpen ?? false) {
-        debugPrint('[LoginController] Dismissing Facebook loading dialog');
-        Get.back();
-      }
+    //   if (_isDisposed) return;
+    //   if (Get.isDialogOpen ?? false) {
+    //     debugPrint('[LoginController] Dismissing Facebook loading dialog');
+    //     Get.back();
+    //   }
 
-      if (result.status == LoginStatus.cancelled) {
-        isFacebookLoading.value = false;
-        _showErrorMessage(t.translate('loginFacebookCancelled'));
-        return;
-      }
+    //   if (result.status == LoginStatus.cancelled) {
+    //     isFacebookLoading.value = false;
+    //     _showErrorMessage(t.translate('loginFacebookCancelled'));
+    //     return;
+    //   }
 
-      if (result.status != LoginStatus.success || result.accessToken == null) {
-        debugPrint('[LoginController] Facebook login failed: status=${result.status}, message=${result.message}');
-        isFacebookLoading.value = false;
-        _showErrorMessage(t.translate('loginFacebookFailed'));
-        return;
-      }
+    //   if (result.status != LoginStatus.success || result.accessToken == null) {
+    //     debugPrint('[LoginController] Facebook login failed: status=${result.status}, message=${result.message}');
+    //     isFacebookLoading.value = false;
+    //     _showErrorMessage(t.translate('loginFacebookFailed'));
+    //     return;
+    //   }
 
-      debugPrint('[LoginController] Calling socialAuth for Facebook...');
-      final res = await _authApi.socialAuth(
-        provider: 'facebook',
-        token: result.accessToken!.tokenString,
-      );
-      debugPrint('[LoginController] Facebook socialAuth response received: ${res.containsKey("token") ? "success" : "failed"}');
+    //   debugPrint('[LoginController] Calling socialAuth for Facebook...');
+    //   final res = await _authApi.socialAuth(
+    //     provider: 'facebook',
+    //     token: result.accessToken!.tokenString,
+    //   );
+    //   debugPrint('[LoginController] Facebook socialAuth response received: ${res.containsKey("token") ? "success" : "failed"}');
 
-      if (_isDisposed) return;
+    //   if (_isDisposed) return;
 
-      // Check for rate limit (429)
-      if (res['statusCode'] == 429 || 
-          (res['message'] as String?)?.contains('429') == true ||
-          (res['message'] as String?)?.toLowerCase().contains('too many') == true) {
-        isFacebookLoading.value = false;
-        _startFacebookRateLimitCooldown();
-        _showErrorMessage(t.translate('loginErrorTooManyRequests'));
-        return;
-      }
+    //   // Check for rate limit (429)
+    //   if (res['statusCode'] == 429 || 
+    //       (res['message'] as String?)?.contains('429') == true ||
+    //       (res['message'] as String?)?.toLowerCase().contains('too many') == true) {
+    //     isFacebookLoading.value = false;
+    //     _startFacebookRateLimitCooldown();
+    //     _showErrorMessage(t.translate('loginErrorTooManyRequests'));
+    //     return;
+    //   }
 
-      if (res.containsKey('token')) {
-        final uid = res['uid'] as String;
-        final token = res['token'] as String;
-        final userName = (res['displayName'] as String?) ?? 'User';
+    //   if (res.containsKey('token')) {
+    //     final uid = res['uid'] as String;
+    //     final token = res['token'] as String;
+    //     final userName = (res['displayName'] as String?) ?? 'User';
 
-        await _jwt.saveUserSession(
-          uid: uid,
-          token: token,
-          email: res['email'] as String?,
-          displayName: userName,
-        );
+    //     await _jwt.saveUserSession(
+    //       uid: uid,
+    //       token: token,
+    //       email: res['email'] as String?,
+    //       displayName: userName,
+    //     );
 
-        await _postAuthActions(uid);
+    //     await _postAuthActions(uid);
 
-        if (_isDisposed) return;
-        isFacebookLoading.value = false;
-        _showSuccessMessage(
-          t.translate('loginFacebookSignInSuccess'),
-          userName,
-        );
+    //     if (_isDisposed) return;
+    //     isFacebookLoading.value = false;
+    //     _showSuccessMessage(
+    //       t.translate('loginFacebookSignInSuccess'),
+    //       userName,
+    //     );
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (_isDisposed) return;
-        Get.offAllNamed(AppRoutes.homeScreen);
-      } else {
-        isFacebookLoading.value = false;
-        final msg = res['detail'] as String? ??
-            res['message'] as String? ??
-            t.translate('loginFacebookFailed');
-        debugPrint('[LoginController] Facebook socialAuth failed');
-        _showErrorMessage(msg);
-      }
-    } catch (e) {
-      debugPrint('[LoginController] handleFacebookSignIn EXCEPTION');
-      if (_isDisposed) return;
-      if (Get.isDialogOpen ?? false) Get.back();
-      isFacebookLoading.value = false;
-      _showErrorMessage(t.translate('loginFacebookFailed'));
-    }
+    //     await Future.delayed(const Duration(milliseconds: 500));
+    //     if (_isDisposed) return;
+    //     Get.offAllNamed(AppRoutes.homeScreen);
+    //   } else {
+    //     isFacebookLoading.value = false;
+    //     final msg = res['detail'] as String? ??
+    //         res['message'] as String? ??
+    //         t.translate('loginFacebookFailed');
+    //     debugPrint('[LoginController] Facebook socialAuth failed');
+    //     _showErrorMessage(msg);
+    //   }
+    // } catch (e) {
+    //   debugPrint('[LoginController] handleFacebookSignIn EXCEPTION');
+    //   if (_isDisposed) return;
+    //   if (Get.isDialogOpen ?? false) Get.back();
+    //   isFacebookLoading.value = false;
+    //   _showErrorMessage(t.translate('loginFacebookFailed'));
+    // }
   }
 
   void handleEmailSignIn() {
