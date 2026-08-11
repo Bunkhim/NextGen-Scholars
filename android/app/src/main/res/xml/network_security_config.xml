@@ -15,15 +15,13 @@
             <pin digest="SHA-256">s/tdAOmUzd8syaTuqfgGvFcn6DzA5Cmb+Vby1ST+U3Y=</pin>
             <pin digest="SHA-256">sCkq5UWXjg+7mKu9lMhhYF5bGLsy7VI/UNW3tccdR7w=</pin>
         </pin-set>
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
     </domain-config>
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">api.cloudinary.com</domain>
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
+        <pin-set expiration="2027-12-31">
+            <pin digest="SHA-256">Q4Bmar673sCjiLnGgLfIdNrkmDOSkiLtRbNAuyXfAyE=</pin>
+            <pin digest="SHA-256">47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=</pin>
+        </pin-set>
     </domain-config>
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
