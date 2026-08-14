@@ -1,13 +1,14 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:scholarship_app/core/api/services/notifications_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/language_service.dart';
 import 'package:scholarship_app/services/fcm_service.dart';
-import 'package:scholarship_app/services/notification_preferences_service.dart';
 import 'package:scholarship_app/services/theme_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsController extends GetxController {
+  final NotificationsApiService _notificationsApi = NotificationsApiService();
   // SharedPreferences keys
   static const _kPush = 'settings_push_notifications';
   static const _kEmail = 'settings_email_notifications';
@@ -50,24 +51,24 @@ class SettingsController extends GetxController {
   Future<void> _syncFromBackend() async {
     final uid = JwtService().uidSync;
     if (uid == null) return;
-    final prefs = await NotificationPreferencesService().fetch();
+    final prefs = await _notificationsApi.getPreferences();
     if (prefs == null) return;
     final sp = await SharedPreferences.getInstance();
-    if (pushNotifications.value != prefs.pushEnabled) {
-      pushNotifications.value = prefs.pushEnabled;
-      await sp.setBool(_kPush, prefs.pushEnabled);
+    if (pushNotifications.value != prefs['pushEnabled']) {
+      pushNotifications.value = prefs['pushEnabled'] as bool? ?? true;
+      await sp.setBool(_kPush, pushNotifications.value);
     }
-    if (emailNotifications.value != prefs.emailEnabled) {
-      emailNotifications.value = prefs.emailEnabled;
-      await sp.setBool(_kEmail, prefs.emailEnabled);
+    if (emailNotifications.value != prefs['emailEnabled']) {
+      emailNotifications.value = prefs['emailEnabled'] as bool? ?? true;
+      await sp.setBool(_kEmail, emailNotifications.value);
     }
-    if (deadlineReminders.value != prefs.deadlineReminders) {
-      deadlineReminders.value = prefs.deadlineReminders;
-      await sp.setBool(_kDeadline, prefs.deadlineReminders);
+    if (deadlineReminders.value != prefs['deadlineReminders']) {
+      deadlineReminders.value = prefs['deadlineReminders'] as bool? ?? true;
+      await sp.setBool(_kDeadline, deadlineReminders.value);
     }
-    if (newScholarships.value != prefs.newScholarships) {
-      newScholarships.value = prefs.newScholarships;
-      await sp.setBool(_kNewScholarships, prefs.newScholarships);
+    if (newScholarships.value != prefs['newScholarships']) {
+      newScholarships.value = prefs['newScholarships'] as bool? ?? true;
+      await sp.setBool(_kNewScholarships, newScholarships.value);
     }
   }
 
@@ -79,19 +80,19 @@ class SettingsController extends GetxController {
     switch (key) {
       case _kPush:
         pushNotifications.value = value;
-        NotificationPreferencesService().update('pushEnabled', value);
+        _notificationsApi.updatePreferences({'pushEnabled': value});
         break;
       case _kEmail:
         emailNotifications.value = value;
-        NotificationPreferencesService().update('emailEnabled', value);
+        _notificationsApi.updatePreferences({'emailEnabled': value});
         break;
       case _kDeadline:
         deadlineReminders.value = value;
-        NotificationPreferencesService().update('deadlineReminders', value);
+        _notificationsApi.updatePreferences({'deadlineReminders': value});
         break;
       case _kNewScholarships:
         newScholarships.value = value;
-        NotificationPreferencesService().update('newScholarships', value);
+        _notificationsApi.updatePreferences({'newScholarships': value});
         break;
     }
   }
