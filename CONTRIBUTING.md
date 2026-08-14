@@ -276,12 +276,14 @@ flutter run
 flutter analyze
 ```
 
-### Deploying Cloud Functions / Deploy Cloud Functions
+### Deploying the Telegram bot / Deploy Telegram bot
+
+The bot is a standalone Python service in the `nextgen-api` repository
+(`telegram_bot/`). Deploy it on the VPS:
 
 ```bash
-cd functions
-npm install
-firebase deploy --only functions
+cd ~/nextgen-api/deploy
+docker compose up -d --build telegram-bot
 ```
 
 ---
