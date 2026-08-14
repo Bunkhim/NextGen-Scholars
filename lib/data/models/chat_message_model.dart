@@ -2,6 +2,7 @@
 /// Stores both user messages and AI responses for conversation history.
 class ChatMessageModel {
   final int? id;
+  final String? userId;
   final String sessionId;
   final String role;
   final String content;
@@ -16,6 +17,7 @@ class ChatMessageModel {
 
   const ChatMessageModel({
     this.id,
+    this.userId,
     required this.sessionId,
     required this.role,
     required this.content,
@@ -26,6 +28,7 @@ class ChatMessageModel {
 
   ChatMessageModel copyWith({
     int? id,
+    String? userId,
     String? sessionId,
     String? role,
     String? content,
@@ -34,6 +37,7 @@ class ChatMessageModel {
   }) {
     return ChatMessageModel(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       sessionId: sessionId ?? this.sessionId,
       role: role ?? this.role,
       content: content ?? this.content,
@@ -46,6 +50,7 @@ class ChatMessageModel {
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
       'session_id': sessionId,
       'role': role,
       'content': content,
@@ -57,6 +62,7 @@ class ChatMessageModel {
   factory ChatMessageModel.fromMap(Map<String, dynamic> map) {
     return ChatMessageModel(
       id: map['id'] as int?,
+      userId: map['user_id'] as String?,
       sessionId: (map['session_id'] as String?) ?? '',
       role: (map['role'] as String?) ?? roleUser,
       content: (map['content'] as String?) ?? '',

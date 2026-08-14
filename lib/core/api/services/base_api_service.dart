@@ -104,10 +104,12 @@ class BaseApiService {
 
   Future<dynamic> delete({
     required String endpoint,
+    Object? data,
     CancelToken? cancelToken,
   }) async {
     try {
-      final response = await _apiConfig.dio.delete(endpoint, cancelToken: cancelToken);
+      final response =
+          await _apiConfig.dio.delete(endpoint, data: data, cancelToken: cancelToken);
       return response.data;
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) rethrow;

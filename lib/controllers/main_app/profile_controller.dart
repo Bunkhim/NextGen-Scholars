@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:scholarship_app/controllers/main_app/discover_controller.dart';
+import 'package:scholarship_app/controllers/main_app/notification_controller.dart';
 import 'package:scholarship_app/core/api/services/auth_api_service.dart';
 import 'package:scholarship_app/core/api/services/users_api_service.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/routes/app_routes.dart';
 import 'package:scholarship_app/screens/main_app/profile_screen.dart';
 import 'package:scholarship_app/services/application_service.dart';
+import 'package:scholarship_app/services/fcm_service.dart';
 import 'package:scholarship_app/services/fill_info_persistence_service.dart';
 import 'package:scholarship_app/services/saved_scholarship_service.dart';
 import 'package:scholarship_app/services/session_security_service.dart';
@@ -92,6 +95,11 @@ class ProfileController extends GetxController {
       await _authApi.logout();
     } catch (_) {}
 
+    // Unbind this device's FCM token so the previous account stops receiving
+    // push notifications here. Runs before the JWT is cleared.
+    await FcmService().unregisterDeviceToken();
+    _clearInMemorySessionState();
+
     await FillInfoPersistenceService().onUserLoggedOut();
     await SessionSecurityService().clearLoginTimestamp();
 
@@ -107,6 +115,17 @@ class ProfileController extends GetxController {
     Get.offAllNamed(AppRoutes.loginScreen);
   }
 
+  /// Drop the previous account's in-memory controller state so a different
+  /// account logging in on this device never sees stale lists/badges.
+  void _clearInMemorySessionState() {
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().clearSessionData();
+    }
+    if (Get.isRegistered<DiscoverController>()) {
+      Get.find<DiscoverController>().clearSessionData();
+    }
+  }
+
   Future<void> handleDeleteAccount() async {
     isDeletingAccount.value = true;
     try {
@@ -114,6 +133,8 @@ class ProfileController extends GetxController {
       if (uid == null) return;
 
       await _usersApi.deleteAccount();
+      await FcmService().unregisterDeviceToken();
+      _clearInMemorySessionState();
       await FillInfoPersistenceService().onAccountDeleted(uid);
       await UserDataSyncService().deleteAllLocalData();
       await SessionSecurityService().clearLoginTimestamp();

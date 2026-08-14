@@ -63,7 +63,11 @@ class NotificationController extends GetxController {
   Future<void> _fetchNotifications() async {
     final raw = await _notificationService.fetchMyNotifications();
     notifications.value = _applySettingsFilter(raw);
-    unreadCount.value = await _notificationService.fetchUnreadCount();
+    // Derive the badge from the visible (settings-filtered) list so it always
+    // matches what the user can actually see. The backend /unread-count counts
+    // everything unfiltered (incl. new_application and disabled types), which
+    // made the badge higher than the list.
+    unreadCount.value = filteredUnreadCount;
   }
 
   void _applyReadLocally(String notificationId) {
@@ -91,6 +95,13 @@ class NotificationController extends GetxController {
     pushEnabled.value = prefs.getBool('settings_push_notifications') ?? true;
     newScholarshipsEnabled.value =
         prefs.getBool('settings_new_scholarships') ?? false;
+  }
+
+  /// Clear the previous account's in-memory data on logout so it can't show
+  /// up for a different account on the same device.
+  void clearSessionData() {
+    notifications.clear();
+    unreadCount.value = 0;
   }
 
   List<AppNotification> _applySettingsFilter(List<AppNotification> all) {

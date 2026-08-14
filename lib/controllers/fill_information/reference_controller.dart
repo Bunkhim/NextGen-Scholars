@@ -105,7 +105,7 @@ class ReferenceController extends GetxController {
 		if (value.trim().length < 2) {
 			return localizations.translate('referenceNameMinLength');
 		}
-		if (!RegExp(r'^[\p{L}\s]+$', unicode: true).hasMatch(value.trim())) {
+		if (!RegExp(r'^[\p{L}\p{M}\s]+$', unicode: true).hasMatch(value.trim())) {
 			return localizations.translate('referenceNameAllowUnicode');
 		}
 		return null;

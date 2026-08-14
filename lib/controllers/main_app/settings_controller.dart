@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
 import 'package:scholarship_app/services/language_service.dart';
+import 'package:scholarship_app/services/fcm_service.dart';
 import 'package:scholarship_app/services/notification_preferences_service.dart';
 import 'package:scholarship_app/services/theme_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -100,6 +101,23 @@ class SettingsController extends GetxController {
     await prefs.setString(key, value);
     if (key == _kSound) {
       notificationSound.value = value;
+    }
+  }
+
+  /// Fires a local notification immediately with the currently selected sound
+  /// so it can be previewed on a physical device.
+  Future<bool> testNotificationSound({
+    String? title,
+    String? body,
+  }) async {
+    try {
+      await FcmService().showTestNotification(
+        title ?? 'NextGen Scholars',
+        body ?? 'Test notification',
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

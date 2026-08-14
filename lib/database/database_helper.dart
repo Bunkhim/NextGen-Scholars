@@ -15,7 +15,7 @@ class DatabaseHelper {
 
   // ── Constants ───────────────────────────────────────────────────────────────
   static const String _databaseName = 'scholarship_app.db';
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   // Table names
   static const String tableUserProfile = 'user_profiles';
@@ -126,6 +126,7 @@ class DatabaseHelper {
     batch.execute('''
       CREATE TABLE $tableChatMessages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
         session_id TEXT NOT NULL,
         role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
         content TEXT NOT NULL,
@@ -244,6 +245,17 @@ class DatabaseHelper {
       try {
         await db
             .execute('ALTER TABLE $tableScholarships ADD COLUMN logo_url TEXT');
+      } catch (_) {}
+    }
+    if (oldVersion < 5) {
+      // Scope chat history per user so a different account never sees another
+      // user's conversations. Legacy rows (user_id NULL) are hidden by the
+      // per-user queries.
+      try {
+        await db
+            .execute('ALTER TABLE $tableChatMessages ADD COLUMN user_id TEXT');
+        await db.execute(
+            'CREATE INDEX IF NOT EXISTS idx_chat_user_session ON $tableChatMessages(user_id, session_id)');
       } catch (_) {}
     }
   }

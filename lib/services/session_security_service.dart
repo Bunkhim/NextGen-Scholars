@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scholarship_app/core/services/jwt_service.dart';
+import 'package:scholarship_app/services/fcm_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionSecurityService {
@@ -50,6 +51,10 @@ class SessionSecurityService {
         await googleSignIn.signOut();
       }
     } catch (_) {}
+
+    // Unbind this device's FCM token so the previous account stops receiving
+    // push notifications here.
+    await FcmService().unregisterDeviceToken();
 
     await JwtService().clearUserSession();
     await clearLoginTimestamp();

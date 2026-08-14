@@ -55,6 +55,15 @@ class DiscoverController extends GetxController {
 
   Future<void> refreshScholarships() => _loadScholarships();
 
+  /// Clear the previous account's in-memory state on logout so saved/favorite
+  /// ids from another account can't appear even transiently.
+  void clearSessionData() {
+    favoriteIds.clear();
+    savingIds.clear();
+    searchQuery.value = '';
+    searchController.clear();
+  }
+
   Future<void> _loadSavedIds() async {
     try {
       final ids = await savedScholarshipService.getSavedIds();

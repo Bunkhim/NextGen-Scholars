@@ -397,7 +397,7 @@ class LoginController extends GetxController {
         _showErrorMessage(msg);
       }
     } catch (e) {
-      debugPrint('[LoginController] handleGoogleSignIn EXCEPTION');
+      debugPrint('[LoginController] handleGoogleSignIn EXCEPTION: $e');
       if (_isDisposed) return;
       if (Get.isDialogOpen ?? false) Get.back();
       isGoogleLoading.value = false;

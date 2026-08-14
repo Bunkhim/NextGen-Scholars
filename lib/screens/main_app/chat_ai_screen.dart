@@ -39,6 +39,10 @@ class _ChatAIScreenState extends State<ChatAIScreen>
 
   @override
   void dispose() {
+    // Dispose the controller so the next account that opens this screen gets a
+    // fresh instance and only loads its own sessions (Get.put would otherwise
+    // reuse this instance and show the previous user's in-memory messages).
+    Get.delete<ChatAIController>();
     _messageController.dispose();
     _scrollController.dispose();
     _dotController.dispose();

@@ -28,11 +28,14 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   Future<void> _selectDate(BuildContext context) async {
     final t = AppLocalizations.of(context);
+    final now = DateTime.now();
+    // App users must be at least 13 years old.
+    final latestDob = DateTime(now.year - 13, now.month, now.day);
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: controller.selectedDate.value ?? DateTime(2000),
+      initialDate: controller.selectedDate.value ?? DateTime(now.year - 13),
       firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
+      lastDate: latestDob,
       locale: const Locale('en', 'GB'),
       helpText: t.translate('personalInfoDobHint'),
       builder: (context, child) {

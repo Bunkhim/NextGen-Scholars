@@ -363,6 +363,7 @@ const Map<String, String> translationsKm = {
   'editProfilePhoneInvalid': 'លេខទូរស័ព្ទមិនត្រឹមត្រូវ (៧-១៥ ខ្ទង់)',
   'editProfileDobRequired': 'ត្រូវបំពេញថ្ងៃខែឆ្នាំកំណើត (DD/MM/YYYY)',
   'editProfileDobInvalid': 'ទម្រង់កាលបរិច្ឆេទមិនត្រឹមត្រូវ។ ប្រើ DD/MM/YYYY',
+  'editProfileDobUnderage': 'អ្នកត្រូវតែមានអាយុយ៉ាងតិច ១៣ ឆ្នាំ',
   'editProfileCountryRequired': 'ត្រូវបំពេញប្រទេស',
   'editProfileCountryInvalid':
       'ប្រទេសត្រូវមានចន្លោះពី ២ ដល់ ៥៦ អក្សរ និងមានតែអក្សរប៉ុណ្ណោះ',
@@ -388,6 +389,9 @@ const Map<String, String> translationsKm = {
   'settingsAppSettingsSection': 'ការកំណត់កម្មវិធី',
   'settingsLanguage': 'ភាសា',
   'settingsNotificationSound': 'សម្លេងជូនដំណឹង',
+  'settingsTestSound': 'សាកល្បងសម្លេង',
+  'settingsTestSoundSent': 'បានផ្ញើការជូនដំណឹងសាកល្បង',
+  'settingsTestSoundFailed': 'មិនអាចចាក់សម្លេងសាកល្បងបានទេ',
   'settingsDarkMode': 'ម៉ូដងងឹត',
   'settingsAboutSection': 'អំពី',
   'settingsPrivacyPolicy': 'គោលការណ៍ឯកជន',
@@ -519,6 +523,7 @@ const Map<String, String> translationsKm = {
   'detailDeadlineDate': '១៥-មីនា-២០២៦',
   'detailDaysRemaining': '៦០ ថ្ងៃនៅសល់',
   'detailAboutTitle': 'អំពីអាហារូបករណ៍នេះ',
+  'detailFieldOfStudyLabel': 'វិស័យសិក្សា',
   'detailAboutDescription':
       'អាហារូបករណ៍ដ៏ល្បីល្បាញនេះផ្តល់ការគ្របដណ្តប់សិក្សាធិការពេញលេញសម្រាប់សិស្សឆ្នើមដែលកំពុងរៀនវិទ្យាសាស្ត្រកុំព្យូទ័រ។ អ្នកទទួលនឹងទទួលបានការគាំទ្រហិរញ្ញវត្ថុពេញលេញពេញមួយដំណើរសិក្សា។',
   'detailBenefitsTitle': 'អត្ថប្រយោជន៍អាហារូបករណ៍',

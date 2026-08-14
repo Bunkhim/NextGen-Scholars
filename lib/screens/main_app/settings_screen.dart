@@ -207,6 +207,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         )),
                     _Divider(),
 
+                    _ArrowTile(
+                      icon: Icons.volume_up_outlined,
+                      iconColor: colorScheme.primary,
+                      label: t.translate('settingsTestSound'),
+                      onTap: () async {
+                        final ok = await _controller.testNotificationSound(
+                          title: t.translate('settingsTestSound'),
+                          body: t.translate('settingsSoundChime'),
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(ok
+                                ? t.translate('settingsTestSoundSent')
+                                : t.translate('settingsTestSoundFailed')),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            backgroundColor: ok
+                                ? const Color(0xff2196F3)
+                                : colorScheme.error,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                    _Divider(),
+
                     Obx(() => _ToggleTile(
                           icon: Icons.dark_mode_outlined,
                           iconColor: colorScheme.primary,

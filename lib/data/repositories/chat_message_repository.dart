@@ -1,17 +1,27 @@
+import '../../core/services/jwt_service.dart';
 import '../../database/database_helper.dart';
 import '../models/chat_message_model.dart';
 
 /// Repository for chat message persistence.
 /// Supports multiple chat sessions with history.
+///
+/// All rows are scoped to the currently signed-in user (`user_id` column) so a
+/// different account never sees another user's conversations.
 class ChatMessageRepository {
   final DatabaseHelper _db = DatabaseHelper();
+
+  String get _uid => JwtService().uidSync ?? '';
 
   /// Save a single message.
   Future<int> insert(ChatMessageModel message) async {
     final db = await _db.database;
+    final map = message.toMap();
+    if (map['user_id'] == null && _uid.isNotEmpty) {
+      map['user_id'] = _uid;
+    }
     return await db.insert(
       DatabaseHelper.tableChatMessages,
-      message.toMap(),
+      map,
     );
   }
 
@@ -23,15 +33,18 @@ class ChatMessageRepository {
     String? modelUsed,
   }) async {
     final db = await _db.database;
+    final uid = _uid;
     final batch = db.batch();
 
     batch.insert(DatabaseHelper.tableChatMessages, {
+      'user_id': uid,
       'session_id': sessionId,
       'role': ChatMessageModel.roleUser,
       'content': userMessage,
     });
 
     batch.insert(DatabaseHelper.tableChatMessages, {
+      'user_id': uid,
       'session_id': sessionId,
       'role': ChatMessageModel.roleAssistant,
       'content': assistantResponse,
@@ -46,8 +59,8 @@ class ChatMessageRepository {
     final db = await _db.database;
     final results = await db.query(
       DatabaseHelper.tableChatMessages,
-      where: 'session_id = ?',
-      whereArgs: [sessionId],
+      where: 'user_id = ? AND session_id = ?',
+      whereArgs: [_uid, sessionId],
       orderBy: 'created_at ASC, id ASC',
     );
     return results.map((m) => ChatMessageModel.fromMap(m)).toList();
@@ -63,14 +76,16 @@ class ChatMessageRepository {
         COUNT(*) as message_count,
         (
           SELECT content FROM ${DatabaseHelper.tableChatMessages} c2
-          WHERE c2.session_id = c1.session_id AND c2.role = 'user'
+          WHERE c2.user_id = c1.user_id
+            AND c2.session_id = c1.session_id AND c2.role = 'user'
           ORDER BY c2.created_at ASC
           LIMIT 1
         ) as first_user_message
       FROM ${DatabaseHelper.tableChatMessages} c1
+      WHERE c1.user_id = ?
       GROUP BY session_id
       ORDER BY last_message_at DESC
-    ''');
+    ''', [_uid]);
 
     return results.map((row) {
       final firstMsg = row['first_user_message'] as String?;
@@ -95,8 +110,8 @@ class ChatMessageRepository {
     final db = await _db.database;
     return await db.delete(
       DatabaseHelper.tableChatMessages,
-      where: 'session_id = ?',
-      whereArgs: [sessionId],
+      where: 'user_id = ? AND session_id = ?',
+      whereArgs: [_uid, sessionId],
     );
   }
 
@@ -110,8 +125,9 @@ class ChatMessageRepository {
   Future<int> countInSession(String sessionId) async {
     final db = await _db.database;
     final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM ${DatabaseHelper.tableChatMessages} WHERE session_id = ?',
-      [sessionId],
+      'SELECT COUNT(*) as count FROM ${DatabaseHelper.tableChatMessages} '
+      'WHERE user_id = ? AND session_id = ?',
+      [_uid, sessionId],
     );
     return (result.first['count'] as int?) ?? 0;
   }
@@ -120,7 +136,9 @@ class ChatMessageRepository {
   Future<int> sessionCount() async {
     final db = await _db.database;
     final result = await db.rawQuery(
-      'SELECT COUNT(DISTINCT session_id) as count FROM ${DatabaseHelper.tableChatMessages}',
+      'SELECT COUNT(DISTINCT session_id) as count FROM '
+      '${DatabaseHelper.tableChatMessages} WHERE user_id = ?',
+      [_uid],
     );
     return (result.first['count'] as int?) ?? 0;
   }
@@ -133,8 +151,8 @@ class ChatMessageRepository {
     final db = await _db.database;
     final results = await db.query(
       DatabaseHelper.tableChatMessages,
-      where: 'session_id = ?',
-      whereArgs: [sessionId],
+      where: 'user_id = ? AND session_id = ?',
+      whereArgs: [_uid, sessionId],
       orderBy: 'created_at DESC, id DESC',
       limit: limit,
     );

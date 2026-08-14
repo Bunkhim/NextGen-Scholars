@@ -32,6 +32,12 @@ class RegisterController extends GetxController {
   final RxBool isFacebookLoading = false.obs;
   final RxString selectedCountryCode = '+1'.obs;
 
+  // Bumped on every password keystroke so the password-strength requirement
+  // checkmarks rebuild live. GetX can't observe a plain TextEditingController,
+  // which is why the checks only updated when another observable changed
+  // (e.g. toggling the eye icon).
+  final RxInt passwordRevision = 0.obs;
+
   final RxString nameError = ''.obs;
   final RxString emailError = ''.obs;
   final RxString phoneError = ''.obs;
@@ -125,7 +131,7 @@ class RegisterController extends GetxController {
     if (value.trim().length < 2) {
       return t.translate('registerNameTooShort');
     }
-    if (!RegExp(r"^[\p{L}\s'-]+$", unicode: true).hasMatch(value.trim())) {
+    if (!RegExp(r"^[\p{L}\p{M}\s'-]+$", unicode: true).hasMatch(value.trim())) {
       return t.translate('registerNameInvalidChars');
     }
     return null;

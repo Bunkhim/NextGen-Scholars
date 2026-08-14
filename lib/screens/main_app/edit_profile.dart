@@ -172,7 +172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isValidName(String name) {
     final trimmed = name.trim();
     if (trimmed.length < 2 || trimmed.length > 50) return false;
-    return RegExp(r"^[\p{L}\s'\-.]+$", unicode: true).hasMatch(trimmed);
+    return RegExp(r"^[\p{L}\p{M}\s'\-.]+$", unicode: true).hasMatch(trimmed);
   }
 
   bool _isValidDOB(String dob) {
@@ -187,15 +187,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (day == null || month == null || year == null) return false;
       if (month < 1 || month > 12) return false;
-      if (year < 1900 || year > DateTime.now().year - 13) return false;
+      if (year < 1900) return false;
 
       // Validate the actual calendar date (catches Feb 30, Apr 31, etc.)
       final date = DateTime(year, month, day);
       if (date.year != year || date.month != month || date.day != day) {
         return false;
       }
-      // Block future dates
-      if (date.isAfter(DateTime.now())) return false;
+      // App users must be at least 13 years old (also blocks future dates).
+      final now = DateTime.now();
+      final minDob = DateTime(now.year - 13, now.month, now.day);
+      if (date.isAfter(minDob)) return false;
       return true;
     } catch (_) {
       return false;
@@ -205,7 +207,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isValidCountry(String country) {
     final value = country.trim();
     if (value.length < 2 || value.length > 56) return false;
-    return RegExp(r"^[\p{L}\s'\-\.]+$", unicode: true).hasMatch(value);
+    return RegExp(r"^[\p{L}\p{M}\s'\-\.]+$", unicode: true).hasMatch(value);
   }
 
   void _validateNameLive(String value) {

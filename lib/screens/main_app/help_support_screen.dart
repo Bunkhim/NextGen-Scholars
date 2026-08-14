@@ -143,9 +143,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   icon: Icons.chat_bubble_outline_rounded,
                   color: Colors.purple,
                   title: 'Telegram',
-                  subtitle: '@scholarship_kh_bot',
+                  subtitle: '@nextgen_scholars_bot',
                   onTap: () =>
-                      controller.openUrl('https://t.me/scholarship_kh_bot'),
+                      controller.openUrl('https://t.me/nextgen_scholars_bot'),
                 ),
               ],
             ),

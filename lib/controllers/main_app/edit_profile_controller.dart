@@ -178,7 +178,7 @@ class EditProfileController extends GetxController {
     if (trimmed.length < 2 || trimmed.length > 50) {
       return t.translate('editProfileNameLength');
     }
-    if (!RegExp(r"^[\p{L}\s'\-.]+$", unicode: true).hasMatch(trimmed)) {
+    if (!RegExp(r"^[\p{L}\p{M}\s'\-.]+$", unicode: true).hasMatch(trimmed)) {
       return t.translate('editProfileNameLength');
     }
     return null;
@@ -217,15 +217,18 @@ class EditProfileController extends GetxController {
     if (day == null || month == null || year == null) {
       return t.translate('editProfileDobInvalid');
     }
-    if (month < 1 || month > 12 || year < 1900 || year > DateTime.now().year - 13) {
+    if (month < 1 || month > 12 || year < 1900) {
       return t.translate('editProfileDobInvalid');
     }
     final date = DateTime(year, month, day);
     if (date.year != year || date.month != month || date.day != day) {
       return t.translate('editProfileDobInvalid');
     }
-    if (date.isAfter(DateTime.now())) {
-      return t.translate('editProfileDobInvalid');
+    // App users must be at least 13 years old.
+    final now = DateTime.now();
+    final minDob = DateTime(now.year - 13, now.month, now.day);
+    if (date.isAfter(minDob)) {
+      return t.translate('editProfileDobUnderage');
     }
     return null;
   }
@@ -236,7 +239,7 @@ class EditProfileController extends GetxController {
     if (trimmed.length < 2 || trimmed.length > 56) {
       return t.translate('editProfileCountryInvalid');
     }
-    if (!RegExp(r"^[\p{L}\s'\-.]+$", unicode: true).hasMatch(trimmed)) {
+    if (!RegExp(r"^[\p{L}\p{M}\s'\-.]+$", unicode: true).hasMatch(trimmed)) {
       return t.translate('editProfileCountryInvalid');
     }
     return null;

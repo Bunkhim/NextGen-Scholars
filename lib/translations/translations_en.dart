@@ -369,6 +369,7 @@ const Map<String, String> translationsEn = {
   'editProfilePhoneInvalid': 'Phone must be a valid format (7-15 digits)',
   'editProfileDobRequired': 'Date of Birth is required (DD/MM/YYYY)',
   'editProfileDobInvalid': 'Invalid date format. Use DD/MM/YYYY',
+  'editProfileDobUnderage': 'You must be at least 13 years old',
   'editProfileCountryRequired': 'Country is required',
   'editProfileCountryInvalid':
       'Country must be 2-56 characters and contain letters only',
@@ -394,6 +395,9 @@ const Map<String, String> translationsEn = {
   'settingsAppSettingsSection': 'App Settings',
   'settingsLanguage': 'Language',
   'settingsNotificationSound': 'Notification Sound',
+  'settingsTestSound': 'Test Sound',
+  'settingsTestSoundSent': 'Test notification sent',
+  'settingsTestSoundFailed': 'Could not play the test notification',
   'settingsDarkMode': 'Dark Mode',
   'settingsAboutSection': 'About',
   'settingsPrivacyPolicy': 'Privacy Policy',
@@ -528,6 +532,7 @@ const Map<String, String> translationsEn = {
   'detailDeadlineDate': 'March-15-2026',
   'detailDaysRemaining': '60 day remaining',
   'detailAboutTitle': 'About this scholarship',
+  'detailFieldOfStudyLabel': 'Field of Study',
   'detailAboutDescription':
       'This prestigious scholarship offers full tuition coverage for outstanding students pursuing Computer Science. Recipients will receive comprehensive financial support throughout their academic journey.',
   'detailBenefitsTitle': 'Scholarship Benefits',

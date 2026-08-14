@@ -281,7 +281,7 @@ class PersonalInfoController extends GetxController {
     if (value.length < 2) {
       return t.translate('personalInfoNameMinLength');
     }
-    if (!RegExp(r'^[\p{L}\s]+$', unicode: true).hasMatch(value)) {
+    if (!RegExp(r'^[\p{L}\p{M}\s]+$', unicode: true).hasMatch(value)) {
       return t.translate('personalInfoNameAllowUnicode');
     }
     return null;

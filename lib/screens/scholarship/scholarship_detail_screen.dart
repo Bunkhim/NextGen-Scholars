@@ -369,7 +369,8 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                     const SizedBox(height: 14),
 
                     // About / Description (expandable, reactive)
-                    if (description.isNotEmpty) ...[
+                    if (description.isNotEmpty ||
+                        scholarship.fieldOfStudy.trim().isNotEmpty) ...[
                       Obx(() => GestureDetector(
                             onTap: controller.toggleDescription,
                             child: Row(
@@ -408,16 +409,30 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                                               .withOpacity(0.25),
                                       height: 1),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    description,
-                                    style: TextStyle(
-                                      height: 1.5,
-                                      fontSize: 13,
-                                      color: WallpaperService().hasAny
-                                          ? WallpaperService().onThemeColor
-                                          : colorScheme.onSurface,
+                                  if (description.isNotEmpty)
+                                    Text(
+                                      description,
+                                      style: TextStyle(
+                                        height: 1.5,
+                                        fontSize: 13,
+                                        color: WallpaperService().hasAny
+                                            ? WallpaperService().onThemeColor
+                                            : colorScheme.onSurface,
+                                      ),
                                     ),
-                                  ),
+                                  // Field of Study — under About this
+                                  // scholarship, shows what the scholarship
+                                  // is for (IT, CS, Business, ...).
+                                  if (scholarship.fieldOfStudy.trim().isNotEmpty) ...[
+                                    const SizedBox(height: 14),
+                                    _buildSectionTitle(
+                                        context,
+                                        t.translate('detailFieldOfStudyLabel'),
+                                        colorScheme),
+                                    const SizedBox(height: 8),
+                                    _buildFieldOfStudyChips(context,
+                                        scholarship.fieldOfStudy, colorScheme),
+                                  ],
                                 ],
                               ),
                             )
@@ -985,6 +1000,42 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         fontWeight: FontWeight.bold,
         color: ws.hasTheme ? ws.onThemeColor : colorScheme.primary,
       ),
+    );
+  }
+
+  Widget _buildFieldOfStudyChips(BuildContext context, String fieldOfStudy,
+      ColorScheme colorScheme) {
+    final ws = WallpaperService();
+    final primary = ws.hasTheme
+        ? (ws.currentThemeData?.accentColor ?? ws.onThemeColor)
+        : colorScheme.primary;
+    final fields = fieldOfStudy
+        .split(RegExp(r'[,;]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (fields.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: fields.map((field) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: primary.withOpacity(0.3)),
+          ),
+          child: Text(
+            field,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: primary,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 

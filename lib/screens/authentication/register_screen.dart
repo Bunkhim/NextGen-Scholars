@@ -114,6 +114,10 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   Widget _buildPasswordRequirements(AppLocalizations t, ColorScheme cs, RegisterController controller) {
+    // Subscribe the enclosing Obx to the keystroke tick: passwordController is
+    // a plain TextEditingController (not observable), so without this the
+    // checkmarks only refreshed when another observable changed (eye toggle).
+    final _ = controller.passwordRevision.value;
     final pwd = controller.passwordController.text;
     final checks = [
       _PasswordCheck(
@@ -547,6 +551,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                               ),
                             ),
                             onChanged: (_) {
+                              controller.passwordRevision.value++;
                               if (controller.passwordError.value.isNotEmpty) {
                                 controller.passwordError.value = '';
                               }
