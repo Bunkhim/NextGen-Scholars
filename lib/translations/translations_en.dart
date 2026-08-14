@@ -405,6 +405,98 @@ const Map<String, String> translationsEn = {
   'settingsHelpSupport': 'Help & Support',
   'settingsRateApp': 'Rate App',
   'settingsVersion': 'Version 1.0.0',
+  'legalLastUpdated': 'Last updated: August 2025',
+
+  // Privacy Policy
+  'legalPrivacyS1Title': '1. Introduction',
+  'legalPrivacyS1P1':
+      'NextGen Scholars ("we", "us") is committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, and the choices you have.',
+  'legalPrivacyS2Title': '2. Information We Collect',
+  'legalPrivacyS2P1':
+      'Account information: your name, email address, phone number, date of birth, and profile details when you register.',
+  'legalPrivacyS2P2':
+      'Application data: your scholarship applications, documents, and academic information.',
+  'legalPrivacyS2P3':
+      'Device information: device type, operating system, and app version for service improvement.',
+  'legalPrivacyS2P4':
+      'Push notification tokens so we can send you application and announcement updates.',
+  'legalPrivacyS2P5':
+      'Usage data such as pages visited and features used to improve the app.',
+  'legalPrivacyS3Title': '3. How We Use Your Information',
+  'legalPrivacyS3P1':
+      'To process and manage your scholarship applications.',
+  'legalPrivacyS3P2':
+      'To send you notifications about your applications, deadlines, and announcements.',
+  'legalPrivacyS3P3':
+      'To improve our services, security, and user experience.',
+  'legalPrivacyS3P4':
+      'To communicate with you regarding support requests and important updates.',
+  'legalPrivacyS4Title': '4. How We Share Your Information',
+  'legalPrivacyS4P1':
+      'We do not sell your personal information to anyone.',
+  'legalPrivacyS4P2':
+      'We may share your application data with scholarship providers you apply to, as required to evaluate your application.',
+  'legalPrivacyS4P3':
+      'We may disclose information when required by law or to protect our legal rights.',
+  'legalPrivacyS5Title': '5. Data Security',
+  'legalPrivacyS5P1':
+      'We use industry-standard safeguards to protect your data. However, no method of transmission or storage is 100% secure, and we cannot guarantee absolute security.',
+  'legalPrivacyS6Title': '6. Your Rights',
+  'legalPrivacyS6P1':
+      'You may access, correct, or delete your personal information through the app or by contacting our support team. You may also withdraw consent and request data deletion at any time.',
+  'legalPrivacyS7Title': '7. Children\'s Privacy',
+  'legalPrivacyS7P1':
+      'The app is not intended for children under 13. We do not knowingly collect personal information from children under 13.',
+  'legalPrivacyS8Title': '8. Third-Party Services',
+  'legalPrivacyS8P1':
+      'The app may use third-party services (such as analytics or login providers) that have their own privacy policies. We encourage you to review them.',
+  'legalPrivacyS9Title': '9. Changes to This Policy',
+  'legalPrivacyS9P1':
+      'We may update this Privacy Policy from time to time. We will notify you of material changes through the app.',
+  'legalPrivacyS10Title': '10. Contact Us',
+  'legalPrivacyS10P1':
+      'If you have questions about this Privacy Policy, contact us at support@nextgenscholars.app.',
+
+  // Terms of Service
+  'legalTermsS1Title': '1. Acceptance of Terms',
+  'legalTermsS1P1':
+      'By using the NextGen Scholars app, you agree to these Terms of Service and our Privacy Policy. If you do not agree, please do not use the app.',
+  'legalTermsS2Title': '2. Eligibility',
+  'legalTermsS2P1':
+      'You must be at least 13 years old and provide accurate information to use the app.',
+  'legalTermsS3Title': '3. Your Account',
+  'legalTermsS3P1':
+      'You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account.',
+  'legalTermsS4Title': '4. Acceptable Use',
+  'legalTermsS4P1':
+      'You agree not to misuse the app, upload false information, interfere with other users, or attempt to access systems without authorization.',
+  'legalTermsS5Title': '5. Scholarship Applications',
+  'legalTermsS5P1':
+      'Submitting an application does not guarantee selection. Scholarship decisions are made by the scholarship providers.',
+  'legalTermsS6Title': '6. Intellectual Property',
+  'legalTermsS6P1':
+      'The app, its design, content, and logos are owned by NextGen Scholars and protected by copyright and other laws.',
+  'legalTermsS7Title': '7. User Content',
+  'legalTermsS7P1':
+      'You retain ownership of content you submit. You grant us a license to store and process it to provide the service.',
+  'legalTermsS8Title': '8. Third-Party Links',
+  'legalTermsS8P1':
+      'The app may contain links to external sites. We are not responsible for their content or policies.',
+  'legalTermsS9Title': '9. Disclaimer of Warranties',
+  'legalTermsS9P1':
+      'The app is provided "as is" without warranties of any kind, express or implied, to the maximum extent permitted by law.',
+  'legalTermsS10Title': '10. Limitation of Liability',
+  'legalTermsS10P1':
+      'To the maximum extent permitted by law, we are not liable for indirect, incidental, or consequential damages arising from your use of the app.',
+  'legalTermsS11Title': '11. Termination',
+  'legalTermsS11P1':
+      'We may suspend or terminate your access to the app if you violate these Terms.',
+  'legalTermsS12Title': '12. Changes to These Terms',
+  'legalTermsS12P1':
+      'We may update these Terms from time to time. Continued use of the app after changes means you accept the updated Terms.',
+  'legalTermsS13Title': '13. Contact Us',
+  'legalTermsS13P1':
+      'For questions about these Terms, contact us at support@nextgenscholars.app.',
   'settingsSelectLanguage': 'Select Language',
   'settingsSelectNotificationSound': 'Notification Sound',
   'settingsOpeningPage': 'Opening',
